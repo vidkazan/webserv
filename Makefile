@@ -8,7 +8,7 @@ OBJS = $(SRCS:.cpp=.o)
 
 FLAGS = -O3 -std=c++98
 
-COMP = clang
+COMP = c++
 
 %.o: %.cpp		$(HDRS)
 				@$(COMP) $(FLAGS) -c $< -o $@
