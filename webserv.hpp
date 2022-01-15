@@ -39,7 +39,7 @@ private:
 public:
 	Webserv(){};
 	~Webserv(){};
-	void configFileParce(int portNum, char *stringIP){
+	void configFileParce(int portNum, char *stringIP){ // TODO #001
 		Socket* socket = new Socket(portNum, stringIP);
 		_servSockets.push_back(socket);
 		bind(this->getCurrentServSocketFDByIndex(0), (struct sockaddr *)&_servSockets[0]->getSockAddrInStruct(), sizeof(_servSockets[0]->getSockAddrInStruct()));
@@ -49,6 +49,7 @@ public:
 		return _servSockets[index]->getSocketFD();
 	}
 	void errorMsg(const char *msg){write(2, msg, strlen(msg));};
+
 };
 
 #endif
