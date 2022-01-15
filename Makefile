@@ -6,7 +6,7 @@ HDRS = gnl/get_next_line.hpp
 
 OBJS = $(SRCS:.cpp=.o)
 
-FLAGS = -O3 -std=c++98
+FLAGS = -O3 -std=c++98 -Wno-c++11-compat-deprecated-writable-strings
 
 COMP = c++
 
