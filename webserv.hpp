@@ -14,39 +14,35 @@
 #define YELLOW "\e[93m"
 #define GREEN "\e[92m"
 #define WHITE "\e[39m"
-#define WRITEREADY 1
+#define WAITING 0
+#define READING 1
+#define WRITING 2
+#define CLOSING 3
 
 class Client {
 private:
 	int _socketFD;
-	int _isReadyForWrite;
-	int _readIsDone;
-	std::string* _request;
-	std::string* _responce;
+	int _status; // 0 wait 1 read 2 write 3 close
+	std::string _request;
+	std::string _responce;
 public:
-	Client(int fd): _socketFD(fd), _isReadyForWrite(0), _readIsDone(0){
-		_request = new std::string;
-		_responce = new std::string;
+	Client(int fd): _socketFD(fd), _status(READING){
 	};
 	~Client(){};
-	std::string* getRequest(){return _request;};
-	std::string* getResponce(){return _responce;};
+	std::string getRequest(){return _request;};
+	std::string getResponce(){return _responce;};
 	int getSocketFD(){return _socketFD;};
-	int getWriteStatus(){return _isReadyForWrite;}
-	int getReadStatus(){return _readIsDone;}
+	int getStatus(){return _status;}
 
-	void setWriteIsReady(){
-		_isReadyForWrite = 1;
+	void setStatus(int status){
+		_status = status;
 	};
-	void setRequest(std::string* req){
-		delete _request;
+	void setRequest(std::string req){
 		_request = req;
 	};
-	void setResponce(std::string* resp){
-		delete _responce;
+	void setResponce(std::string resp){
 		_responce = resp;
 	};
-	void setReadStatusIsDone(){_readIsDone = 1;};
 };
 
 class ListenSocket {
@@ -110,9 +106,9 @@ public:
 		write(2, &buf, ret);
 		write(2, WHITE, 5);
 		write(2, "\n", 1);
-		std::string *buf2 = new std::string(buf);
+		std::string buf2 = buf;
 		it->setRequest(buf2);
-		it->setReadStatusIsDone();
+		it->setStatus(WRITING);
 	}
 	void generateResponse(std::vector<Client>::iterator it){
 		char bufResp[] = "HTTP/1.1 200 OK\n"
@@ -124,10 +120,9 @@ public:
 						 "<h1>Hello, World!!!!!!!!!!!!!</h1>\n"
 						 "</body>\n"
 						 "</html>";
-		std::string *resp = new std::string(bufResp);
+		std::string resp = bufResp;
 		it->setResponce(resp);
 		std::cout << "write ready on fd: " << it->getSocketFD() << "\n";
-		it->setWriteIsReady();
 	}
 };
 

@@ -22,8 +22,9 @@ int main()
 		}
 		for(std::vector<Client>::iterator it = webserv.getClientSockets().begin();it != webserv.getClientSockets().end(); it++)
 		{
-			FD_SET(it->getSocketFD(), &readfds);
-			if(it->getWriteStatus() == 1)
+			if(it->getStatus() == READING)
+				FD_SET(it->getSocketFD(), &readfds);
+			else if(it->getStatus() == WRITING)
 				FD_SET(it->getSocketFD(), &writefds);
 			if(it->getSocketFD() > largestFD)
 				largestFD = it->getSocketFD();
@@ -33,6 +34,33 @@ int main()
 		{
 			webserv.errorMsg("webserv: select error");
 			exit(EXIT_FAILURE);
+		}
+		for(std::vector<Client>::iterator it = webserv.getClientSockets().begin();it != webserv.getClientSockets().end(); it++)
+		{
+			if(webserv.getClientSockets().empty())
+				break;
+//			std::cout << "isset check fd: " << it->getSocketFD() << "\n";
+			if (FD_ISSET(it->getSocketFD(), &readfds)){
+				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFD() << "\n";
+				webserv.readRequest(it);
+				if(it->getStatus() == WRITING)
+				{
+					webserv.generateResponse(it);
+				}
+			}
+			if(FD_ISSET(it->getSocketFD(), &writefds))
+			{
+				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFD() << "\n";
+//				char * newstr = it->getResponce()->c_str();
+				write(2, GREEN,5);
+				write(2, it->getResponce().c_str(), it->getResponce().size());
+				write(2, WHITE,5);
+				write(2, "\n", 1);
+				write(it->getSocketFD(), it->getResponce().c_str(), it->getResponce().size());
+//				close(it->getSocketFD());
+				std::cout << "close fd: " << it->getSocketFD() << "\n";
+				it->setStatus(READING);
+			}
 		}
 		int fd;
 		for(std::vector<ListenSocket>::iterator it = webserv.getServSockets().begin();it != webserv.getServSockets().end(); it++)
@@ -50,33 +78,6 @@ int main()
 				}
 				fcntl(fd, F_SETFL, O_NONBLOCK);
 				webserv.addClientSocket(fd);
-			}
-		}
-		for(std::vector<Client>::iterator it = webserv.getClientSockets().begin();it != webserv.getClientSockets().end(); it++)
-		{
-			if(webserv.getClientSockets().empty())
-				break;
-//			std::cout << "isset check fd: " << it->getSocketFD() << "\n";
-			if (FD_ISSET(it->getSocketFD(), &readfds)){
-				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFD() << "\n";
-				webserv.readRequest(it);
-				if(it->getReadStatus() == 1)
-				{
-					webserv.generateResponse(it);
-				}
-			}
-			if(FD_ISSET(it->getSocketFD(), &writefds))
-			{
-				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFD() << "\n";
-//				char * newstr = it->getResponce()->c_str();
-				write(2, GREEN,5);
-				write(2, it->getResponce()->c_str(), it->getResponce()->size());
-				write(2, WHITE,5);
-				write(2, "\n", 1);
-				write(it->getSocketFD(), it->getResponce()->c_str(), it->getResponce()->size());
-				close(it->getSocketFD());
-				std::cout << "close fd: " << it->getSocketFD() << "\n";
-				webserv.getClientSockets().erase(it);
 			}
 		}
 	}
