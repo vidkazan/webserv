@@ -1,4 +1,4 @@
-#include "webserv.hpp"
+#include "Webserv.hpp"
 
 int main()
 {
@@ -8,7 +8,7 @@ int main()
 	std::cout << "server start\n";
 	for(std::vector<ListenSocket>::iterator it = webserv.getServSockets().begin();it != webserv.getServSockets().end(); it++)
 		listen(it->getSocketFD(), 1000);
-	for(;;)
+	while(1)
 	{
 		int largestFD = 0;
 		fd_set readfds, writefds;
@@ -29,7 +29,7 @@ int main()
 			if(it->getSocketFD() > largestFD)
 				largestFD = it->getSocketFD();
 		}
-		std::cout << "select: waiting for connection " <<"\n";
+		std::cout << "select: listening... " <<"\n";
 		if(select(largestFD + 1, &readfds, &writefds,0,0) < 0)
 		{
 			webserv.errorMsg("webserv: select error");
@@ -39,33 +39,29 @@ int main()
 		{
 			if(webserv.getClientSockets().empty())
 				break;
-//			std::cout << "isset check fd: " << it->getSocketFD() << "\n";
 			if (FD_ISSET(it->getSocketFD(), &readfds)){
 				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFD() << "\n";
 				webserv.readRequest(it);
 				if(it->getStatus() == WRITING)
-				{
 					webserv.generateResponse(it);
-				}
 			}
 			if(FD_ISSET(it->getSocketFD(), &writefds))
 			{
 				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFD() << "\n";
-//				char * newstr = it->getResponce()->c_str();
-				write(2, GREEN,5);
-				write(2, it->getResponce().c_str(), it->getResponce().size());
-				write(2, WHITE,5);
-				write(2, "\n", 1);
-				write(it->getSocketFD(), it->getResponce().c_str(), it->getResponce().size());
-//				close(it->getSocketFD());
-				std::cout << "close fd: " << it->getSocketFD() << "\n";
+				printLog(nullptr,(char *)it->getResponce().c_str(), GREEN);
+				ssize_t sendRes = send(it->getSocketFD(), it->getResponce().c_str(), it->getResponce().size(), 0);
+				if(sendRes <= 0) {
+					it->setStatus(CLOSING);
+					break;
+				}
+				it->cleanRequest();
+				it->cleanResponce();
 				it->setStatus(READING);
 			}
 		}
 		int fd;
 		for(std::vector<ListenSocket>::iterator it = webserv.getServSockets().begin();it != webserv.getServSockets().end(); it++)
 		{
-//			std::cout << "isset check ld: " << it->getSocketFD() << "\n";
 			if(FD_ISSET(it->getSocketFD(), &readfds))
 			{
 				struct sockaddr_in adrAccept = {0};
@@ -78,6 +74,13 @@ int main()
 				}
 				fcntl(fd, F_SETFL, O_NONBLOCK);
 				webserv.addClientSocket(fd);
+			}
+		}
+		for(std::vector<Client>::iterator it = webserv.getClientSockets().begin();it != webserv.getClientSockets().end(); it++){
+			if(it->getStatus() == CLOSING){
+				close(it->getSocketFD());
+				webserv.getClientSockets().erase(it);
+				break;
 			}
 		}
 	}
