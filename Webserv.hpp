@@ -2,16 +2,7 @@
 #define WEBSERV_HPP
 
 #include "main.hpp"
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <cstdio>
-#include "gnl/get_next_line.hpp"
-#include <iostream>
-#include <cstring>
-#include <vector>
-#include <iomanip>
 
 #define RED "\e[91m"
 #define YELLOW "\e[93m"
@@ -24,32 +15,47 @@
 class Client {
 private:
 	std::string _requestType;
-	std::string _requestOptions;
-	std::string _requestHTTPversion;
+	std::string _requestOption;
+	std::string _requestHTTPVersion;
 	std::string _requestHost;
 	int _socketFD;
 	int _status; // 0 wait 1 read 2 write 3 close
+	int _responseCode;
 	std::string _request;
 	std::string _responce;
 public:
-	Client(int fd): _socketFD(fd), _status(READING){
+	Client(int fd): _socketFD(fd), _status(READING), _responseCode(-1){
 	};
 	~Client(){};
+
+	int getResponseCode() const {return _responseCode;};
 	std::string getRequest(){return _request;};
 	std::string getResponce(){return _responce;};
-	int getSocketFD(){return _socketFD;};
-	int getStatus(){return _status;}
+	int getSocketFD() const {return _socketFD;};
+	int getStatus() const {return _status;}
+	std::string getRequestType() const {return  _requestType;};
+	std::string getRequestOption() const {return  _requestOption;};
+	std::string getRequestHost() const {return  _requestHost;};
+	std::string getRequestHTTPVesion(){return  _requestHTTPVersion;};
 
+	void setResponseCose(int code){
+		if(code > 99 && code < 600)
+			_responseCode = code;
+	};
 	void setStatus(int status){
 		_status = status;
 	};
-	void setRequest(std::string req){
+	void setRequest(const std::string & req){
 		this->cleanRequest();
 		_request = req;
 	};
-	void setResponce(std::string resp){
+	void setResponce(const std::string & resp){
 		_responce = resp;
 	};
+	void setRequestType(const std::string & type){_requestType = type;};
+	void setRequestOption(const std::string & opt){_requestOption = opt;};
+	void setRequestHTTPVesion(const std::string & version){_requestHTTPVersion = version;};
+	void setRequestHost(const std::string & host){_requestHost = host;};
 	void cleanRequest(){
 		_request.erase();
 	}
@@ -77,7 +83,7 @@ public:
 		_adr.sin_addr.s_addr = inet_addr(stringIP);
 	};
 	~ListenSocket(){};
-	int getSocketFD(){return _socketFD;};
+	int getSocketFD() const {return _socketFD;};
 	struct sockaddr_in& getSockAddrInStruct(){return _adr;};
 };
 
@@ -118,6 +124,12 @@ public:
 		it->setRequest(it->getRequest() + buf);
 		std::cout << "read ret: " << ret <<"\n";
 		printLog("request:", (char *)it->getRequest().c_str(),RED);
+		if(it->getRequest().find('\n') >= 0)
+		{
+			parceRequest(it);
+			std::cout <<it->getSocketFD() <<"\n"<< it->getRequestType() <<"\n"<< it->getRequestOption() <<"\n"<< it->getRequestHTTPVesion() <<"\n"<< it->getRequestHost() <<"\n";
+			it->setStatus(WRITING);
+		}
 	}
 	void generateResponse(std::vector<Client>::iterator it){
 		char bufResp[] = "HTTP/1.1 200 OK\n"
@@ -130,6 +142,57 @@ public:
 						 "</html>";
 		std::string resp = bufResp;
 		it->setResponce(resp);
+	}
+
+	static void parceRequestTypeOptionVersion(std::string str,std::vector<Client>::iterator& it){
+		size_t pos = str.find(' ');
+		if(pos >= 0) {
+			it->setRequestType(str.substr(0, pos));
+			str.erase(0,pos+1);
+		}
+		else
+		{
+			it->setResponseCose(400);
+			return;
+		}
+		pos = str.find(' ');
+		if(pos != std::string::npos){
+			it->setRequestOption(str.substr(0, pos));
+			str.erase(0,pos+1);
+		}
+		else
+		{
+			it->setResponseCose(400);
+			return;
+		}
+		if(!str.empty())
+			it->setRequestHTTPVesion(str);
+		else
+		{
+			it->setResponseCose(400);
+			return;
+		}
+	}
+
+	static void parceRequest(std::vector<Client>::iterator it){
+		std::string line;
+		size_t pos;
+
+		while(true)
+		{
+			pos = it->getRequest().find('\n');
+			if (pos == std::string::npos)
+				return;
+			line = it->getRequest().substr(0,pos);
+			if (it->getRequestType().empty() && !line.empty()) {
+				parceRequestTypeOptionVersion(line, it);
+			}
+			else if(line.find("Host: ") != std::string::npos){
+				line.erase(0, 6);
+				it->setRequestHost(line);
+			}
+			it->setRequest(it->getRequest().erase(0, pos + 1));
+		}
 	}
 };
 
@@ -144,4 +207,5 @@ void printLog(char *description,char *msg, char *color){
 	write(2, WHITE, 5);
 	write(2, "\n", 1);
 }
+
 #endif

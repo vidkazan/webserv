@@ -56,6 +56,10 @@ int main()
 				}
 				it->cleanRequest();
 				it->cleanResponce();
+				it->setRequestHost("");
+				it->setRequestHTTPVesion("");
+				it->setRequestOption("");
+				it->setRequestType("");
 				it->setStatus(READING);
 			}
 		}
