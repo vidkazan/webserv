@@ -5,7 +5,7 @@ int main()
 	Webserv webserv;
 	for(int i = 2000; i < 2003; i++)
 		webserv.addListenSocket(i,"127.0.0.1");
-	std::cout << "server start\n";
+	printLog(nullptr, "______________________________________________________________|\n|_________________________SERVER START_________________________|\n|______________________________________________________________", GREEN);
 	for(std::vector<ListenSocket>::iterator it = webserv.getServSockets().begin();it != webserv.getServSockets().end(); it++)
 		listen(it->getSocketFD(), 1000);
 	while(1)
@@ -22,14 +22,14 @@ int main()
 		}
 		for(std::vector<Client>::iterator it = webserv.getClientSockets().begin();it != webserv.getClientSockets().end(); it++)
 		{
-			if(it->getStatus() == READING)
+			if(it->getStatus() == READING || it->getStatus() == READING_DONE)
 				FD_SET(it->getSocketFD(), &readfds);
 			else if(it->getStatus() == WRITING)
 				FD_SET(it->getSocketFD(), &writefds);
 			if(it->getSocketFD() > largestFD)
 				largestFD = it->getSocketFD();
 		}
-		std::cout << "select: listening... " <<"\n";
+		std::cout << "select:\n";
 		if(select(largestFD + 1, &readfds, &writefds,0,0) < 0)
 		{
 			webserv.errorMsg("webserv: select error");
@@ -48,14 +48,14 @@ int main()
 			if(FD_ISSET(it->getSocketFD(), &writefds))
 			{
 				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFD() << "\n";
-				printLog(nullptr,(char *)it->getResponce().c_str(), GREEN);
-				ssize_t sendRes = send(it->getSocketFD(), it->getResponce().c_str(), it->getResponce().size(), 0);
+				printLog(nullptr,(char *)it->getResponse().c_str(), GREEN);
+				ssize_t sendRes = send(it->getSocketFD(), it->getResponse().c_str(), it->getResponse().size(), 0);
 				if(sendRes <= 0) {
 					it->setStatus(CLOSING);
 					break;
 				}
 				it->setStatus(READING);
-				it->resetResponseData();
+				it->resetRequestData();
 			}
 		}
 		int fd;
@@ -65,7 +65,7 @@ int main()
 			{
 				struct sockaddr_in adrAccept = {0};
 				socklen_t adrAcceptLen = sizeof adrAccept;
-				std::cout << "select: new connection on ld " << it->getSocketFD() << "\n";
+				std::cout << "select: new client on port " << ntohs(it->getSockAddrInStruct().sin_port) << "\n";
 				fd = accept(it->getSocketFD(), (struct sockaddr *)&adrAccept, &adrAcceptLen);
 				if (fd < 0){
 					webserv.errorMsg("accept: fd < 0");
