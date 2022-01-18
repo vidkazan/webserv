@@ -8,7 +8,8 @@
 #define YELLOW "\e[93m"
 #define GREEN "\e[92m"
 #define WHITE "\e[39m"
-#define READING 1
+#define READING 0
+#define READING_DONE 1
 #define WRITING 2
 #define CLOSING 3
 
@@ -18,21 +19,28 @@ private:
 	std::string _requestOption;
 	std::string _requestHTTPVersion;
 	std::string _requestHost;
+	std::string _requestBody;
+	bool _bodyDelimiter;
 	int _socketFD;
 	int _status; // 0 wait 1 read 2 write 3 close
 	int _responseCode;
+	int _requestLinesParsed;
 	std::string _request;
 	std::string _responce;
 public:
-	Client(int fd): _socketFD(fd), _status(READING), _responseCode(-1){
+	Client(int fd): _bodyDelimiter(false), _socketFD(fd), _status(READING), _responseCode(-1), _requestLinesParsed(0){
 	};
 	~Client(){};
 
+	bool getBodyDelimiterStatus(){return _bodyDelimiter;};
 	int getResponseCode() const {return _responseCode;};
-	std::string getRequest(){return _request;};
+	const std::string & getRequest() const {return _request;};
+	std::string getRequestBody(){return _requestBody;};
 	std::string getResponce(){return _responce;};
 	int getSocketFD() const {return _socketFD;};
-	int getStatus() const {return _status;}
+	int getStatus() const {return _status;};
+	void iterRequestLinesParsed(){_requestLinesParsed++;};
+	int getRequestLinesParsed(){return _requestLinesParsed;};
 	std::string getRequestType() const {return  _requestType;};
 	std::string getRequestOption() const {return  _requestOption;};
 	std::string getRequestHost() const {return  _requestHost;};
@@ -50,8 +58,15 @@ public:
 		_request = req;
 	};
 	void setResponce(const std::string & resp){
+		this->cleanResponce();
 		_responce = resp;
 	};
+	void setRequestBody(const std::string & body){
+		_requestBody.clear();
+		_requestBody = body;
+	};
+	void setBodyDelimiterStatus(bool s){
+		_bodyDelimiter = s;};
 	void setRequestType(const std::string & type){_requestType = type;};
 	void setRequestOption(const std::string & opt){_requestOption = opt;};
 	void setRequestHTTPVesion(const std::string & version){_requestHTTPVersion = version;};
@@ -61,6 +76,19 @@ public:
 	}
 	void cleanResponce(){
 		_responce.erase();
+	}
+	void resetResponseData(){
+		_bodyDelimiter= false;
+		_status = READING;
+		_responseCode= -1;
+		_requestLinesParsed = 0;
+		_requestType = "";
+		_requestOption = "";
+		_requestHTTPVersion = "";
+		_requestHost = "";
+		_requestBody = "";
+		_request = "";
+		_responce = "";
 	}
 };
 
@@ -124,29 +152,68 @@ public:
 		it->setRequest(it->getRequest() + buf);
 		std::cout << "read ret: " << ret <<"\n";
 		printLog("request:", (char *)it->getRequest().c_str(),RED);
-		if(it->getRequest().find('\n') >= 0)
+		if(it->getRequest().find('\n') != std::string::npos)
 		{
 			parceRequest(it);
-			std::cout <<it->getSocketFD() <<"\n"<< it->getRequestType() <<"\n"<< it->getRequestOption() <<"\n"<< it->getRequestHTTPVesion() <<"\n"<< it->getRequestHost() <<"\n";
-			it->setStatus(WRITING);
+			std::cout << "current parsed info:\n" <<it->getSocketFD() <<"\n"<< it->getRequestType() <<"\n"<< it->getRequestOption() <<"\n"<< it->getRequestHTTPVesion() <<"\n"<< it->getRequestHost() << std::endl;
+			if(it->getBodyDelimiterStatus())
+				it->setStatus(READING_DONE);
 		}
 	}
-	void generateResponse(std::vector<Client>::iterator it){
-		char bufResp[] = "HTTP/1.1 200 OK\n"
-						 "Content-Length: 64\n"
-						 "Content-Type: text/html\n\n"
-						 "<html>\n"
-						 "<body>\n"
-						 "<h1>Hello, World!!!!!!!!!!!!!</h1>\n"
-						 "</body>\n"
-						 "</html>";
+	void generateResponse(std::vector<Client>::iterator it)
+	{
+		char *bufResp = 0;
+		if(it->getRequestType().empty())
+		{
+			bufResp = "HTTP/1.1 400 Bad Request\n"
+					  "Content-Length: 64\n"
+					  "Content-Type: text/html\n\n"
+					  "<html>\n"
+					  "<body>\n"
+					  "<h1>Hello, World!!!!!!!!!!!!!</h1>\n"
+					  "</body>\n"
+					  "</html>";
+		}
+		if(it->getRequestType() == "POST" && it->getRequestOption() == "/")
+		{
+			bufResp = "HTTP/1.1 405 Method Not Allowed\n"
+							 "Content-Length: 64\n"
+							 "Content-Type: text/html\n\n"
+							 "<html>\n"
+							 "<body>\n"
+							 "<h1>Hello, World!!!!!!!!!!!!!</h1>\n"
+							 "</body>\n"
+							 "</html>";
+		}
+		else if(it->getRequestType() == "GET")
+		{
+			bufResp = "HTTP/1.1 200 OK\n"
+							 "Content-Length: 64\n"
+							 "Content-Type: text/html\n\n"
+							 "<html>\n"
+							 "<body>\n"
+							 "<h1>Hello, World!!!!!!!!!!!!!</h1>\n"
+							 "</body>\n"
+							 "</html>";
+		}
+		else if(it->getRequestType() == "HEAD"  && it->getRequestOption() == "/")
+		{
+			bufResp = "HTTP/1.1 405 Method Not Allowed\n"
+					  "Server: webserv/1.0\n"
+					  "Date: Mon, 17 Jan 2022 16:29:40 GMT\n"
+					  "Accept-Charsets: utf-8\n"
+					  "Accept-Language: en-US\n"
+					  "Allow: GET \n"
+					  "Content-Length: 0\n\n";
+		}
 		std::string resp = bufResp;
-		it->setResponce(resp);
+		it->setResponce(bufResp);
+		it->setStatus(WRITING);
 	}
 
 	static void parceRequestTypeOptionVersion(std::string str,std::vector<Client>::iterator& it){
 		size_t pos = str.find(' ');
-		if(pos >= 0) {
+		if(pos != std::string::npos) {
 			it->setRequestType(str.substr(0, pos));
 			str.erase(0,pos+1);
 		}
@@ -174,24 +241,57 @@ public:
 		}
 	}
 
-	static void parceRequest(std::vector<Client>::iterator it){
+	static void parceRequest(std::vector<Client>::iterator it)
+	{
+		std::cout << "parse request\n";
+		std::string tmp;
 		std::string line;
 		size_t pos;
+		pos = it->getRequest().find("\r\n\r\n");
+		if(!it->getBodyDelimiterStatus())
+		{
+			if (pos != std::string::npos) {
+				std::cout << "parce req: found \\r\\n\\r\\n pos= "<< pos << "\n";
+				it->setBodyDelimiterStatus(true);
+				tmp = it->getRequest();
+				tmp.erase(0, pos + 4);
+				it->setRequestBody(tmp);
+				std::cout << "req body:\n|" << it->getRequestBody() << "|\n";
 
+				tmp = it->getRequest();
+				tmp = tmp.substr(0,pos);
+				tmp.append("\n");
+				it->setRequest(tmp);
+				std::cout << "req edited:\n|" << it->getRequest() << "|\n";
+			}
+		}
+		if (it->getRequest().find('\n') == std::string::npos)
+			std::cout << "parce req: \\n not found\n";
 		while(true)
 		{
 			pos = it->getRequest().find('\n');
 			if (pos == std::string::npos)
 				return;
+			if(it->getRequest() == "\r\n"){
+				it->setBodyDelimiterStatus(true);
+			}
+			if (it->getRequest() == "\r\n")
+			{
+				std::cout << "parce req: \\r\\n found\n";
+				return;
+			}
 			line = it->getRequest().substr(0,pos);
 			if (it->getRequestType().empty() && !line.empty()) {
 				parceRequestTypeOptionVersion(line, it);
+				it->iterRequestLinesParsed();
 			}
 			else if(line.find("Host: ") != std::string::npos){
 				line.erase(0, 6);
 				it->setRequestHost(line);
+				it->iterRequestLinesParsed();
 			}
-			it->setRequest(it->getRequest().erase(0, pos + 1));
+			tmp = it->getRequest();
+			it->setRequest(tmp.erase(0, pos + 1));
 		}
 	}
 };
@@ -203,7 +303,9 @@ void printLog(char *description,char *msg, char *color){
 		write(2, description, strlen(description));
 		write(2, "\n", 1);
 	}
+	write(2, "|", 1);
 	write(2, msg, strlen(msg));
+	write(2, "|", 1);
 	write(2, WHITE, 5);
 	write(2, "\n", 1);
 }

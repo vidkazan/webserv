@@ -14,6 +14,5 @@
 
 std::vector<std::string> split(std::string text,const std::string & space_delimiter);
 void printLog(char *,char *msg, char *color);
-//ssize_t findInStr(const std::string & str, char *toFind);
 
 #endif

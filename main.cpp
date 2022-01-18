@@ -42,7 +42,7 @@ int main()
 			if (FD_ISSET(it->getSocketFD(), &readfds)){
 				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFD() << "\n";
 				webserv.readRequest(it);
-				if(it->getStatus() == WRITING)
+				if(it->getStatus() == READING_DONE)
 					webserv.generateResponse(it);
 			}
 			if(FD_ISSET(it->getSocketFD(), &writefds))
@@ -54,13 +54,8 @@ int main()
 					it->setStatus(CLOSING);
 					break;
 				}
-				it->cleanRequest();
-				it->cleanResponce();
-				it->setRequestHost("");
-				it->setRequestHTTPVesion("");
-				it->setRequestOption("");
-				it->setRequestType("");
 				it->setStatus(READING);
+				it->resetResponseData();
 			}
 		}
 		int fd;
