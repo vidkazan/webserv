@@ -173,6 +173,8 @@ public:
 	void generateResponse(std::vector<Client>::iterator it)
 	{
 		char *bufResp = nullptr;
+		if(it->getRequestOption() != "/")
+
 		if(it->getRequestType().empty())
 		{
 			bufResp = "HTTP/1.1 400 Bad Request\n"
@@ -251,6 +253,14 @@ public:
 		}
 	}
 
+	void	checkPath(std::vector<Client>::iterator it){
+		
+	}
+
+	void	analyseRequest(std::vector<Client>::iterator it){
+		checkPath(it);
+	}
+
 	static void parseRequest(std::vector<Client>::iterator it)
 	{
 		std::cout << "Req parsing...\n";
@@ -282,8 +292,6 @@ public:
 				it->setLastChunkStatus(true);
 			}
 		}
-//		if (it->getRequestBuffer().find('\n') == std::string::npos)
-//			std::cout << "parse req: \\n not found\n";
 		while(true)
 		{
 			pos = it->getRequestBuffer().find('\n');

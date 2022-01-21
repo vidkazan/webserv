@@ -29,7 +29,7 @@ int main()
 			if(it->getSocketFD() > largestFD)
 				largestFD = it->getSocketFD();
 		}
-		std::cout << "select:\n";
+//		std::cout << "select:\n";
 		if(select(largestFD + 1, &readfds, &writefds,0,0) < 0)
 		{
 			webserv.errorMsg("webserv: select error");
@@ -42,8 +42,10 @@ int main()
 			if (FD_ISSET(it->getSocketFD(), &readfds)){
 				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFD() << "\n";
 				webserv.readRequest(it);
-				if(it->getStatus() == READING_DONE)
+				if(it->getStatus() == READING_DONE) {
+					webserv.analyseRequest(it);
 					webserv.generateResponse(it);
+				}
 			}
 			if(FD_ISSET(it->getSocketFD(), &writefds))
 			{
