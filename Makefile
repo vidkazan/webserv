@@ -1,12 +1,12 @@
 NAME = webserv
 
-SRCS =	main.cpp gnl/get_next_line.cpp gnl/get_next_line_utils.cpp
+SRCS =	main.cpp
 
-HDRS = gnl/get_next_line.hpp Webserv.hpp main.hpp
+HDRS = Webserv.hpp main.hpp
 
 OBJS = $(SRCS:.cpp=.o)
 
-FLAGS = -O3 -std=c++98 -Wno-c++11-compat-deprecated-writable-strings -Wall
+FLAGS = -O3 -std=c++98 -Wno-c++11-compat-deprecated-writable-strings -Wall -Wextra -Werror
 
 COMP = c++
 

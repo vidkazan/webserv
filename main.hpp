@@ -6,13 +6,14 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <cstdio>
-#include "gnl/get_next_line.hpp"
 #include <iostream>
 #include <cstring>
 #include <vector>
 #include <iomanip>
+#include <unistd.h>
+#include <fcntl.h>
+#include <cstdio>
 
-std::vector<std::string> split(std::string text,const std::string & space_delimiter);
 void printLog(char *,char *msg, char *color);
 
 #endif
