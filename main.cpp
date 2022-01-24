@@ -22,6 +22,8 @@ int main()
 	dirs.push_back(dir7);
 	ListenSocketConfigDirectory dir8("/directory/Yeah/not_happy.bad_extension", "GET", "/directory/Yeah/not_happy.bad_extension");
 	dirs.push_back(dir8);
+	ListenSocketConfigDirectory dir9("/put_test/file_should_exist_after", "PUT", "/put_test/file_should_exist_after");
+	dirs.push_back(dir9);
 	ListenSocketConfig config1(dirs, 2000, "127.0.0.1");
 		webserv.addListenSocket(config1);
 	printLog(nullptr, "______________________________________________________________|\n|_________________________SERVER START_________________________|\n|______________________________________________________________", GREEN);

@@ -226,10 +226,10 @@ public:
 		_request.setBuffer(_request.getBuffer() + buf);
 		std::cout << "read ret: " << ret <<"\n";
 		printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
-		if(_request.getBuffer().find('\n') != std::string::npos)
+		if(_request.getBuffer().find("\r\n\r\n") != std::string::npos)
 		{
 			parseRequest();
-			std::cout << "current parsed info:" << _socketFD <<"\n"<< _request.getType() <<"\n"<< _request.getOption() <<"\n"<< _request.getHTTPVersion() <<"\n"<< _request.getHost()<<"\nchunked: " << _request.getTransferEncodingIsChunked() << std::endl;
+//			std::cout << "current parsed info:" << _socketFD <<"\n"<< _request.getType() <<"\n"<< _request.getOption() <<"\n"<< _request.getHTTPVersion() <<"\n"<< _request.getHost()<<"\nchunked: " << _request.getTransferEncodingIsChunked() << std::endl;
 			if((_request.getBodyDelimiterStatus() && !_request.getTransferEncodingIsChunked()) || (_request.getTransferEncodingIsChunked() && _request.getLastChunkStatus())) {
 				write(2, "reading done\n", 13);
 				_status = READING_DONE;
@@ -361,7 +361,7 @@ public:
 				tmp = tmp.substr(0,pos);
 				tmp.append("\n");
 				_request.setBuffer(tmp);
-				std::cout << "req edited:\n|" << _request.getBuffer() << "|\n";
+//				std::cout << "req edited:\n|" << _request.getBuffer() << "|\n";
 			}
 		}
 		if(_request.getTransferEncodingIsChunked()){
