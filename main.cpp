@@ -1,13 +1,29 @@
 #include "Webserv.hpp"
 
-
 int main()
 {
 	Webserv webserv;
 	// config file parser is cominggg.....
-	// making listen sockets
-	for(int i = 2000; i < 2003; i++)
-		webserv.addListenSocket(i,"127.0.0.1");
+	// generate servers
+	std::vector<ListenSocketConfigDirectory> dirs;
+	ListenSocketConfigDirectory dir1("/", "GET", "/");
+	dirs.push_back(dir1);
+	ListenSocketConfigDirectory dir2("/directory", "GET", "/directory");
+	dirs.push_back(dir2);
+	ListenSocketConfigDirectory dir3("/directory/youpi.bad_extension", "GET", "/directory/youpi.bad_extension");
+	dirs.push_back(dir3);
+	ListenSocketConfigDirectory dir4("/directory/youpi.bla", "GET", "/directory/youpi.bla");
+	dirs.push_back(dir4);
+	ListenSocketConfigDirectory dir5("/directory/nop/", "GET", "/directory/nop/");
+	dirs.push_back(dir5);
+	ListenSocketConfigDirectory dir6("/directory/nop", "GET", "/directory/nop");
+	dirs.push_back(dir6);
+	ListenSocketConfigDirectory dir7("/directory/nop/other.pouic", "GET", "/directory/nop/other.pouic");
+	dirs.push_back(dir7);
+	ListenSocketConfigDirectory dir8("/directory/Yeah/not_happy.bad_extension", "GET", "/directory/Yeah/not_happy.bad_extension");
+	dirs.push_back(dir8);
+	ListenSocketConfig config1(dirs, 2000, "127.0.0.1");
+		webserv.addListenSocket(config1);
 	printLog(nullptr, "______________________________________________________________|\n|_________________________SERVER START_________________________|\n|______________________________________________________________", GREEN);
 	// listening listen sockets
 	for(std::vector<ListenSocket>::iterator it = webserv.getServSockets().begin();it != webserv.getServSockets().end(); it++)
@@ -54,7 +70,7 @@ int main()
 				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
 				it->readRequest();
 				if(it->getStatus() == READING_DONE) {
-//					webserv.analyseRequest(it);
+					it->analyseRequest();
 					it->generateResponse();
 				}
 			}
@@ -90,7 +106,7 @@ int main()
 					exit(EXIT_FAILURE);
 				}
 				fcntl(fd, F_SETFL, O_NONBLOCK);
-				webserv.addClientSocket(fd);
+				webserv.addClientSocket(fd, it->getConfig());
 			}
 		}
 		// checking all connections for closing

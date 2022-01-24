@@ -14,6 +14,62 @@
 #define WRITING 2
 #define CLOSING 3
 
+class ListenSocket;
+
+
+class	ListenSocketConfigDirectory{
+private:
+	std::string _directoryName;
+	std::string _directoryAllowedMethods;
+	std::string _directoryPath;
+public:
+	ListenSocketConfigDirectory(const std::string&directoryName, const std::string&directoryAllowedMethods,
+								const std::string&directoryPath) : _directoryName(directoryName),
+																   _directoryAllowedMethods(directoryAllowedMethods),
+																   _directoryPath(directoryPath){}
+
+	virtual ~ListenSocketConfigDirectory(){}
+
+	const std::string&getDirectoryName() const{
+		return _directoryName;
+	}
+
+	const std::string&getDirectoryAllowedMethods() const{
+		return _directoryAllowedMethods;
+	}
+
+	const std::string&getDirectoryPath() const{
+		return _directoryPath;
+	}
+};
+
+class	ListenSocketConfig{
+private:
+	std::vector<ListenSocketConfigDirectory> _directories;
+	short int _port;
+	char * _ip;
+public:
+	ListenSocketConfig(const std::vector<ListenSocketConfigDirectory>&directories, short port, char *ip)
+			: _directories(directories), _port(port), _ip(ip){}
+
+	virtual ~ListenSocketConfig(){
+
+	}
+
+	const std::vector<ListenSocketConfigDirectory>&getDirectories() const{
+		return _directories;
+	}
+
+	short getPort() const{
+		return _port;
+	}
+
+	char *getIp() const{
+		return _ip;
+	}
+
+};
+
 class Request{
 private:
 	std::string _type;
@@ -75,13 +131,25 @@ class Response{
 private:
 	std::string _response;
 	int _responseCode;
+	bool _pathIsAvailable;
+	bool _requestIsValid;
+	bool _methodIsAllowed;
 public:
-	Response() : _response(""), _responseCode(-1){};
+	Response() : _response(""), _responseCode(-1), _pathIsAvailable(false), _requestIsValid(true), _methodIsAllowed(false){};
 
 	virtual ~Response(){};
 
 	int getResponseCode() const {return _responseCode;};
+
 	const std::string& getResponse() const {return _response;};
+
+	bool isPathIsAvailable() const{
+		return _pathIsAvailable;
+	}
+
+	bool isMethodIsAllowed() const{
+		return _methodIsAllowed;
+	}
 
 	void setResponseCode(int code){
 		if(code > 99 && code < 600)
@@ -94,22 +162,40 @@ public:
 	void cleanResponse(){
 		_response.erase();
 	}
+
+	void setPathIsAvailable(bool pathIsAvailable){
+		_pathIsAvailable = pathIsAvailable;
+	}
+
+	void setMethodIsAllowed(bool methodIsAllowed){
+		_methodIsAllowed = methodIsAllowed;
+	}
+
+	bool isRequestIsValid() const{
+		return _requestIsValid;
+	}
+
+	void setRequestIsValid(bool requestIsValid){
+		_requestIsValid = requestIsValid;
+	}
 };
 
 class Client {
 private:
 	int _socketFD;
 	int _status;
+	ListenSocketConfig _serverConfig;
 	Response _response;
 	Request _request;
 public:
-	Client(int fd): _socketFD(fd), _status(READING){
+	Client(int fd, const ListenSocketConfig& config): _socketFD(fd), _status(READING), _serverConfig(config){
 	};
 	~Client(){};
 	int getStatus() const {return _status;};
 	void resetData(){
 		_status = READING;
 	}
+
 	const Response&getResponse() const{
 		return _response;
 	}
@@ -154,9 +240,7 @@ public:
 	void generateResponse()
 	{
 		char *bufResp = nullptr;
-		if(_request.getOption() != "/")
-
-		if(_request.getType().empty())
+		if(!_response.isRequestIsValid())
 		{
 			bufResp = "HTTP/1.1 400 Bad Request\n"
 					  "Content-Length: 64\n"
@@ -167,7 +251,18 @@ public:
 					  "</body>\n"
 					  "</html>";
 		}
-		if(_request.getType() == "POST" && _request.getOption() == "/")
+		else if(!_response.isPathIsAvailable())
+		{
+			bufResp = "HTTP/1.1 404 Not found\n"
+					  "Content-Length: 64\n"
+					  "Content-Type: text/html\n\n"
+					  "<html>\n"
+					  "<body>\n"
+					  "<h1>Hello, World!!!!!!!!!!!!!</h1>\n"
+					  "</body>\n"
+					  "</html>";
+		}
+		else if(!_response.isMethodIsAllowed())
 		{
 			bufResp = "HTTP/1.1 405 Method Not Allowed\n"
 							 "Content-Length: 64\n"
@@ -178,7 +273,7 @@ public:
 							 "</body>\n"
 							 "</html>";
 		}
-		else if(_request.getType() == "GET")
+		else
 		{
 			bufResp = "HTTP/1.1 200 OK\n"
 							 "Content-Length: 64\n"
@@ -188,16 +283,6 @@ public:
 							 "<h1>Hello, World!!!!!!!!!!!!!</h1>\n"
 							 "</body>\n"
 							 "</html>";
-		}
-		else if(_request.getType() == "HEAD"  && _request.getOption() == "/")
-		{
-			bufResp = "HTTP/1.1 405 Method Not Allowed\n"
-					  "Server: webserv/1.0\n"
-					  "Date: Mon, 17 Jan 2022 16:29:40 GMT\n"
-					  "Accept-Charsets: utf-8\n"
-					  "Accept-Language: en-US\n"
-					  "Allow: GET \n"
-					  "Content-Length: 0\n\n";
 		}
 		std::string resp = bufResp;
 		_response.setResponse(bufResp);
@@ -237,12 +322,22 @@ public:
 		}
 	}
 
-	void	checkPath(){
-
-	}
-
 	void	analyseRequest(){
-		checkPath();
+		std::cout << "analyse request:\n";
+		if(_request.getType().empty() || _request.getOption().empty() || _request.getHTTPVersion().empty() \
+				|| _request.getHost().empty() ){
+			_response.setRequestIsValid(false);
+		}
+		std::vector<ListenSocketConfigDirectory>::const_iterator it = _serverConfig.getDirectories().begin();
+		std::vector<ListenSocketConfigDirectory>::const_iterator itEnd = _serverConfig.getDirectories().end();
+		for(;it != itEnd; it++){
+			if(it->getDirectoryName() == _request.getOption())
+			{
+				_response.setPathIsAvailable(true);
+				if(it->getDirectoryAllowedMethods().find(_request.getType()) != std::string::npos)
+					_response.setMethodIsAllowed(true);
+			}
+		}
 	}
 
 	void parseRequest()
@@ -313,8 +408,9 @@ class ListenSocket {
 private:
 	int _socketFD;
 	struct sockaddr_in _adr;
+	ListenSocketConfig _config;
 public:
-	ListenSocket(int portNum, const char *stringIP){
+	ListenSocket(const ListenSocketConfig & config): _config(config){
 		_adr.sin_addr.s_addr = 0;
 		_adr.sin_family = 0;
 		_adr.sin_len = 0;
@@ -324,12 +420,16 @@ public:
 		int opt = 1;
 		setsockopt(_socketFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof opt);
 		_adr.sin_family = AF_INET;
-		_adr.sin_port = htons(portNum);
-		_adr.sin_addr.s_addr = inet_addr(stringIP);
+		_adr.sin_port = htons(_config.getPort());
+		_adr.sin_addr.s_addr = inet_addr(_config.getIp());
 	};
 	~ListenSocket(){};
 	int getSocketFD() const {return _socketFD;};
 	struct sockaddr_in& getSockAddrInStruct(){return _adr;};
+
+	const ListenSocketConfig&getConfig() const{
+		return _config;
+	}
 };
 
 class Webserv {
@@ -343,16 +443,16 @@ public:
 	std::vector<ListenSocket>& getServSockets(){return _servSockets;};
 	std::vector<Client>& getClientSockets(){return _clientSockets;};
 	void errorMsg(const char *msg){write(2, msg, strlen(msg));};
-	void addListenSocket(int portNum, char *stringIP){
-		ListenSocket socket(portNum, stringIP);
+	void addListenSocket(const ListenSocketConfig & config){
+		ListenSocket socket(config);
 		_servSockets.push_back(socket);
 		if(bind(_servSockets.back().getSocketFD(), (struct sockaddr *)&_servSockets.back().getSockAddrInStruct(), sizeof(_servSockets.back().getSockAddrInStruct())) < 0){
 			perror("bind error");
 			exit(EXIT_FAILURE);
 		}
 	}
-	void addClientSocket(int fd){
-		Client clientSocket(fd);
+	void addClientSocket(int fd,const ListenSocketConfig& config){
+		Client clientSocket(fd, config);
 		_clientSockets.push_back(clientSocket);
 	}
 };
