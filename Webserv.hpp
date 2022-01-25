@@ -14,8 +14,13 @@
 #define WRITING 2
 #define CLOSING 3
 
-class ListenSocket;
+#define REQUEST_READ_WAITING_FOR_HEADER 10
+#define REQUEST_READ_HEADER 11
+#define REQUEST_READ_BODY 12
+#define REQUEST_READ_CHUNKED 13
+#define REQUEST_READ_COMLETE 14
 
+class ListenSocket;
 
 class	ListenSocketConfigDirectory{
 private:
@@ -81,6 +86,8 @@ private:
 	bool _isLastChunk;
 	bool _bodyDelimiter;
 	std::string _buffer;
+	int _readStatus;
+	ssize_t _contentLength;
 public:
 	Request(): _type(""),\
 				_option(""),\
@@ -90,7 +97,9 @@ public:
 				_transferEncodingIsChunked(false),\
 				_isLastChunk(false),\
 				_bodyDelimiter(false),\
-				_buffer(""){};
+				_buffer(""),\
+				_readStatus(REQUEST_READ_WAITING_FOR_HEADER), \
+				_contentLength(-1){};
 	virtual ~Request(){};
 
 	bool getBodyDelimiterStatus() const {return _bodyDelimiter;};
@@ -124,6 +133,20 @@ public:
 	void setHost(const std::string & host){_host = host;};
 	void cleanBuffer(){
 		_buffer.erase();
+	}
+	int getReadStatus() const{
+		return _readStatus;
+	}
+	void setReadStatus(int readStatus){
+		_readStatus = readStatus;
+	}
+
+	ssize_t getContentLength() const{
+		return _contentLength;
+	}
+
+	void setContentLength(ssize_t contentLength){
+		_contentLength = contentLength;
 	}
 };
 
@@ -226,11 +249,23 @@ public:
 		_request.setBuffer(_request.getBuffer() + buf);
 		std::cout << "read ret: " << ret <<"\n";
 		printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
-		if(_request.getBuffer().find("\r\n\r\n") != std::string::npos)
+
+		if(_request.getBuffer().find("\r\n\r\n") != std::string::npos && _request.getReadStatus() == REQUEST_READ_WAITING_FOR_HEADER){
+			std::cout << "Request read status: REQUEST_READ_HEADER\n";
+			_request.setReadStatus(REQUEST_READ_HEADER);
+		}
+		if(_request.getReadStatus() == REQUEST_READ_HEADER)
 		{
-			parseRequest();
-//			std::cout << "current parsed info:" << _socketFD <<"\n"<< _request.getType() <<"\n"<< _request.getOption() <<"\n"<< _request.getHTTPVersion() <<"\n"<< _request.getHost()<<"\nchunked: " << _request.getTransferEncodingIsChunked() << std::endl;
-			if((_request.getBodyDelimiterStatus() && !_request.getTransferEncodingIsChunked()) || (_request.getTransferEncodingIsChunked() && _request.getLastChunkStatus())) {
+			parseRequestHeader();
+			std::cout << "current parsed info:" << _socketFD <<"\n" \
+						<<"type: "<< _request.getType() \
+						<<"\n"<< _request.getOption() \
+						<<"\nhttp: "<< _request.getHTTPVersion() \
+						<<"\nhost: "<< _request.getHost() \
+						<<"\nchunked: " << _request.getTransferEncodingIsChunked()\
+						<<"\ncontent-length: "<< _request.getContentLength() \
+						<< std::endl;
+			if(_request.getReadStatus() == REQUEST_READ_COMLETE) {
 				write(2, "reading done\n", 13);
 				_status = READING_DONE;
 			}
@@ -298,28 +333,13 @@ public:
 			_request.setType(str.substr(0, pos));
 			str.erase(0,pos+1);
 		}
-		else
-		{
-			_response.setResponseCode(400);
-			return;
-		}
 		pos = str.find(' ');
 		if(pos != std::string::npos){
 			_request.setOption(str.substr(0, pos));
 			str.erase(0,pos+1);
 		}
-		else
-		{
-			_response.setResponseCode(400);
-			return;
-		}
 		if(!str.empty())
 			_request.setHTTPVersion(str);
-		else
-		{
-			_response.setResponseCode(400);
-			return;
-		}
 	}
 
 	void	analyseRequest(){
@@ -340,47 +360,27 @@ public:
 		}
 	}
 
-	void parseRequest()
+	void parseRequestBody(){}
+
+	void parseRequestBodyChunked(){}
+
+	void parseRequestHeader()
 	{
-		std::cout << "Req parsing...\n";
 		std::string tmp;
 		std::string line;
 		size_t pos;
-		if(!_request.getBodyDelimiterStatus())
-		{
-			pos = _request.getBuffer().find("\r\n\r\n");
-			if (pos != std::string::npos)
-			{
-				std::cout << "parse req: found \\r\\n\\r\\n pos " << pos << "\n";
-				_request.setBodyDelimiterStatus(true);
-				tmp = _request.getBuffer();
-				tmp.erase(0, pos + 4);
-				_request.setBody(tmp);
-				std::cout << "req body:\n|" << _request.getBody() << "|\n";
-				tmp = _request.getBuffer();
-				tmp = tmp.substr(0,pos);
-				tmp.append("\n");
-				_request.setBuffer(tmp);
-//				std::cout << "req edited:\n|" << _request.getBuffer() << "|\n";
-			}
-		}
-		if(_request.getTransferEncodingIsChunked()){
-			if((_request.getBody().find("0\r\n\r\n") != std::string::npos) || (_request.getBuffer().find("0\r\n\r\n") != std::string::npos))
-			{
-				write(2, "parse req: last chunk found\n",28);
-				_request.setLastChunkStatus(true);
-			}
-		}
 		while(true)
 		{
-			pos = _request.getBuffer().find('\n');
-			if (pos == std::string::npos) {
+			if((pos = _request.getBuffer().find("\r\n")) == 0)
+			{
+				tmp = _request.getBuffer();
+				_request.setBuffer(tmp.erase(0, 2));
+				if (_request.getReadStatus() != REQUEST_READ_BODY && _request.getReadStatus() != REQUEST_READ_CHUNKED)
+					_request.setReadStatus(REQUEST_READ_COMLETE);
+				printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 				return;
 			}
-			if(_request.getBuffer() == "\r\n" && !_request.getBodyDelimiterStatus()){
-				_request.setBodyDelimiterStatus(true);
-				std::cout << "parse req: \\r\\n found\n";
-			}
+			pos = _request.getBuffer().find('\n');
 			line = _request.getBuffer().substr(0,pos);
 			if (_request.getType().empty() && !line.empty()) {
 				parseRequestTypeOptionVersion(line);
@@ -390,19 +390,90 @@ public:
 				_request.setHost(line);
 			}
 			else if(line.find("Transfer-Encoding: ") != std::string::npos){
-				line.erase(0,19);
-				if(line.find("chunked") != std::string::npos)
+				line.erase(0, 19);
+				if (line.find("chunked") != std::string::npos)
+				{
 					_request.setTransferEncoding(true);
+					std::cout << "Request read status: REQUEST_READ_CHUNKED\n";
+					_request.setReadStatus(REQUEST_READ_CHUNKED);
+				}
 			}
-			if(!(_request.getBodyDelimiterStatus() && _request.getTransferEncodingIsChunked())) {
-				tmp = _request.getBuffer();
-				_request.setBuffer(tmp.erase(0, pos + 1));
+			else if(line.find("Content-Length: ") != std::string::npos){
+				line.erase(0, 15);
+				_request.setContentLength(std::stoi(line));
+				std::cout << "Request read status: REQUEST_READ_BODY\n";
+				_request.setReadStatus(REQUEST_READ_BODY);
 			}
-			else
-				return;
+			tmp = _request.getBuffer();
+			_request.setBuffer(tmp.erase(0, pos + 1));
+			printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 		}
 	}
 };
+//
+//void parseRequest()
+//{
+//	std::string tmp;
+//	std::string line;
+//	size_t pos;
+//	if(!_request.getBodyDelimiterStatus())
+//	{
+//		pos = _request.getBuffer().find("\r\n\r\n");
+//		if (pos != std::string::npos)
+//		{
+//			std::cout << "parse req: found \\r\\n\\r\\n pos " << pos << "\n";
+//			_request.setBodyDelimiterStatus(true);
+//			tmp = _request.getBuffer();
+//			tmp.erase(0, pos + 4);
+//			_request.setBody(tmp);
+//			std::cout << "req body:\n|" << _request.getBody() << "|\n";
+//			tmp = _request.getBuffer();
+//			tmp = tmp.substr(0,pos);
+//			tmp.append("\n");
+//			_request.setBuffer(tmp);
+////				std::cout << "req edited:\n|" << _request.getBuffer() << "|\n";
+//		}
+//	}
+//	if(_request.getTransferEncodingIsChunked()){
+//		if((_request.getBody().find("0\r\n\r\n") != std::string::npos) || (_request.getBuffer().find("0\r\n\r\n") != std::string::npos))
+//		{
+//			write(2, "parse req: last chunk found\n",28);
+//			_request.setLastChunkStatus(true);
+//		}
+//	}
+//	while(true)
+//	{
+//		pos = _request.getBuffer().find('\n');
+//		if (pos == std::string::npos) {
+//			return;
+//		}
+//		if(_request.getBuffer() == "\r\n" && !_request.getBodyDelimiterStatus()){
+//			_request.setBodyDelimiterStatus(true);
+//			std::cout << "parse req: \\r\\n found\n";
+//		}
+//		line = _request.getBuffer().substr(0,pos);
+//		if (_request.getType().empty() && !line.empty()) {
+//			parseRequestTypeOptionVersion(line);
+//		}
+//		else if(line.find("Host: ") != std::string::npos){
+//			line.erase(0, 6);
+//			_request.setHost(line);
+//		}
+//		else if(line.find("Transfer-Encoding: ") != std::string::npos){
+//			line.erase(0,19);
+//			if(line.find("chunked") != std::string::npos)
+//				_request.setTransferEncoding(true);
+//		}
+//		if(!(_request.getBodyDelimiterStatus() && _request.getTransferEncodingIsChunked())) {
+//			tmp = _request.getBuffer();
+//			_request.setBuffer(tmp.erase(0, pos + 1));
+//		}
+//		else
+//			return;
+//	}
+//}
+//};
+
 
 class ListenSocket {
 private:
