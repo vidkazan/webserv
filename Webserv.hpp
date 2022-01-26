@@ -89,6 +89,7 @@ private:
 	std::string _bufferChunk;
 	int _readStatus;
 	ssize_t _contentLength;
+	ssize_t _chunkSize;
 public:
 	Request(): _type(""),\
 				_option(""),\
@@ -101,8 +102,11 @@ public:
 				_buffer(""),\
 				_bufferChunk(""),\
 				_readStatus(REQUEST_READ_WAITING_FOR_HEADER), \
-				_contentLength(-1){};
+				_contentLength(-1), \
+				_chunkSize(-1){};
 	virtual ~Request(){};
+
+
 
 	bool getBodyDelimiterStatus() const {return _bodyDelimiter;};
 	const std::string & getBuffer() const {return _buffer;};
@@ -154,6 +158,14 @@ public:
 
 	void setContentLength(ssize_t contentLength){
 		_contentLength = contentLength;
+	}
+
+	ssize_t getChunkSize() const{
+		return _chunkSize;
+	}
+
+	void setChunkSize(ssize_t chunkSize){
+		_chunkSize = chunkSize;
 	}
 };
 
@@ -245,16 +257,23 @@ public:
 	}
 	void readRequest(){
 		char buf[100000];
-		bzero(&buf, 100000);
-		ssize_t ret = read(_socketFD, &buf, 100000);
-//		printLog(nullptr, buf,YELLOW);
-		if(ret == -1 || ret == 0){
-			std::cout << "fd " << _socketFD << " status: closing\n";
-			_status = CLOSING;
-			return;
+		ssize_t retFinal = 0;
+		ssize_t ret = 100000;
+		while(ret == 100000)
+		{
+			bzero(&buf, 100000);
+			ret = recv(_socketFD, &buf, 100000, 0);
+//			std::cout << "read ret: " << ret <<"\n";
+			//	printLog(nullptr, buf,YELLOW);
+			if (ret == -1 || ret == 0){
+				std::cout << "fd " << _socketFD << " status: closing\n";
+				_status = CLOSING;
+				return;
+			}
+			retFinal += ret;
+			_request.setBuffer(_request.getBuffer() + buf);
 		}
-		_request.setBuffer(_request.getBuffer() + buf);
-		std::cout << "read ret: " << ret <<"\n";
+		std::cout << "read retFinal: " << retFinal <<"\n";
 //		printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 
 		if(_request.getBuffer().find("\r\n\r\n") != std::string::npos && _request.getReadStatus() == REQUEST_READ_WAITING_FOR_HEADER){
@@ -379,40 +398,74 @@ public:
 	{
 		std::string tmp;
 		size_t pos;
-		static long chunkSize = -1;
+
+		// taking read buffer
+		tmp = _request.getBuffer();
+//		printLog("requestBuffer:", (char *)tmp.c_str(),RED);
+
+		// while chunk is not complete
 		while(_request.getBufferChunk().empty())
 		{
-			tmp = _request.getBuffer();
-			printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
-			if((pos = tmp.find("\r\n")) == std::string::npos)
-				return;
-			std::istringstream(tmp.substr(0, pos)) >> std::hex >> chunkSize;
-			if(chunkSize == 0)
+			// if dont have chunk size(chunkSize -1)
+				// get chunk size \r\n
+				// erase size line from buffer
+
+			// first chunk line must consist of "<HEX chunk size>\r\n"
+			// if we are waiting the chunk size line, checking chunk size line is ready
+			if(_request.getChunkSize() == -1)
 			{
-				if(_request.getBuffer().find("0\r\n\r\n") != std::string::npos && _request.getBuffer().size() == 5)
-				{
-					write(2, "parse req: last chunk found\n",28);
-					_request.setLastChunkStatus(true);
-					std::cout << "Request read status: REQUEST_READ_COMPLETE\n";
-					_request.setReadStatus(REQUEST_READ_COMLETE);
+				if((pos = tmp.find("\r\n")) == std::string::npos)
 					return;
-				}
-				printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
-				std::cout << pos << " chunkSize 0\n";
-				return;
+
+				std::cout << "\n\nnew chunk size HEX: " << tmp.substr(0, pos) << "\n";
+				// converting request chunk size from HEX-string to DEC-long
+				ssize_t tmpChunkSize;
+				std::istringstream(tmp.substr(0, pos)) >> std::hex >> tmpChunkSize;
+				std::cout << "new chunk size DEC: " << tmpChunkSize << "\n";
+				_request.setChunkSize(tmpChunkSize);
+				tmp.erase(0,pos + 2);
+				_request.setBuffer(tmp);
 			}
-			std::cout << pos << " chunkSize: " << chunkSize << " size: " <<  tmp.size() << "\n";
-			if((chunkSize + pos + 2) <= tmp.size())
+			if(_request.getChunkSize() != -1)
 			{
-				_request.setBufferChunk(tmp.substr(pos + 1, chunkSize));
-				std::cout << "chunkBuffer:\n|" << _request.getBufferChunk() << "|\n" << "chunkBufferSize:\n" << _request.getBufferChunk().size() << "\n" ;
-				_request.setBuffer(tmp.erase(0, chunkSize + pos + 4));
-				printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
-				exportChunk();
-				_request.setBufferChunk("");
+				std::cout << "current chunkSize: " << _request.getChunkSize() << " bufferSize: " << tmp.size() << "\n";
+
+				// if buffer size >= chunkSize + 2(\r\n)
+				if (tmp.size() >= static_cast<size_t>(_request.getChunkSize()) + 2){
+					// get chunk body
+					// set chunkBuffer
+					_request.setBufferChunk(tmp.substr(0, _request.getChunkSize()));
+					// remove \r\n
+					tmp.erase(0,_request.getChunkSize());
+					{
+						tmp.erase(0, 2);
+						_request.setBuffer(tmp);
+					}
+					if(_request.getChunkSize() == 0){
+						_request.setLastChunkStatus(true);
+						_request.setReadStatus(REQUEST_READ_COMLETE);
+						std::cout << "Request read status: REQUEST_READ_COMPLETE\n";
+					}
+					else
+					{
+						// chunk complete
+						// export chunkBuffer
+						std::cout << "chunk complete! chunkBufferSize:" << _request.getBufferChunk().size() << "\n" ;
+						std::cout << "BufferSize:" << _request.getBuffer().size() << "\n" ;
+						exportChunk();
+					}
+					// clean chunkBuffer
+					// clean chunkBufferSize
+					_request.setBufferChunk("");
+					_request.setChunkSize(-1);
+//					printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
+				}
+				else
+					// return for new extended buffer
+					return;
 			}
-			else
-				return;
+			else // atatatatatatattttttaaaaaaaaaaa
+				exit(2);
 		}
 	}
 	void exportChunk(){}
