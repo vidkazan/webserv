@@ -1,0 +1,5 @@
+.DS_Store
+.idea
+webserv
+cmake-build-debug
+main.o
