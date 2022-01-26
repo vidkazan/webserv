@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <cstdio>
+#include <sstream>
 
 void printLog(char *,char *msg, char *color);
 

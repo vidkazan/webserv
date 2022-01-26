@@ -86,6 +86,7 @@ private:
 	bool _isLastChunk;
 	bool _bodyDelimiter;
 	std::string _buffer;
+	std::string _bufferChunk;
 	int _readStatus;
 	ssize_t _contentLength;
 public:
@@ -98,12 +99,14 @@ public:
 				_isLastChunk(false),\
 				_bodyDelimiter(false),\
 				_buffer(""),\
+				_bufferChunk(""),\
 				_readStatus(REQUEST_READ_WAITING_FOR_HEADER), \
 				_contentLength(-1){};
 	virtual ~Request(){};
 
 	bool getBodyDelimiterStatus() const {return _bodyDelimiter;};
 	const std::string & getBuffer() const {return _buffer;};
+	const std::string & getBufferChunk() const {return _bufferChunk;};
 	std::string getBody(){return _body;};
 	std::string getType() const {return  _type;};
 	std::string getOption() const {return  _option;};
@@ -118,6 +121,10 @@ public:
 	void setBuffer(const std::string & req){
 		this->cleanBuffer();
 		_buffer = req;
+	};
+	void setBufferChunk(const std::string & buf){
+		_bufferChunk.erase();
+		_bufferChunk = buf;
 	};
 	void setBody(const std::string & body){
 		_body.clear();
@@ -240,7 +247,7 @@ public:
 		char buf[100000];
 		bzero(&buf, 100000);
 		ssize_t ret = read(_socketFD, &buf, 100000);
-		printLog(nullptr, buf,YELLOW);
+//		printLog(nullptr, buf,YELLOW);
 		if(ret == -1 || ret == 0){
 			std::cout << "fd " << _socketFD << " status: closing\n";
 			_status = CLOSING;
@@ -257,18 +264,24 @@ public:
 		if(_request.getReadStatus() == REQUEST_READ_HEADER)
 		{
 			parseRequestHeader();
-			std::cout << "current parsed info:" << _socketFD <<"\n" \
-						<<"type: "<< _request.getType() \
-						<<"\n"<< _request.getOption() \
-						<<"\nhttp: "<< _request.getHTTPVersion() \
-						<<"\nhost: "<< _request.getHost() \
-						<<"\nchunked: " << _request.getTransferEncodingIsChunked()\
-						<<"\ncontent-length: "<< _request.getContentLength() \
-						<< std::endl;
-			if(_request.getReadStatus() == REQUEST_READ_COMLETE) {
-				write(2, "reading done\n", 13);
-				_status = READING_DONE;
+//			std::cout << "current parsed info:" << _socketFD <<"\n" \
+//						<<"type: "<< _request.getType() \
+//						<<"\n"<< _request.getOption() \
+//						<<"\nhttp: "<< _request.getHTTPVersion() \
+//						<<"\nhost: "<< _request.getHost() \
+//						<<"\nchunked: " << _request.getTransferEncodingIsChunked()\
+//						<<"\ncontent-length: "<< _request.getContentLength() \
+//						<< std::endl;
 			}
+		if(_request.getReadStatus() == REQUEST_READ_BODY)
+		{
+			
+		}
+		else if(_request.getReadStatus() == REQUEST_READ_CHUNKED)
+			parseRequestBodyChunked();
+		if(_request.getReadStatus() == REQUEST_READ_COMLETE) {
+			write(2, "reading done\n", 13);
+			_status = READING_DONE;
 		}
 	}
 
@@ -342,7 +355,7 @@ public:
 			_request.setHTTPVersion(str);
 	}
 
-	void	analyseRequest(){
+	void analyseRequest(){
 		std::cout << "analyse request:\n";
 		if(_request.getType().empty() || _request.getOption().empty() || _request.getHTTPVersion().empty() \
 				|| _request.getHost().empty() ){
@@ -362,8 +375,45 @@ public:
 
 	void parseRequestBody(){}
 
-	void parseRequestBodyChunked(){}
-
+	void parseRequestBodyChunked()
+	{
+		std::string tmp;
+		size_t pos;
+		static long chunkSize = -1;
+		while(_request.getBufferChunk().empty())
+		{
+			tmp = _request.getBuffer();
+			if((pos = tmp.find("\r\n")) == std::string::npos)
+				return;
+			std::istringstream(tmp.substr(0, pos)) >> std::hex >> chunkSize;
+			if(chunkSize == 0)
+			{
+				if(_request.getBuffer().find("0\r\n\r\n") != std::string::npos && _request.getBuffer().size() == 5)
+				{
+					write(2, "parse req: last chunk found\n",28);
+					_request.setLastChunkStatus(true);
+					std::cout << "Request read status: REQUEST_READ_COMPLETE\n";
+					_request.setReadStatus(REQUEST_READ_COMLETE);
+					return;
+				}
+				std::cout << pos << " chunkSize 0\n";
+				return;
+			}
+			std::cout << pos << " chunkSize: " << chunkSize << " size: " <<  tmp.size() << "\n";
+			if((chunkSize + pos + 2) <= tmp.size())
+			{
+				_request.setBufferChunk(tmp.substr(pos + 1, chunkSize));
+				std::cout << "chunkBuffer:\n|" << _request.getBufferChunk() << "|\n" << "chunkBufferSize:\n" << _request.getBufferChunk().size() << "\n" ;
+				_request.setBuffer(tmp.erase(0, chunkSize + pos + 4));
+				exportChunk();
+				_request.setBufferChunk("");
+				printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
+			}
+			else
+				return;
+		}
+	}
+	void exportChunk(){}
 	void parseRequestHeader()
 	{
 		std::string tmp;
@@ -371,13 +421,13 @@ public:
 		size_t pos;
 		while(true)
 		{
-			if((pos = _request.getBuffer().find("\r\n")) == 0)
+			if(_request.getBuffer().find("\r\n") == 0)
 			{
 				tmp = _request.getBuffer();
 				_request.setBuffer(tmp.erase(0, 2));
 				if (_request.getReadStatus() != REQUEST_READ_BODY && _request.getReadStatus() != REQUEST_READ_CHUNKED)
 					_request.setReadStatus(REQUEST_READ_COMLETE);
-				printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
+//				printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 				return;
 			}
 			pos = _request.getBuffer().find('\n');
@@ -406,73 +456,10 @@ public:
 			}
 			tmp = _request.getBuffer();
 			_request.setBuffer(tmp.erase(0, pos + 1));
-			printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
+//			printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 		}
 	}
 };
-//
-//void parseRequest()
-//{
-//	std::string tmp;
-//	std::string line;
-//	size_t pos;
-//	if(!_request.getBodyDelimiterStatus())
-//	{
-//		pos = _request.getBuffer().find("\r\n\r\n");
-//		if (pos != std::string::npos)
-//		{
-//			std::cout << "parse req: found \\r\\n\\r\\n pos " << pos << "\n";
-//			_request.setBodyDelimiterStatus(true);
-//			tmp = _request.getBuffer();
-//			tmp.erase(0, pos + 4);
-//			_request.setBody(tmp);
-//			std::cout << "req body:\n|" << _request.getBody() << "|\n";
-//			tmp = _request.getBuffer();
-//			tmp = tmp.substr(0,pos);
-//			tmp.append("\n");
-//			_request.setBuffer(tmp);
-////				std::cout << "req edited:\n|" << _request.getBuffer() << "|\n";
-//		}
-//	}
-//	if(_request.getTransferEncodingIsChunked()){
-//		if((_request.getBody().find("0\r\n\r\n") != std::string::npos) || (_request.getBuffer().find("0\r\n\r\n") != std::string::npos))
-//		{
-//			write(2, "parse req: last chunk found\n",28);
-//			_request.setLastChunkStatus(true);
-//		}
-//	}
-//	while(true)
-//	{
-//		pos = _request.getBuffer().find('\n');
-//		if (pos == std::string::npos) {
-//			return;
-//		}
-//		if(_request.getBuffer() == "\r\n" && !_request.getBodyDelimiterStatus()){
-//			_request.setBodyDelimiterStatus(true);
-//			std::cout << "parse req: \\r\\n found\n";
-//		}
-//		line = _request.getBuffer().substr(0,pos);
-//		if (_request.getType().empty() && !line.empty()) {
-//			parseRequestTypeOptionVersion(line);
-//		}
-//		else if(line.find("Host: ") != std::string::npos){
-//			line.erase(0, 6);
-//			_request.setHost(line);
-//		}
-//		else if(line.find("Transfer-Encoding: ") != std::string::npos){
-//			line.erase(0,19);
-//			if(line.find("chunked") != std::string::npos)
-//				_request.setTransferEncoding(true);
-//		}
-//		if(!(_request.getBodyDelimiterStatus() && _request.getTransferEncodingIsChunked())) {
-//			tmp = _request.getBuffer();
-//			_request.setBuffer(tmp.erase(0, pos + 1));
-//		}
-//		else
-//			return;
-//	}
-//}
-//};
 
 
 class ListenSocket {

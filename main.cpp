@@ -12,7 +12,7 @@ int main()
 	dirs.push_back(dir2);
 	ListenSocketConfigDirectory dir3("/directory/youpi.bad_extension", "GET", "/directory/youpi.bad_extension");
 	dirs.push_back(dir3);
-	ListenSocketConfigDirectory dir4("/directory/youpi.bla", "GET", "/directory/youpi.bla");
+	ListenSocketConfigDirectory dir4("/directory/youpi.bla", "GET, POST", "/directory/youpi.bla");
 	dirs.push_back(dir4);
 	ListenSocketConfigDirectory dir5("/directory/nop/", "GET", "/directory/nop/");
 	dirs.push_back(dir5);
