@@ -255,7 +255,7 @@ public:
 		}
 		_request.setBuffer(_request.getBuffer() + buf);
 		std::cout << "read ret: " << ret <<"\n";
-		printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
+//		printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 
 		if(_request.getBuffer().find("\r\n\r\n") != std::string::npos && _request.getReadStatus() == REQUEST_READ_WAITING_FOR_HEADER){
 			std::cout << "Request read status: REQUEST_READ_HEADER\n";
@@ -383,6 +383,7 @@ public:
 		while(_request.getBufferChunk().empty())
 		{
 			tmp = _request.getBuffer();
+			printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 			if((pos = tmp.find("\r\n")) == std::string::npos)
 				return;
 			std::istringstream(tmp.substr(0, pos)) >> std::hex >> chunkSize;
@@ -396,6 +397,7 @@ public:
 					_request.setReadStatus(REQUEST_READ_COMLETE);
 					return;
 				}
+				printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 				std::cout << pos << " chunkSize 0\n";
 				return;
 			}
@@ -405,9 +407,9 @@ public:
 				_request.setBufferChunk(tmp.substr(pos + 1, chunkSize));
 				std::cout << "chunkBuffer:\n|" << _request.getBufferChunk() << "|\n" << "chunkBufferSize:\n" << _request.getBufferChunk().size() << "\n" ;
 				_request.setBuffer(tmp.erase(0, chunkSize + pos + 4));
+				printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 				exportChunk();
 				_request.setBufferChunk("");
-				printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 			}
 			else
 				return;

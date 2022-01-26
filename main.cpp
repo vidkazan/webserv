@@ -56,7 +56,7 @@ int main()
 				largestFD = it->getSocketFd();
 		}
 		// SELECT
-		std::cout << "select:\n";
+//		std::cout << "select:\n";
 		if(select(largestFD + 1, &readfds, &writefds,0,0) < 0)
 		{
 			webserv.errorMsg("webserv: select error");
@@ -69,7 +69,7 @@ int main()
 				break;
 			// finding a read event in client sockets array
 			if (FD_ISSET(it->getSocketFd(), &readfds)){
-				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
+//				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
 				it->readRequest();
 				if(it->getStatus() == READING_DONE) {
 					it->analyseRequest();
@@ -79,7 +79,7 @@ int main()
 			// finding a write event in client sockets array
 			if(FD_ISSET(it->getSocketFd(), &writefds))
 			{
-				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
+//				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
 				printLog(nullptr,(char *)it->getResponse().getResponse().c_str(), GREEN);
 				ssize_t sendRes = write(it->getSocketFd(), it->getResponse().getResponse().c_str(), it->getResponse().getResponse().size());
 				if(sendRes <= 0) {
