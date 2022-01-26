@@ -10,9 +10,8 @@
 #define WHITE "\e[39m"
 
 #define READING 0
-#define READING_DONE 1
-#define WRITING 2
-#define CLOSING 3
+#define WRITING 1
+#define CLOSING 2
 
 #define REQUEST_READ_WAITING_FOR_HEADER 10
 #define REQUEST_READ_HEADER 11
@@ -256,6 +255,7 @@ public:
 		_response = response;
 	}
 	void readRequest(){
+		ssize_t ret;
 		char buf[100000];
 		bzero(&buf, 100000);
 		ret = recv(_socketFD, &buf, 100000, 0);
@@ -291,8 +291,7 @@ public:
 		else if(_request.getReadStatus() == REQUEST_READ_CHUNKED)
 			parseRequestBodyChunked();
 		if(_request.getReadStatus() == REQUEST_READ_COMLETE) {
-			write(2, "reading done\n", 13);
-			_status = READING_DONE;
+			_status = WRITING;
 		}
 	}
 
@@ -461,7 +460,8 @@ public:
 		}
 	}
 
-	void exportChunk(){}
+	void exportChunk(){
+	}
 
 	void parseRequestHeader()
 	{
@@ -474,8 +474,13 @@ public:
 			{
 				tmp = _request.getBuffer();
 				_request.setBuffer(tmp.erase(0, 2));
-				if (_request.getReadStatus() != REQUEST_READ_BODY && _request.getReadStatus() != REQUEST_READ_CHUNKED)
+				if (_request.getReadStatus() != REQUEST_READ_BODY && _request.getReadStatus() != REQUEST_READ_CHUNKED){
 					_request.setReadStatus(REQUEST_READ_COMLETE);
+					write(2, "reading done\n", 13);
+					analyseRequest();
+				}
+				else if(_request.getReadStatus() == REQUEST_READ_BODY || _request.getReadStatus() == REQUEST_READ_CHUNKED)
+					analyseRequest();
 //				printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 				return;
 			}

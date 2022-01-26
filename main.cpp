@@ -48,7 +48,7 @@ int main()
 		// adding client sockets to SELECT's read/write events catching array
 		for(std::vector<Client>::iterator it = webserv.getClientSockets().begin();it != webserv.getClientSockets().end(); it++)
 		{
-			if(it->getStatus() == READING || it->getStatus() == READING_DONE)
+			if(it->getStatus() == READING)
 				FD_SET(it->getSocketFd(), &readfds);
 			else if(it->getStatus() == WRITING)
 				FD_SET(it->getSocketFd(), &writefds);
@@ -69,12 +69,10 @@ int main()
 				break;
 			// finding a read event in client sockets array
 			if (FD_ISSET(it->getSocketFd(), &readfds)){
-				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
+//				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
 				it->readRequest();
-				if(it->getStatus() == READING_DONE) {
-					it->analyseRequest();
+				if(it->getStatus() == WRITING)
 					it->generateResponse();
-				}
 			}
 			// finding a write event in client sockets array
 			if(FD_ISSET(it->getSocketFd(), &writefds))
