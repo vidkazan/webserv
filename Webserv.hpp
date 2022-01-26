@@ -257,23 +257,15 @@ public:
 	}
 	void readRequest(){
 		char buf[100000];
-		ssize_t retFinal = 0;
-		ssize_t ret = 100000;
-		while(ret == 100000)
-		{
-			bzero(&buf, 100000);
-			ret = recv(_socketFD, &buf, 100000, 0);
-//			std::cout << "read ret: " << ret <<"\n";
-			//	printLog(nullptr, buf,YELLOW);
-			if (ret == -1 || ret == 0){
-				std::cout << "fd " << _socketFD << " status: closing\n";
-				_status = CLOSING;
-				return;
-			}
-			retFinal += ret;
-			_request.setBuffer(_request.getBuffer() + buf);
+		bzero(&buf, 100000);
+		ret = recv(_socketFD, &buf, 100000, 0);
+		if (ret == -1 || ret == 0){
+			std::cout << "fd " << _socketFD << " status: closing\n";
+			_status = CLOSING;
+			return;
 		}
-		std::cout << "read retFinal: " << retFinal <<"\n";
+		_request.setBuffer(_request.getBuffer() + buf);
+		std::cout << "read ret: " << ret <<"\n";
 //		printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 
 		if(_request.getBuffer().find("\r\n\r\n") != std::string::npos && _request.getReadStatus() == REQUEST_READ_WAITING_FOR_HEADER){
@@ -291,7 +283,7 @@ public:
 //						<<"\nchunked: " << _request.getTransferEncodingIsChunked()\
 //						<<"\ncontent-length: "<< _request.getContentLength() \
 //						<< std::endl;
-			}
+		}
 		if(_request.getReadStatus() == REQUEST_READ_BODY)
 		{
 			
@@ -468,7 +460,9 @@ public:
 				exit(2);
 		}
 	}
+
 	void exportChunk(){}
+
 	void parseRequestHeader()
 	{
 		std::string tmp;

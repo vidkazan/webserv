@@ -69,7 +69,7 @@ int main()
 				break;
 			// finding a read event in client sockets array
 			if (FD_ISSET(it->getSocketFd(), &readfds)){
-//				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
+				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
 				it->readRequest();
 				if(it->getStatus() == READING_DONE) {
 					it->analyseRequest();
