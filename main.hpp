@@ -14,6 +14,12 @@
 #include <fcntl.h>
 #include <cstdio>
 #include <sstream>
+#include <fstream>
+#include <map>
+#include <vector>
+#include <list>
+
+#include "Webserv.hpp"
 
 void printLog(char *,char *msg, char *color);
 

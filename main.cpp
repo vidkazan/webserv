@@ -6,23 +6,23 @@ int main()
 	// config file parser is cominggg.....
 	// generate servers
 	std::vector<ListenSocketConfigDirectory> dirs;
-	ListenSocketConfigDirectory dir1("/", "GET", "/");
+	ListenSocketConfigDirectory dir1("/", "GET", "www/index.html");
 	dirs.push_back(dir1);
-	ListenSocketConfigDirectory dir2("/directory", "GET", "/directory");
+	ListenSocketConfigDirectory dir2("/directory", "GET", "directory");
 	dirs.push_back(dir2);
-	ListenSocketConfigDirectory dir3("/directory/youpi.bad_extension", "GET", "/directory/youpi.bad_extension");
+	ListenSocketConfigDirectory dir3("/directory/youpi.bad_extension", "GET", "directory/youpi.bad_extension");
 	dirs.push_back(dir3);
-	ListenSocketConfigDirectory dir4("/directory/youpi.bla", "GET, POST", "/directory/youpi.bla");
+	ListenSocketConfigDirectory dir4("/directory/youpi.bla", "GET, POST", "directory/youpi.bla");
 	dirs.push_back(dir4);
-	ListenSocketConfigDirectory dir5("/directory/nop/", "GET", "/directory/nop/");
+	ListenSocketConfigDirectory dir5("/directory/nop/", "GET", "directory/nop/");
 	dirs.push_back(dir5);
-	ListenSocketConfigDirectory dir6("/directory/nop", "GET", "/directory/nop");
+	ListenSocketConfigDirectory dir6("/directory/nop", "GET", "directory/nop");
 	dirs.push_back(dir6);
-	ListenSocketConfigDirectory dir7("/directory/nop/other.pouic", "GET", "/directory/nop/other.pouic");
+	ListenSocketConfigDirectory dir7("/directory/nop/other.pouic", "GET", "directory/nop/other.pouic");
 	dirs.push_back(dir7);
-	ListenSocketConfigDirectory dir8("/directory/Yeah/not_happy.bad_extension", "GET", "/directory/Yeah/not_happy.bad_extension");
+	ListenSocketConfigDirectory dir8("/directory/Yeah/not_happy.bad_extension", "GET", "directory/Yeah/not_happy.bad_extension");
 	dirs.push_back(dir8);
-	ListenSocketConfigDirectory dir9("/put_test/file_should_exist_after", "PUT", "/put_test/file_should_exist_after");
+	ListenSocketConfigDirectory dir9("/put_test/file_should_exist_after", "PUT", "tmp/put_test/file_should_exist_after");
 	dirs.push_back(dir9);
 	ListenSocketConfig config1(dirs, 2000, "127.0.0.1");
 		webserv.addListenSocket(config1);

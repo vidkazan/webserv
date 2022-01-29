@@ -76,51 +76,41 @@ public:
 
 class Request{
 private:
+	// header
 	std::string _type;
 	std::string _option;
 	std::string _httpVersion;
 	std::string _host;
 	std::string _body;
-	bool _transferEncodingIsChunked;
-	bool _isLastChunk;
-	bool _bodyDelimiter;
 	std::string _buffer;
 	std::string _bufferChunk;
 	int _readStatus;
 	ssize_t _contentLength;
 	ssize_t _chunkSize;
+	size_t _count;
 public:
 	Request(): _type(""),\
 				_option(""),\
 				_httpVersion(""),\
 				_host(""),\
 				_body(""),\
-				_transferEncodingIsChunked(false),\
-				_isLastChunk(false),\
-				_bodyDelimiter(false),\
 				_buffer(""),\
 				_bufferChunk(""),\
 				_readStatus(REQUEST_READ_WAITING_FOR_HEADER), \
 				_contentLength(-1), \
-				_chunkSize(-1){};
-	virtual ~Request(){};
-
-
-
-	bool getBodyDelimiterStatus() const {return _bodyDelimiter;};
+				_chunkSize(-1), \
+				_count(0){};
+	virtual ~Request()
+	{
+	}
 	const std::string & getBuffer() const {return _buffer;};
 	const std::string & getBufferChunk() const {return _bufferChunk;};
 	std::string getBody(){return _body;};
 	std::string getType() const {return  _type;};
 	std::string getOption() const {return  _option;};
 	std::string getHost() const {return  _host;};
-	bool getTransferEncodingIsChunked() const {return  _transferEncodingIsChunked;};
-	bool getLastChunkStatus() const {return  _isLastChunk;};
 	std::string getHTTPVersion(){return  _httpVersion;};
 
-	void setTransferEncoding(bool state){
-		_transferEncodingIsChunked = state;
-	};
 	void setBuffer(const std::string & req){
 		this->cleanBuffer();
 		_buffer = req;
@@ -133,10 +123,6 @@ public:
 		_body.clear();
 		_body = body;
 	};
-	void setBodyDelimiterStatus(bool s){
-		_bodyDelimiter = s;};
-	void setLastChunkStatus(bool s){
-		_isLastChunk = s;};
 	void setType(const std::string & type){_type = type;};
 	void setOption(const std::string & opt){_option = opt;};
 	void setHTTPVersion(const std::string & version){_httpVersion = version;};
@@ -155,8 +141,16 @@ public:
 		return _contentLength;
 	}
 
+	size_t getCounter() const{
+		return _count;
+	}
+
 	void setContentLength(ssize_t contentLength){
 		_contentLength = contentLength;
+	}
+
+	void setCounter(size_t count){
+		_count = count;
 	}
 
 	ssize_t getChunkSize() const{
@@ -171,18 +165,37 @@ public:
 class Response{
 private:
 	std::string _response;
-	int _responseCode;
+	std::string _path;
+	std::vector<std::string> _responseCodeMsg;
 	bool _pathIsAvailable;
 	bool _requestIsValid;
 	bool _methodIsAllowed;
+	int _outputFileFd;
+	int _inputFileFd;
 public:
-	Response() : _response(""), _responseCode(-1), _pathIsAvailable(false), _requestIsValid(true), _methodIsAllowed(false){};
+	Response() : _response(""), _pathIsAvailable(false), _requestIsValid(true), _methodIsAllowed(false), _outputFileFd(-1), _inputFileFd(-1){
+	};
 
+
+	int getInputFileFd() const
+	{
+		return _inputFileFd;
+	}
+	int getOutputFileFd() const
+	{
+		return _outputFileFd;
+	}
+	void setOutputFile(int file){
+		_outputFileFd = file;
+	}
+	void setInputFile(int file){
+		_inputFileFd = file;
+	}
 	virtual ~Response(){};
 
-	int getResponseCode() const {return _responseCode;};
-
 	const std::string& getResponse() const {return _response;};
+
+	const std::string& getPath() const {return _path;};
 
 	bool isPathIsAvailable() const{
 		return _pathIsAvailable;
@@ -191,14 +204,12 @@ public:
 	bool isMethodIsAllowed() const{
 		return _methodIsAllowed;
 	}
-
-	void setResponseCode(int code){
-		if(code > 99 && code < 600)
-			_responseCode = code;
-	};
 	void setResponse(const std::string & resp){
 		this->cleanResponse();
 		_response = resp;
+	};
+	void setPath(const std::string & path){
+		_path = path;
 	};
 	void cleanResponse(){
 		_response.erase();
@@ -265,7 +276,7 @@ public:
 			return;
 		}
 		_request.setBuffer(_request.getBuffer() + buf);
-		std::cout << "read ret: " << ret <<"\n";
+//		std::cout << "read ret: " << ret <<"\n";
 //		printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 
 		if(_request.getBuffer().find("\r\n\r\n") != std::string::npos && _request.getReadStatus() == REQUEST_READ_WAITING_FOR_HEADER){
@@ -280,7 +291,6 @@ public:
 //						<<"\n"<< _request.getOption() \
 //						<<"\nhttp: "<< _request.getHTTPVersion() \
 //						<<"\nhost: "<< _request.getHost() \
-//						<<"\nchunked: " << _request.getTransferEncodingIsChunked()\
 //						<<"\ncontent-length: "<< _request.getContentLength() \
 //						<< std::endl;
 		}
@@ -297,54 +307,40 @@ public:
 
 	void generateResponse()
 	{
-		char *bufResp = nullptr;
+		std::fstream inputFile;
+		std::string bufResp;
+		std::string tmp;
 		if(!_response.isRequestIsValid())
-		{
-			bufResp = "HTTP/1.1 400 Bad Request\n"
-					  "Content-Length: 64\n"
-					  "Content-Type: text/html\n\n"
-					  "<html>\n"
-					  "<body>\n"
-					  "<h1>Hello, World!!!!!!!!!!!!!</h1>\n"
-					  "</body>\n"
-					  "</html>";
-		}
+			bufResp += "HTTP/1.1 400 Bad Request\n";
 		else if(!_response.isPathIsAvailable())
-		{
-			bufResp = "HTTP/1.1 404 Not found\n"
-					  "Content-Length: 64\n"
-					  "Content-Type: text/html\n\n"
-					  "<html>\n"
-					  "<body>\n"
-					  "<h1>Hello, World!!!!!!!!!!!!!</h1>\n"
-					  "</body>\n"
-					  "</html>";
-		}
+			bufResp = "HTTP/1.1 404 Not found\n";
 		else if(!_response.isMethodIsAllowed())
-		{
-			bufResp = "HTTP/1.1 405 Method Not Allowed\n"
-							 "Content-Length: 64\n"
-							 "Content-Type: text/html\n\n"
-							 "<html>\n"
-							 "<body>\n"
-							 "<h1>Hello, World!!!!!!!!!!!!!</h1>\n"
-							 "</body>\n"
-							 "</html>";
-		}
+			bufResp = "HTTP/1.1 405 Method Not Allowed\n";
 		else
-		{
-			bufResp = "HTTP/1.1 200 OK\n"
-							 "Content-Length: 64\n"
-							 "Content-Type: text/html\n\n"
-							 "<html>\n"
-							 "<body>\n"
-							 "<h1>Hello, World!!!!!!!!!!!!!</h1>\n"
-							 "</body>\n"
-							 "</html>";
+			bufResp = "HTTP/1.1 200 OK\n";
+
+		if(bufResp.find("400") != std::string::npos)
+			inputFile.open("www/400.html",std::ios::in);
+		if(bufResp.find("404") != std::string::npos)
+			inputFile.open("www/404.html",std::ios::in);
+		if(bufResp.find("405") != std::string::npos)
+			inputFile.open("www/405.html",std::ios::in);
+		if(bufResp.find("200") != std::string::npos)
+			inputFile.open("www/index.html",std::ios::in);
+		for (std::string line; std::getline(inputFile, line); ) {
+			tmp += line;
 		}
-		std::string resp = bufResp;
+
+		std::cout << inputFile;
+//		std::cout << tmp << "\n";
+		bufResp += "Content-Length: ";
+		bufResp += std::to_string((unsigned  long long )tmp.size());
+		bufResp +="\n";
+		bufResp += "Content-Type: text/html\n\n";
+		bufResp += tmp;
 		_response.setResponse(bufResp);
 		_status = WRITING;
+		inputFile.close();
 		Request request;
 		_request = request;
 	}
@@ -366,7 +362,8 @@ public:
 	}
 
 	void analyseRequest(){
-		std::cout << "analyse request:\n";
+//		std::cout << "analyse request:\n";
+		size_t pos;
 		if(_request.getType().empty() || _request.getOption().empty() || _request.getHTTPVersion().empty() \
 				|| _request.getHost().empty() ){
 			_response.setRequestIsValid(false);
@@ -377,9 +374,21 @@ public:
 			if(it->getDirectoryName() == _request.getOption())
 			{
 				_response.setPathIsAvailable(true);
-				if(it->getDirectoryAllowedMethods().find(_request.getType()) != std::string::npos)
+				pos = it->getDirectoryAllowedMethods().find(_request.getType());
+				if(pos != std::string::npos)
+				{
 					_response.setMethodIsAllowed(true);
+					_response.setPath(it->getDirectoryPath());
+				}
 			}
+		}
+		if((_request.getType() == "PUT" || _request.getType() == "POST") && _response.isMethodIsAllowed() && _response.isPathIsAvailable() && _response.isRequestIsValid())
+		{
+			std::ofstream outFile;
+			outFile.open(_response.getPath(),std::ios::trunc);
+			if(!outFile.is_open())
+				std::cout << _response.getPath() << " : error\n";
+			outFile.close();
 		}
 	}
 
@@ -408,18 +417,18 @@ public:
 				if((pos = tmp.find("\r\n")) == std::string::npos)
 					return;
 
-				std::cout << "\n\nnew chunk size HEX: " << tmp.substr(0, pos) << "\n";
+//				std::cout << "\n\nnew chunk size HEX: " << tmp.substr(0, pos) << "\n";
 				// converting request chunk size from HEX-string to DEC-long
 				ssize_t tmpChunkSize;
 				std::istringstream(tmp.substr(0, pos)) >> std::hex >> tmpChunkSize;
-				std::cout << "new chunk size DEC: " << tmpChunkSize << "\n";
+//				std::cout << "new chunk size DEC: " << tmpChunkSize << "\n";
 				_request.setChunkSize(tmpChunkSize);
 				tmp.erase(0,pos + 2);
 				_request.setBuffer(tmp);
 			}
 			if(_request.getChunkSize() != -1)
 			{
-				std::cout << "current chunkSize: " << _request.getChunkSize() << " bufferSize: " << tmp.size() << "\n";
+//				std::cout << "current chunkSize: " << _request.getChunkSize() << " bufferSize: " << tmp.size() << "\n";
 
 				// if buffer size >= chunkSize + 2(\r\n)
 				if (tmp.size() >= static_cast<size_t>(_request.getChunkSize()) + 2){
@@ -433,16 +442,18 @@ public:
 						_request.setBuffer(tmp);
 					}
 					if(_request.getChunkSize() == 0){
-						_request.setLastChunkStatus(true);
+//						_request.setLastChunkStatus(true);
 						_request.setReadStatus(REQUEST_READ_COMLETE);
+						std::cout <<  "written:" << _request.getCounter() << "\n";
 						std::cout << "Request read status: REQUEST_READ_COMPLETE\n";
 					}
 					else
 					{
 						// chunk complete
 						// export chunkBuffer
-						std::cout << "chunk complete! chunkBufferSize:" << _request.getBufferChunk().size() << "\n" ;
-						std::cout << "BufferSize:" << _request.getBuffer().size() << "\n" ;
+//						std::cout << "chunk complete! chunkBufferSize:" << _request.getBufferChunk().size() << "\n" ;
+						_request.setCounter(_request.getCounter() + _request.getBufferChunk().size());
+//						std::cout << "BufferSize:" << _request.getBuffer().size() << "\n" ;
 						exportChunk();
 					}
 					// clean chunkBuffer
@@ -461,6 +472,11 @@ public:
 	}
 
 	void exportChunk(){
+		std::ofstream outFile;
+//		std::cout << "writing chunk to:" << _response.getPath() << "\n";
+		outFile.open(_response.getPath(), std::ios::app);
+		outFile << _request.getBufferChunk();
+		outFile.close();
 	}
 
 	void parseRequestHeader()
@@ -476,7 +492,6 @@ public:
 				_request.setBuffer(tmp.erase(0, 2));
 				if (_request.getReadStatus() != REQUEST_READ_BODY && _request.getReadStatus() != REQUEST_READ_CHUNKED){
 					_request.setReadStatus(REQUEST_READ_COMLETE);
-					write(2, "reading done\n", 13);
 					analyseRequest();
 				}
 				else if(_request.getReadStatus() == REQUEST_READ_BODY || _request.getReadStatus() == REQUEST_READ_CHUNKED)
@@ -497,7 +512,6 @@ public:
 				line.erase(0, 19);
 				if (line.find("chunked") != std::string::npos)
 				{
-					_request.setTransferEncoding(true);
 					std::cout << "Request read status: REQUEST_READ_CHUNKED\n";
 					_request.setReadStatus(REQUEST_READ_CHUNKED);
 				}
