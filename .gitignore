@@ -1,8 +1,9 @@
 .DS_Store
 .idea
-.idea/*
+.idea/*.xml
 webserv
 cmake-build-debug/
 cmake-build-debug/*
-main.o
+*.o
+tmp
 tmp/*
