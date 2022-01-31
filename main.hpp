@@ -19,6 +19,29 @@
 #include <vector>
 #include <list>
 
+
+
+#define RED "\e[91m"
+#define YELLOW "\e[93m"
+#define GREEN "\e[92m"
+#define WHITE "\e[39m"
+
+#define READING 0
+#define WRITING 1
+#define CLOSING 2
+
+#define REQUEST_READ_WAITING_FOR_HEADER 10
+#define REQUEST_READ_HEADER 11
+#define REQUEST_READ_BODY 12
+#define REQUEST_READ_CHUNKED 13
+#define REQUEST_READ_COMLETE 14
+
+#include "ListenSocketConfigDirectory.hpp"
+#include "ListenSocketConfig.hpp"
+#include "Request.hpp"
+#include "Response.hpp"
+#include "Client.hpp"
+#include "ListenSocket.hpp"
 #include "Webserv.hpp"
 
 void printLog(char *,char *msg, char *color);

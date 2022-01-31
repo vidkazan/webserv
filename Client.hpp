@@ -1,0 +1,299 @@
+#pragma once
+#include "main.hpp"
+
+class Client {
+private:
+	int _socketFD;
+	int _status;
+	ListenSocketConfig _serverConfig;
+	Response _response;
+	Request _request;
+public:
+	Client(int fd, const ListenSocketConfig& config): _socketFD(fd), _status(READING), _serverConfig(config){
+	};
+	~Client(){};
+	int getStatus() const {return _status;};
+	void resetData(){
+		_status = READING;
+	}
+
+	const Response&getResponse() const{
+		return _response;
+	}
+	const Request&getRequest() const{
+		return _request;
+	}
+	int getSocketFd() const{
+		return _socketFD;
+	}
+
+	void setStatus(int status){
+		_status = status;
+	};
+
+	void setResponse(const Response&response){
+		_response = response;
+	}
+	void readRequest(){
+		ssize_t ret;
+		char buf[100000];
+		bzero(&buf, 100000);
+		ret = recv(_socketFD, &buf, 100000, 0);
+		if (ret == -1 || ret == 0){
+			std::cout << "fd " << _socketFD << " status: closing\n";
+			_status = CLOSING;
+			return;
+		}
+		_request.setBuffer(_request.getBuffer() + buf);
+//		std::cout << "read ret: " << ret <<"\n";
+//		printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
+
+		if(_request.getBuffer().find("\r\n\r\n") != std::string::npos && _request.getReadStatus() == REQUEST_READ_WAITING_FOR_HEADER){
+			std::cout << "Request read status: REQUEST_READ_HEADER\n";
+			_request.setReadStatus(REQUEST_READ_HEADER);
+		}
+		if(_request.getReadStatus() == REQUEST_READ_HEADER)
+		{
+			parseRequestHeader();
+//			std::cout << "current parsed info:" << _socketFD <<"\n" \
+//						<<"type: "<< _request.getType() \
+//						<<"\n"<< _request.getOption() \
+//						<<"\nhttp: "<< _request.getHTTPVersion() \
+//						<<"\nhost: "<< _request.getHost() \
+//						<<"\ncontent-length: "<< _request.getContentLength() \
+//						<< std::endl;
+		}
+		if(_request.getReadStatus() == REQUEST_READ_BODY)
+		{
+			
+		}
+		else if(_request.getReadStatus() == REQUEST_READ_CHUNKED)
+			parseRequestBodyChunked();
+		if(_request.getReadStatus() == REQUEST_READ_COMLETE) {
+			_status = WRITING;
+		}
+	}
+
+	void generateResponse()
+	{
+		std::fstream inputFile;
+		std::string bufResp;
+		std::string tmp;
+		if(!_response.isRequestIsValid())
+			bufResp += "HTTP/1.1 400 Bad Request\n";
+		else if(!_response.isPathIsAvailable())
+			bufResp = "HTTP/1.1 404 Not found\n";
+		else if(!_response.isMethodIsAllowed())
+			bufResp = "HTTP/1.1 405 Method Not Allowed\n";
+		else
+			bufResp = "HTTP/1.1 200 OK\n";
+
+		if(bufResp.find("400") != std::string::npos)
+			inputFile.open("www/400.html",std::ios::in);
+		if(bufResp.find("404") != std::string::npos)
+			inputFile.open("www/404.html",std::ios::in);
+		if(bufResp.find("405") != std::string::npos)
+			inputFile.open("www/405.html",std::ios::in);
+		if(bufResp.find("200") != std::string::npos)
+			inputFile.open("www/index.html",std::ios::in);
+		for (std::string line; std::getline(inputFile, line); ) {
+			tmp += line;
+		}
+
+		std::cout << inputFile;
+//		std::cout << tmp << "\n";
+		bufResp += "Content-Length: ";
+		bufResp += std::to_string((unsigned  long long )tmp.size());
+		bufResp +="\n";
+		bufResp += "Content-Type: text/html\n\n";
+		bufResp += tmp;
+		_response.setResponse(bufResp);
+		_status = WRITING;
+		inputFile.close();
+		Request request;
+		_request = request;
+	}
+
+	void parseRequestTypeOptionVersion(std::string str)
+	{
+		size_t pos = str.find(' ');
+		if(pos != std::string::npos) {
+			_request.setType(str.substr(0, pos));
+			str.erase(0,pos+1);
+		}
+		pos = str.find(' ');
+		if(pos != std::string::npos){
+			_request.setOption(str.substr(0, pos));
+			str.erase(0,pos+1);
+		}
+		if(!str.empty())
+			_request.setHTTPVersion(str);
+	}
+
+	void analyseRequest(){
+//		std::cout << "analyse request:\n";
+		size_t pos;
+		if(_request.getType().empty() || _request.getOption().empty() || _request.getHTTPVersion().empty() \
+				|| _request.getHost().empty() ){
+			_response.setRequestIsValid(false);
+		}
+		std::vector<ListenSocketConfigDirectory>::const_iterator it = _serverConfig.getDirectories().begin();
+		std::vector<ListenSocketConfigDirectory>::const_iterator itEnd = _serverConfig.getDirectories().end();
+		for(;it != itEnd; it++){
+			if(it->getDirectoryName() == _request.getOption())
+			{
+				_response.setPathIsAvailable(true);
+				pos = it->getDirectoryAllowedMethods().find(_request.getType());
+				if(pos != std::string::npos)
+				{
+					_response.setMethodIsAllowed(true);
+					_response.setPath(it->getDirectoryPath());
+				}
+			}
+		}
+		if((_request.getType() == "PUT" || _request.getType() == "POST") && _response.isMethodIsAllowed() && _response.isPathIsAvailable() && _response.isRequestIsValid())
+		{
+			std::ofstream outFile;
+			outFile.open(_response.getPath(),std::ios::trunc);
+			if(!outFile.is_open())
+				std::cout << _response.getPath() << " : error\n";
+			outFile.close();
+		}
+	}
+
+	void parseRequestBody(){}
+
+	void parseRequestBodyChunked()
+	{
+		std::string tmp;
+		size_t pos;
+
+		// taking read buffer
+		tmp = _request.getBuffer();
+//		printLog("requestBuffer:", (char *)tmp.c_str(),RED);
+
+		// while chunk is not complete
+		while(_request.getBufferChunk().empty())
+		{
+			// if dont have chunk size(chunkSize -1)
+				// get chunk size \r\n
+				// erase size line from buffer
+
+			// first chunk line must consist of "<HEX chunk size>\r\n"
+			// if we are waiting the chunk size line, checking chunk size line is ready
+			if(_request.getChunkSize() == -1)
+			{
+				if((pos = tmp.find("\r\n")) == std::string::npos)
+					return;
+
+//				std::cout << "\n\nnew chunk size HEX: " << tmp.substr(0, pos) << "\n";
+				// converting request chunk size from HEX-string to DEC-long
+				ssize_t tmpChunkSize;
+				std::istringstream(tmp.substr(0, pos)) >> std::hex >> tmpChunkSize;
+//				std::cout << "new chunk size DEC: " << tmpChunkSize << "\n";
+				_request.setChunkSize(tmpChunkSize);
+				tmp.erase(0,pos + 2);
+				_request.setBuffer(tmp);
+			}
+			if(_request.getChunkSize() != -1)
+			{
+//				std::cout << "current chunkSize: " << _request.getChunkSize() << " bufferSize: " << tmp.size() << "\n";
+
+				// if buffer size >= chunkSize + 2(\r\n)
+				if (tmp.size() >= static_cast<size_t>(_request.getChunkSize()) + 2){
+					// get chunk body
+					// set chunkBuffer
+					_request.setBufferChunk(tmp.substr(0, _request.getChunkSize()));
+					// remove \r\n
+					tmp.erase(0,_request.getChunkSize());
+					{
+						tmp.erase(0, 2);
+						_request.setBuffer(tmp);
+					}
+					if(_request.getChunkSize() == 0){
+//						_request.setLastChunkStatus(true);
+						_request.setReadStatus(REQUEST_READ_COMLETE);
+						std::cout <<  "written:" << _request.getCounter() << "\n";
+						std::cout << "Request read status: REQUEST_READ_COMPLETE\n";
+					}
+					else
+					{
+						// chunk complete
+						// export chunkBuffer
+//						std::cout << "chunk complete! chunkBufferSize:" << _request.getBufferChunk().size() << "\n" ;
+						_request.setCounter(_request.getCounter() + _request.getBufferChunk().size());
+//						std::cout << "BufferSize:" << _request.getBuffer().size() << "\n" ;
+						exportChunk();
+					}
+					// clean chunkBuffer
+					// clean chunkBufferSize
+					_request.setBufferChunk("");
+					_request.setChunkSize(-1);
+//					printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
+				}
+				else
+					// return for new extended buffer
+					return;
+			}
+			else // atatatatatatattttttaaaaaaaaaaa
+				exit(2);
+		}
+	}
+
+	void exportChunk(){
+		std::ofstream outFile;
+//		std::cout << "writing chunk to:" << _response.getPath() << "\n";
+		outFile.open(_response.getPath(), std::ios::app);
+		outFile << _request.getBufferChunk();
+		outFile.close();
+	}
+
+	void parseRequestHeader()
+	{
+		std::string tmp;
+		std::string line;
+		size_t pos;
+		while(true)
+		{
+			if(_request.getBuffer().find("\r\n") == 0)
+			{
+				tmp = _request.getBuffer();
+				_request.setBuffer(tmp.erase(0, 2));
+				if (_request.getReadStatus() != REQUEST_READ_BODY && _request.getReadStatus() != REQUEST_READ_CHUNKED){
+					_request.setReadStatus(REQUEST_READ_COMLETE);
+					analyseRequest();
+				}
+				else if(_request.getReadStatus() == REQUEST_READ_BODY || _request.getReadStatus() == REQUEST_READ_CHUNKED)
+					analyseRequest();
+//				printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
+				return;
+			}
+			pos = _request.getBuffer().find('\n');
+			line = _request.getBuffer().substr(0,pos);
+			if (_request.getType().empty() && !line.empty()) {
+				parseRequestTypeOptionVersion(line);
+			}
+			else if(line.find("Host: ") != std::string::npos){
+				line.erase(0, 6);
+				_request.setHost(line);
+			}
+			else if(line.find("Transfer-Encoding: ") != std::string::npos){
+				line.erase(0, 19);
+				if (line.find("chunked") != std::string::npos)
+				{
+					std::cout << "Request read status: REQUEST_READ_CHUNKED\n";
+					_request.setReadStatus(REQUEST_READ_CHUNKED);
+				}
+			}
+			else if(line.find("Content-Length: ") != std::string::npos){
+				line.erase(0, 15);
+				_request.setContentLength(std::stoi(line));
+				std::cout << "Request read status: REQUEST_READ_BODY\n";
+				_request.setReadStatus(REQUEST_READ_BODY);
+			}
+			tmp = _request.getBuffer();
+			_request.setBuffer(tmp.erase(0, pos + 1));
+//			printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
+		}
+	}
+};
