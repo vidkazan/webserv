@@ -1,6 +1,6 @@
 NAME = webserv
 
-SRCS =	main.cpp
+SRCS =	main.cpp Webserv.cpp
 
 HDRS = Webserv.hpp main.hpp ListenSocketConfigDirectory.hpp ListenSocketConfig.hpp Request.hpp Response.hpp Client.hpp ListenSocket.hpp
 

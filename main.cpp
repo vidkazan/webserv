@@ -6,23 +6,23 @@ int main()
 	// config file parser is cominggg.....
 	// generate servers
 	std::vector<ListenSocketConfigDirectory> dirs;
-	ListenSocketConfigDirectory dir1("/", "GET", "www/index.html");
+	ListenSocketConfigDirectory dir1("/", "GET", "www/");
 	dirs.push_back(dir1);
-	ListenSocketConfigDirectory dir2("/directory", "GET", "directory");
+	ListenSocketConfigDirectory dir2("/directory", "GET", "www/directory");
 	dirs.push_back(dir2);
-	ListenSocketConfigDirectory dir3("/directory/youpi.bad_extension", "GET", "directory/youpi.bad_extension");
-	dirs.push_back(dir3);
-	ListenSocketConfigDirectory dir4("/directory/youpi.bla", "GET, POST", "directory/youpi.bla");
-	dirs.push_back(dir4);
-	ListenSocketConfigDirectory dir5("/directory/nop/", "GET", "directory/nop/");
-	dirs.push_back(dir5);
-	ListenSocketConfigDirectory dir6("/directory/nop", "GET", "directory/nop");
+//	ListenSocketConfigDirectory dir3("/directory/youpi.bad_extension", "GET", "www/directory/youpi.bad_extension");
+//	dirs.push_back(dir3);
+//	ListenSocketConfigDirectory dir4("/directory/youpi.bla", "GET, POST", "www/directory/youpi.bla");
+//	dirs.push_back(dir4);
+//	ListenSocketConfigDirectory dir5("/directory/nop/", "GET", "www/directory/nop/");
+//	dirs.push_back(dir5);
+	ListenSocketConfigDirectory dir6("/directory/nop", "GET", "www/directory/nop");
 	dirs.push_back(dir6);
-	ListenSocketConfigDirectory dir7("/directory/nop/other.pouic", "GET", "directory/nop/other.pouic");
-	dirs.push_back(dir7);
-	ListenSocketConfigDirectory dir8("/directory/Yeah/not_happy.bad_extension", "GET", "directory/Yeah/not_happy.bad_extension");
+//	ListenSocketConfigDirectory dir7("/directory/nop/other.pouic", "GET", "www/directory/nop/other.pouic");
+//	dirs.push_back(dir7);
+	ListenSocketConfigDirectory dir8("/directory/Yeah", "GET", "www/directory/Yeah");
 	dirs.push_back(dir8);
-	ListenSocketConfigDirectory dir9("/put_test/file_should_exist_after", "PUT", "tmp/put_test/file_should_exist_after");
+	ListenSocketConfigDirectory dir9("/put_test", "PUT", "www/put_test");
 	dirs.push_back(dir9);
 	ListenSocketConfig config1(dirs, 2000, "127.0.0.1");
 		webserv.addListenSocket(config1);
@@ -56,7 +56,7 @@ int main()
 				largestFD = it->getSocketFd();
 		}
 		// SELECT
-//		std::cout << "select:\n";
+		std::cout << "select:\n";
 		if(select(largestFD + 1, &readfds, &writefds,0,0) < 0)
 		{
 			webserv.errorMsg("webserv: select error");
@@ -77,9 +77,10 @@ int main()
 			// finding a write event in client sockets array
 			if(FD_ISSET(it->getSocketFd(), &writefds))
 			{
-//				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
-				printLog(nullptr,(char *)it->getResponse().getResponse().c_str(), GREEN);
-				ssize_t sendRes = write(it->getSocketFd(), it->getResponse().getResponse().c_str(), it->getResponse().getResponse().size());
+				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
+//				printLog(nullptr,(char *)it->getResponse().getResponse().c_str(), GREEN);
+				ssize_t sendRes = send(it->getSocketFd(), it->getResponse().getResponse().c_str(), it->getResponse().getResponse().size(), 0);
+				std::cout << "sent: " << sendRes << "\n";
 				if(sendRes <= 0) {
 					it->setStatus(CLOSING);
 					break;

@@ -26,11 +26,9 @@ public:
 	int getSocketFd() const{
 		return _socketFD;
 	}
-
 	void setStatus(int status){
 		_status = status;
 	};
-
 	void setResponse(const Response&response){
 		_response = response;
 	}
@@ -55,13 +53,15 @@ public:
 		if(_request.getReadStatus() == REQUEST_READ_HEADER)
 		{
 			parseRequestHeader();
-//			std::cout << "current parsed info:" << _socketFD <<"\n" \
-//						<<"type: "<< _request.getType() \
-//						<<"\n"<< _request.getOption() \
-//						<<"\nhttp: "<< _request.getHTTPVersion() \
-//						<<"\nhost: "<< _request.getHost() \
-//						<<"\ncontent-length: "<< _request.getContentLength() \
-//						<< std::endl;
+			std::cout << YELLOW;
+			std::cout << "current parsed info:" << _socketFD <<"\n" \
+						<<"type: "<< _request.getType() \
+						<<"\n"<< _request.getOption() \
+						<<"\nhttp: "<< _request.getHTTPVersion() \
+						<<"\nhost: "<< _request.getHost() \
+						<<"\ncontent-length: "<< _request.getContentLength() \
+						<< std::endl;
+						std::cout << WHITE;
 		}
 		if(_request.getReadStatus() == REQUEST_READ_BODY)
 		{
@@ -78,10 +78,12 @@ public:
 	{
 		std::fstream inputFile;
 		std::string bufResp;
-		std::string tmp;
+		std::string body;
+		std::string ext;
+		size_t pos;
 		if(!_response.isRequestIsValid())
 			bufResp += "HTTP/1.1 400 Bad Request\n";
-		else if(!_response.isPathIsAvailable())
+		else if(!_response.isPathIsAvailable() || !_response.isFileIsFound())
 			bufResp = "HTTP/1.1 404 Not found\n";
 		else if(!_response.isMethodIsAllowed())
 			bufResp = "HTTP/1.1 405 Method Not Allowed\n";
@@ -95,18 +97,33 @@ public:
 		if(bufResp.find("405") != std::string::npos)
 			inputFile.open("www/405.html",std::ios::in);
 		if(bufResp.find("200") != std::string::npos)
-			inputFile.open("www/index.html",std::ios::in);
+			inputFile.open(_response.getPath(),std::ios::in);
 		for (std::string line; std::getline(inputFile, line); ) {
-			tmp += line;
+			body += line;
 		}
 
-		std::cout << inputFile;
-//		std::cout << tmp << "\n";
+//		std::cout << inputFile;
+//		std::cout << body << "\n";
 		bufResp += "Content-Length: ";
-		bufResp += std::to_string((unsigned  long long )tmp.size());
+		bufResp += std::to_string((unsigned  long long )body.size());
 		bufResp +="\n";
-		bufResp += "Content-Type: text/html\n\n";
-		bufResp += tmp;
+		bufResp += "Content-Type: ";
+//		choosing type
+
+		std::cout << "path: " << _response.getPath() << "\n";
+		pos = _response.getPath().find_last_of('.');
+		if(pos != std::string::npos)
+		{
+			ext = _response.getPath().substr(pos + 1, _response.getPath().size() - pos);
+			std::cout << "extension: " << ext << "\n";
+		}
+		if(ext == "html")
+			bufResp += "text/html";
+		if(ext == "png")
+			bufResp += "image/png";
+		bufResp += "\n\n";
+		bufResp += body;
+//		std::cout << RED << bufResp << WHITE;
 		_response.setResponse(bufResp);
 		_status = WRITING;
 		inputFile.close();
@@ -131,33 +148,73 @@ public:
 	}
 
 	void analyseRequest(){
-//		std::cout << "analyse request:\n";
+		std::cout << "analyse request:\n";
 		size_t pos;
-		if(_request.getType().empty() || _request.getOption().empty() || _request.getHTTPVersion().empty() \
-				|| _request.getHost().empty() ){
+		std::string fileName;
+		std::string filePath;
+		// FILE SEARCHING
+
+		// client: option: "/dir1/ + fileName"
+		// server: config: "/dir1/ -> www/dir1/"
+
+		if(_request.getType().empty() || _request.getOption().empty() || _request.getHTTPVersion().empty() || _request.getHost().empty() )
+		{
 			_response.setRequestIsValid(false);
+			return;
+		}
+		//split option to path and filename
+		pos = _request.getOption().find_last_of('/');
+		if(pos != std::string::npos)
+		{
+			// split option by / ???
+			fileName = _request.getOption().substr(pos + 1, _request.getOption().size() - pos);
+			filePath = _request.getOption().substr(0, pos + 1);
+			std::cout << "filename: " << fileName << " | filepath: " << filePath << "\n";
 		}
 		std::vector<ListenSocketConfigDirectory>::const_iterator it = _serverConfig.getDirectories().begin();
 		std::vector<ListenSocketConfigDirectory>::const_iterator itEnd = _serverConfig.getDirectories().end();
 		for(;it != itEnd; it++){
-			if(it->getDirectoryName() == _request.getOption())
+			if(it->getDirectoryName() == filePath)
 			{
 				_response.setPathIsAvailable(true);
 				pos = it->getDirectoryAllowedMethods().find(_request.getType());
 				if(pos != std::string::npos)
-				{
 					_response.setMethodIsAllowed(true);
-					_response.setPath(it->getDirectoryPath());
-				}
+					if(filePath == "/" && fileName.empty())   // костыыыыыыыль
+						_response.setPath("www/index.html");
+					else
+						_response.setPath(it->getDirectoryPath());
 			}
 		}
 		if((_request.getType() == "PUT" || _request.getType() == "POST") && _response.isMethodIsAllowed() && _response.isPathIsAvailable() && _response.isRequestIsValid())
 		{
-			std::ofstream outFile;
-			outFile.open(_response.getPath(),std::ios::trunc);
+			std::fstream outFile;
+			outFile.open((_response.getPath() + fileName),std::ios::out | std::ios::trunc);
 			if(!outFile.is_open())
-				std::cout << _response.getPath() << " : error\n";
-			outFile.close();
+			{
+				std::cout << _response.getPath() << fileName << " : error\n";
+			}
+			else
+			{
+				_response.setFileIsFound(true);
+				_response.setPath(_response.getPath() + fileName);
+				outFile.close();
+			}
+		}
+		if(_request.getType() == "GET" && _response.isMethodIsAllowed() && _response.isPathIsAvailable() && _response.isRequestIsValid())
+		{
+			std::fstream inFile;
+			inFile.open((_response.getPath() + fileName),std::ios::in);
+			if(!inFile.is_open())
+			{
+				std::cout << _response.getPath() << fileName << " : error\n";
+			}
+			else
+			{
+				_response.setFileIsFound(true);
+				_response.setPath(_response.getPath() + fileName);
+				inFile.close();
+			}
 		}
 	}
 
