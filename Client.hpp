@@ -43,8 +43,8 @@ public:
 			return;
 		}
 		_request.setBuffer(_request.getBuffer() + buf);
-//		std::cout << "read ret: " << ret <<"\n";
-//		printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
+		std::cout << "read ret: " << ret <<"\n";
+		printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 
 		if(_request.getBuffer().find("\r\n\r\n") != std::string::npos && _request.getReadStatus() == REQUEST_READ_WAITING_FOR_HEADER){
 			std::cout << "Request read status: REQUEST_READ_HEADER\n";
@@ -123,7 +123,7 @@ public:
 			bufResp += "image/png";
 		bufResp += "\n\n";
 		bufResp += body;
-//		std::cout << RED << bufResp << WHITE;
+		std::cout << GREEN << bufResp << WHITE;
 		_response.setResponse(bufResp);
 		_status = WRITING;
 		inputFile.close();
@@ -325,7 +325,7 @@ public:
 //				printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 				return;
 			}
-			pos = _request.getBuffer().find('\n');
+			pos = _request.getBuffer().find('\n'); // pos check??
 			line = _request.getBuffer().substr(0,pos);
 			if (_request.getType().empty() && !line.empty()) {
 				parseRequestTypeOptionVersion(line);

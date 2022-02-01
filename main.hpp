@@ -36,6 +36,8 @@
 #define REQUEST_READ_CHUNKED 13
 #define REQUEST_READ_COMLETE 14
 
+void printLog(char *description,char *msg, char *color);
+
 #include "ListenSocketConfigDirectory.hpp"
 #include "ListenSocketConfig.hpp"
 #include "Request.hpp"
@@ -44,6 +46,5 @@
 #include "ListenSocket.hpp"
 #include "Webserv.hpp"
 
-void printLog(char *,char *msg, char *color);
 
 #endif
