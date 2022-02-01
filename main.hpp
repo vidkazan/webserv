@@ -34,7 +34,7 @@
 #define REQUEST_READ_HEADER 11
 #define REQUEST_READ_BODY 12
 #define REQUEST_READ_CHUNKED 13
-#define REQUEST_READ_COMLETE 14
+#define REQUEST_READ_COMPLETE 14
 
 void printLog(char *description,char *msg, char *color);
 

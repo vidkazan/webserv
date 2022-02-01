@@ -69,9 +69,21 @@ public:
 		}
 		else if(_request.getReadStatus() == REQUEST_READ_CHUNKED)
 			parseRequestBodyChunked();
-		if(_request.getReadStatus() == REQUEST_READ_COMLETE) {
+		if(_request.getReadStatus() == REQUEST_READ_COMPLETE) {
 			_status = WRITING;
 		}
+	}
+
+	void	allocateResponse(std::string bufResp){
+		char *res;
+		size_t i=0;
+		size_t size = bufResp.size();
+		res = (char *)malloc(sizeof (char) * (size + 1));
+		for(;i < size;i++){
+			res[i] = bufResp[i];
+		}
+		res[i] = 0;
+		_response.setResponse(res,i);
 	}
 
 	void generateResponse()
@@ -98,10 +110,13 @@ public:
 			inputFile.open("www/405.html",std::ios::in);
 		if(bufResp.find("200") != std::string::npos)
 			inputFile.open(_response.getPath(),std::ios::in);
-		for (std::string line; std::getline(inputFile, line); ) {
-			body += line;
-		}
+//		for (std::string line; std::getline(inputFile, line); ) {
+//			body += line;
+//		}
 
+		std::stringstream buffer;
+		buffer << inputFile.rdbuf();
+		body = buffer.str();
 //		std::cout << inputFile;
 //		std::cout << body << "\n";
 		bufResp += "Content-Length: ";
@@ -123,8 +138,9 @@ public:
 			bufResp += "image/png";
 		bufResp += "\n\n";
 		bufResp += body;
-		std::cout << GREEN << bufResp << WHITE;
-		_response.setResponse(bufResp);
+//		std::cout << GREEN << bufResp << WHITE;
+		allocateResponse(bufResp);
+//		_response.setResponse(response);
 		_status = WRITING;
 		inputFile.close();
 		Request request;
@@ -269,7 +285,7 @@ public:
 					}
 					if(_request.getChunkSize() == 0){
 //						_request.setLastChunkStatus(true);
-						_request.setReadStatus(REQUEST_READ_COMLETE);
+						_request.setReadStatus(REQUEST_READ_COMPLETE);
 						std::cout <<  "written:" << _request.getCounter() << "\n";
 						std::cout << "Request read status: REQUEST_READ_COMPLETE\n";
 					}
@@ -317,7 +333,7 @@ public:
 				tmp = _request.getBuffer();
 				_request.setBuffer(tmp.erase(0, 2));
 				if (_request.getReadStatus() != REQUEST_READ_BODY && _request.getReadStatus() != REQUEST_READ_CHUNKED){
-					_request.setReadStatus(REQUEST_READ_COMLETE);
+					_request.setReadStatus(REQUEST_READ_COMPLETE);
 					analyseRequest();
 				}
 				else if(_request.getReadStatus() == REQUEST_READ_BODY || _request.getReadStatus() == REQUEST_READ_CHUNKED)

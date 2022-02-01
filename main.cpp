@@ -1,4 +1,4 @@
-#include "Webserv.hpp"
+#include "main.hpp"
 
 
 int main()
@@ -80,7 +80,7 @@ int main()
 			{
 				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
 //				printLog(nullptr,(char *)it->getResponse().getResponse().c_str(), GREEN);
-				ssize_t sendRes = send(it->getSocketFd(), it->getResponse().getResponse().c_str(), it->getResponse().getResponse().size(), 0);
+				ssize_t sendRes = send(it->getSocketFd(), it->getResponse().getResponse(),it->getResponse().getResponseSize(), 0);
 				std::cout << "sent: " << sendRes << "\n";
 				if(sendRes <= 0) {
 					it->setStatus(CLOSING);

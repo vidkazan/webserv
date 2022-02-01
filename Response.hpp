@@ -5,7 +5,8 @@
 
 class Response{
 private:
-	std::string _response;
+	char* _response;
+	ssize_t _responseSize;
 	std::string _path;
 	std::vector<std::string> _responseCodeMsg;
 	bool _pathIsAvailable;
@@ -15,9 +16,13 @@ private:
 	int _inputFileFd;
 	bool _fileIsFound;
 public:
-	Response() : _response(""), _pathIsAvailable(false), _requestIsValid(true), _methodIsAllowed(false), _outputFileFd(-1), _inputFileFd(-1), _fileIsFound(false){
+	Response() : _response(nullptr), _responseSize(-1), _pathIsAvailable(false), _requestIsValid(true), _methodIsAllowed(false), _outputFileFd(-1), _inputFileFd(-1), _fileIsFound(false){
 	};
 
+	ssize_t getResponseSize() const
+	{
+		return _responseSize;
+	}
 	int getInputFileFd() const
 	{
 		return _inputFileFd;
@@ -34,7 +39,7 @@ public:
 	}
 	virtual ~Response(){};
 
-	const std::string& getResponse() const {return _response;};
+	char* getResponse() const {return _response;};
 
 	const std::string& getPath() const {return _path;};
 
@@ -47,16 +52,22 @@ public:
 	bool isMethodIsAllowed() const{
 		return _methodIsAllowed;
 	}
-	void setResponse(const std::string & resp){
-		this->cleanResponse();
+//	void setResponse(const std::string & resp){
+//		this->cleanResponse();
+//		_response = resp;
+//	};
+	void setResponse(char *resp, size_t size){
+//		this->cleanResponse();
+		// FIXME leaks!!!!!!!!!!!!!!!!!!!!
+		_responseSize = size;
 		_response = resp;
 	};
 	void setPath(const std::string & path){
 		_path = path;
 	};
-	void cleanResponse(){
-		_response.erase();
-	}
+//	void cleanResponse(){
+//		_response.erase();
+//	}
 
 	void setPathIsAvailable(bool pathIsAvailable){
 		_pathIsAvailable = pathIsAvailable;
