@@ -5,20 +5,25 @@
 
 class Response{
 private:
+	size_t _bytesSent;
 	char* _response;
 	ssize_t _responseSize;
 	std::string _path;
 	std::vector<std::string> _responseCodeMsg;
-	bool _pathIsAvailable;
+ 	bool _pathIsAvailable;
 	bool _requestIsValid;
 	bool _methodIsAllowed;
 	int _outputFileFd;
 	int _inputFileFd;
 	bool _fileIsFound;
 public:
-	Response() : _response(nullptr), _responseSize(-1), _pathIsAvailable(false), _requestIsValid(true), _methodIsAllowed(false), _outputFileFd(-1), _inputFileFd(-1), _fileIsFound(false){
+	Response() : _bytesSent(0),_response(nullptr), _responseSize(-1), _pathIsAvailable(false), _requestIsValid(true), _methodIsAllowed(false), _outputFileFd(-1), _inputFileFd(-1), _fileIsFound(false){
 	};
 
+	size_t getBytesSent() const
+	{
+		return _bytesSent;
+	}
 	ssize_t getResponseSize() const
 	{
 		return _responseSize;
@@ -85,5 +90,11 @@ public:
 
 	void setRequestIsValid(bool requestIsValid){
 		_requestIsValid = requestIsValid;
+	}
+	void setBytesSent(size_t bytes){
+		_bytesSent = bytes;
+	}
+	void addBytesSent(size_t addBytes){
+		_bytesSent += addBytes;
 	}
 };
