@@ -376,7 +376,7 @@ public:
 		std::cout << "sending\n";
 //				printLog(nullptr,it->getResponse().getResponse(), GREEN);
 
-		ssize_t ret = send(getSocketFd(), _response.getResponse() + _response.getBytesSent(),_response.getResponseSize() - _response.getBytesSent(), MSG_NOSIGNAL); //  SIGPIPE ignore
+		ssize_t ret = send(getSocketFd(), _response.getResponse() + _response.getBytesSent(),_response.getResponseSize() - _response.getBytesSent(),0); //  SIGPIPE ignore
 		if(ret <= 0)
 		{
 			setStatus(CLOSING);
