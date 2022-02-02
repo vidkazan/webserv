@@ -25,11 +25,12 @@ int main()
 	dirs.push_back(dir8);
 	ListenSocketConfigDirectory dir9("/put_test", "PUT", "www/put_test");
 	dirs.push_back(dir9);
-	ListenSocketConfigDirectory dir10("/IntraProfileHome_files/", "GET", "www/IntraProfileHome_files/");
+	ListenSocketConfigDirectory dir10("/IntraProfileHome_files", "GET", "www/IntraProfileHome_files/");
 	dirs.push_back(dir10);
+	std::sort(dirs.begin(), dirs.end()); //vector must be sorted
 	ListenSocketConfig config1(dirs, 2000, "127.0.0.1");
 		webserv.addListenSocket(config1);
-	printLog(nullptr, "______________________________________________________________|\n|_________________________SERVER START_________________________|\n|______________________________________________________________", GREEN);
+//	printLog(nullptr, "______________________________________________________________|\n|_________________________SERVER START_________________________|\n|______________________________________________________________", GREEN);
 	// listening listen sockets
 	for(std::vector<ListenSocket>::iterator it = webserv.getServSockets().begin();it != webserv.getServSockets().end(); it++)
 		listen(it->getSocketFD(), 1000);
