@@ -1,10 +1,7 @@
 #include "main.hpp"
 
 
-int main()
-{
-	Webserv webserv;
-	// config file parser is cominggg.....
+void configFileImitation(Webserv & webserv){
 	// generate servers
 	std::vector<ListenSocketConfigDirectory> dirs;
 	ListenSocketConfigDirectory dir1("/", "GET", "www/");
@@ -19,8 +16,19 @@ int main()
 	dirs.push_back(dir9);
 	std::sort(dirs.begin(), dirs.end()); //vector must be sorted
 	ListenSocketConfig config1(dirs, 2000, "127.0.0.1");
-		webserv.addListenSocket(config1);
+	webserv.addListenSocket(config1);
+}
+
+void startMessage(){
 	printLog(nullptr, "______________________________________________________________|\n|_________________________SERVER START_________________________|\n|______________________________________________________________", GREEN);
+}
+
+int main()
+{
+	Webserv webserv;
+	// config file parser is cominggg.....
+	configFileImitation(webserv);
+	startMessage();
 	// listening listen sockets
 	for(std::vector<ListenSocket>::iterator it = webserv.getServSockets().begin();it != webserv.getServSockets().end(); it++)
 		listen(it->getSocketFD(), 1000);

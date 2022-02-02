@@ -15,10 +15,14 @@ private:
 	int _outputFileFd;
 	int _inputFileFd;
 	bool _fileIsFound;
+	std::string _cgiResFileName;
 public:
 	Response() : _bytesSent(0),_response(nullptr), _responseSize(-1), _pathIsAvailable(false), _requestIsValid(true), _methodIsAllowed(false), _outputFileFd(-1), _inputFileFd(-1), _fileIsFound(false){
 	};
-
+	void setCgiResFileName(const std::string & name){_cgiResFileName = name;};
+	std::string getCgiResFileName(){
+		return _cgiResFileName;
+	}
 	size_t getBytesSent() const
 	{
 		return _bytesSent;
