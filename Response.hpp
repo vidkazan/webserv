@@ -8,7 +8,6 @@ private:
 	size_t _bytesSent;
 	char* _response;
 	ssize_t _responseSize;
-	std::string _path;
 	std::vector<std::string> _responseCodeMsg;
  	bool _pathIsAvailable;
 	bool _requestIsValid;
@@ -46,8 +45,6 @@ public:
 
 	char* getResponse() const {return _response;};
 
-	const std::string& getPath() const {return _path;};
-
 	bool isPathIsAvailable() const{
 		return _pathIsAvailable;
 	}
@@ -67,9 +64,7 @@ public:
 		_responseSize = size;
 		_response = resp;
 	};
-	void setPath(const std::string & path){
-		_path = path;
-	};
+
 //	void cleanResponse(){
 //		_response.erase();
 //	}

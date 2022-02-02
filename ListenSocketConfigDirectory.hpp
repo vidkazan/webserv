@@ -33,7 +33,6 @@ public:
 	{
 
 		std::string subStr = str;
-		std::cout << "str: " << subStr;
 		unsigned short count = 0;
 		size_t pos = 0;
 		while(pos != std::string::npos)
@@ -45,13 +44,11 @@ public:
 				count++;
 			}
 		}
-		 std::cout << "count: " << count << "\n";
 		return count;
 	}
 
 	bool operator<(ListenSocketConfigDirectory rhs) const
 	{
-		write(1, "here1\n", 6);
 		std::string subStr;
 		unsigned short countThis;
 		unsigned short countRhs;
@@ -66,7 +63,6 @@ public:
 	}
 	bool operator>(ListenSocketConfigDirectory rhs) const
 	{
-		write(1, "here1\n", 6);
 		std::string subStr;
 		unsigned short countThis = 0;
 		unsigned short countRhs = 0;

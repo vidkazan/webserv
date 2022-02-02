@@ -9,28 +9,18 @@ int main()
 	std::vector<ListenSocketConfigDirectory> dirs;
 	ListenSocketConfigDirectory dir1("/", "GET", "www/");
 	dirs.push_back(dir1);
-	ListenSocketConfigDirectory dir2("/directory", "GET", "www/directory");
+	ListenSocketConfigDirectory dir2("/directory", "GET", "www/YoupiBanane/");
 	dirs.push_back(dir2);
-//	ListenSocketConfigDirectory dir3("/directory/youpi.bad_extension", "GET", "www/directory/youpi.bad_extension");
-//	dirs.push_back(dir3);
-//	ListenSocketConfigDirectory dir4("/directory/youpi.bla", "GET, POST", "www/directory/youpi.bla");
-//	dirs.push_back(dir4);
-//	ListenSocketConfigDirectory dir5("/directory/nop/", "GET", "www/directory/nop/");
-//	dirs.push_back(dir5);
-	ListenSocketConfigDirectory dir6("/directory/nop", "GET", "www/directory/nop");
+	ListenSocketConfigDirectory dir6("/directory/nop", "GET", "www/YoupiBanane/nop/");
 	dirs.push_back(dir6);
-//	ListenSocketConfigDirectory dir7("/directory/nop/other.pouic", "GET", "www/directory/nop/other.pouic");
-//	dirs.push_back(dir7);
-	ListenSocketConfigDirectory dir8("/directory/Yeah", "GET", "www/directory/Yeah");
+	ListenSocketConfigDirectory dir8("/directory/Yeah", "GET", "www/YoupiBanane/Yeah/");
 	dirs.push_back(dir8);
-	ListenSocketConfigDirectory dir9("/put_test", "PUT", "www/put_test");
+	ListenSocketConfigDirectory dir9("/put_test", "PUT", "www/put_test/");
 	dirs.push_back(dir9);
-	ListenSocketConfigDirectory dir10("/IntraProfileHome_files", "GET", "www/IntraProfileHome_files/");
-	dirs.push_back(dir10);
 	std::sort(dirs.begin(), dirs.end()); //vector must be sorted
 	ListenSocketConfig config1(dirs, 2000, "127.0.0.1");
 		webserv.addListenSocket(config1);
-//	printLog(nullptr, "______________________________________________________________|\n|_________________________SERVER START_________________________|\n|______________________________________________________________", GREEN);
+	printLog(nullptr, "______________________________________________________________|\n|_________________________SERVER START_________________________|\n|______________________________________________________________", GREEN);
 	// listening listen sockets
 	for(std::vector<ListenSocket>::iterator it = webserv.getServSockets().begin();it != webserv.getServSockets().end(); it++)
 		listen(it->getSocketFD(), 1000);
@@ -60,7 +50,7 @@ int main()
 				largestFD = it->getSocketFd();
 		}
 		// SELECT
-		std::cout << "select:\n";
+//		std::cout << "select:\n";
 		if(select(largestFD + 1, &readfds, &writefds,0,0) < 0)
 		{
 			webserv.errorMsg("webserv: select error");
