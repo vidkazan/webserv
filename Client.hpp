@@ -78,11 +78,12 @@ public:
 		char *res;
 		size_t i=0;
 		size_t size = bufResp.size();
-		res = (char *)malloc(sizeof (char) * (size + 1));
+		res = (char *)malloc(sizeof (char) * (size));
+		if(!res)
+			exit(3);
 		for(;i < size;i++){
 			res[i] = bufResp[i];
 		}
-		res[i] = 0;
 		_response.setResponse(res,i);
 	}
 
@@ -367,6 +368,27 @@ public:
 			tmp = _request.getBuffer();
 			_request.setBuffer(tmp.erase(0, pos + 1));
 //			printLog("requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
+		}
+	}
+
+	void sendResponse()
+	{
+		std::cout << "sending\n";
+//				printLog(nullptr,it->getResponse().getResponse(), GREEN);
+
+		ssize_t ret = send(getSocketFd(), _response.getResponse() + _response.getBytesSent(),_response.getResponseSize() - _response.getBytesSent(), MSG_NOSIGNAL); //  SIGPIPE ignore
+		if(ret <= 0)
+		{
+			setStatus(CLOSING);
+			return;
+		}
+		_response.addBytesSent(ret);
+		std::cout << "sent: " << _response.getBytesSent() << "/ size: " << _response.getResponseSize() <<  "\n";
+		if(_response.getBytesSent() == (size_t)_response.getResponseSize())
+		{
+			Response response;
+			setResponse(response);
+			setStatus(READING);
 		}
 	}
 };

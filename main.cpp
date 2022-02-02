@@ -25,6 +25,8 @@ int main()
 	dirs.push_back(dir8);
 	ListenSocketConfigDirectory dir9("/put_test", "PUT", "www/put_test");
 	dirs.push_back(dir9);
+	ListenSocketConfigDirectory dir10("/IntraProfileHome_files/", "GET", "www/IntraProfileHome_files/");
+	dirs.push_back(dir10);
 	ListenSocketConfig config1(dirs, 2000, "127.0.0.1");
 		webserv.addListenSocket(config1);
 	printLog(nullptr, "______________________________________________________________|\n|_________________________SERVER START_________________________|\n|______________________________________________________________", GREEN);
@@ -79,16 +81,7 @@ int main()
 			if(FD_ISSET(it->getSocketFd(), &writefds))
 			{
 				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
-//				printLog(nullptr,(char *)it->getResponse().getResponse().c_str(), GREEN);
-				ssize_t sendRes = send(it->getSocketFd(), it->getResponse().getResponse(),it->getResponse().getResponseSize(), 0);
-				std::cout << "sent: " << sendRes << "\n";
-				if(sendRes <= 0) {
-					it->setStatus(CLOSING);
-					break;
-				}
-				Response response;
-				it->setResponse(response);
-				it->setStatus(READING);
+				it->sendResponse();
 			}
 		}
 		// finding a new connection event in listen sockets array
