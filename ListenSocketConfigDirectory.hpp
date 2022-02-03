@@ -9,11 +9,12 @@ private:
 	std::string _directoryName;
 	std::string _directoryAllowedMethods;
 	std::string _directoryPath;
+	ssize_t		_maxBodySize;
 public:
 	ListenSocketConfigDirectory(const std::string&directoryName, const std::string&directoryAllowedMethods,
-								const std::string&directoryPath) : _directoryName(directoryName),
+								const std::string&directoryPath, ssize_t bodySize) : _directoryName(directoryName),
 																   _directoryAllowedMethods(directoryAllowedMethods),
-																   _directoryPath(directoryPath){}
+																   _directoryPath(directoryPath), _maxBodySize(bodySize){}
 
 	virtual ~ListenSocketConfigDirectory(){}
 
@@ -29,6 +30,9 @@ public:
 		return _directoryPath;
 	}
 
+	ssize_t getMaxBodySize() const{
+		return _maxBodySize;
+	}
 	unsigned short countSlash(const std::string & str) const
 	{
 

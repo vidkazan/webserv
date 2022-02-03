@@ -22,7 +22,6 @@
 #include <sys/stat.h>
 
 
-
 #define RED "\e[91m"
 #define YELLOW "\e[93m"
 #define GREEN "\e[92m"
@@ -39,7 +38,6 @@
 #define REQUEST_READ_COMPLETE 14
 
 void printLog(char *description,char *msg, char *color);
-
 #include "ListenSocketConfigDirectory.hpp"
 #include "ListenSocketConfig.hpp"
 #include "Request.hpp"

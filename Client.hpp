@@ -9,7 +9,8 @@ private:
 	Response _response;
 	Request _request;
 public:
-	Client(int fd, const ListenSocketConfig& config): _socketFD(fd), _status(READING), _serverConfig(config){};
+	Client(int fd, const ListenSocketConfig& config): _socketFD(fd), _status(READING), _serverConfig(config){
+	};
 	~Client(){};
 	void printRequestInfo(){
 		std::cout << YELLOW;
@@ -32,11 +33,15 @@ public:
 
 	void readRequest()
 	{
-		recvBuffer();
+		std::ofstream file;
+		if(_request.isCgi() && _request.getType() == "POST") {
+			file.open("tmp/log/fullReq_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::app);
+		}
+		recvBuffer(&file);
 		if(_request.getBuffer().find("\r\n\r\n") != std::string::npos && \
 		_request.getReadStatus() == REQUEST_READ_WAITING_FOR_HEADER)
 		{
-			std::cout << "Request read status: REQUEST_READ_HEADER\n";
+//			std::cout << "Request read status: REQUEST_READ_HEADER\n";
 			_request.setReadStatus(REQUEST_READ_HEADER);
 		}
 		if(_request.getReadStatus() == REQUEST_READ_HEADER)
@@ -45,24 +50,30 @@ public:
 //			printRequestInfo();
 		}
 		if(_request.getReadStatus() == REQUEST_READ_CHUNKED)
-			parseRequestBodyChunked();
+			parseRequestBodyChunked(&file);
 //		else if(_request.getReadStatus() == REQUEST_READ_BODY){
 //		}
 		if(_request.getReadStatus() == REQUEST_READ_COMPLETE) {
 			_status = WRITING;
 		}
+		file.close();
 	}
-	void recvBuffer(){
+	void recvBuffer(std::ofstream * file){
 		ssize_t ret;
 		char buf[100000];
 		bzero(&buf, 100000);
-		ret = recv(_socketFD, &buf, 100000, 0);
+		ret = recv(_socketFD, &buf, 99999, 0);
 		if (ret == -1 || ret == 0){
-			std::cout << "fd " << _socketFD << " status: closing\n";
+//			std::cout << "fd " << _socketFD << " status: closing\n";
 			_status = CLOSING;
 			return;
 		}
+//		if(_request.isCgi() && _request.getType() == "POST") {
+//			*file << buf;
+//			*file << "\n>>> read end\n";
+//		}
 		_request.setBuffer(_request.getBuffer() + buf);
+
 //		std::cout << "read ret: " << ret <<"\n";
 //		printLog("readBuffer: requestBuffer:", (char *)_request.getBuffer().c_str(),RED);
 	}
@@ -72,7 +83,7 @@ public:
 		std::string tmp;
 		std::string line;
 		size_t pos;
-		std::cout << _request.getBuffer() << "\n";
+//		std::cout << _request.getBuffer() << "\n";
 		while(true)
 		{
 			if(_request.getBuffer().find("\r\n") == 0)
@@ -101,7 +112,7 @@ public:
 				line.erase(0, 19);
 				if (line.find("chunked") != std::string::npos)
 				{
-					std::cout << "Request read status: REQUEST_READ_CHUNKED\n";
+//					std::cout << "Request read status: REQUEST_READ_CHUNKED\n";
 					_request.setReadStatus(REQUEST_READ_CHUNKED);
 				}
 			}
@@ -111,8 +122,8 @@ public:
 				std::cout << "Request read status: REQUEST_READ_BODY\n";
 				_request.setReadStatus(REQUEST_READ_BODY);
 			}
-			else if(line.find("X-Secret-Header-For-Test: ") != std::string::npos){
-				if(line[line.size()-1] == '1')
+			else if(line.find("X-Secret-Header-For-Test: 1") != std::string::npos){
+//				if(line[line.size()-1] == '1')
 					_request.setIsXSecretHeader(true);
 				std::cout << "X-Secret-Header\n";
 			}
@@ -141,7 +152,7 @@ public:
 			_request.setHTTPVersion(str);
 	}
 	void parseRequestBody(){}
-	void parseRequestBodyChunked()
+	void parseRequestBodyChunked(std::ofstream * file)
 	{
 		std::string tmp;
 		size_t pos;
@@ -165,10 +176,14 @@ public:
 					return;
 
 //				std::cout << "\n\nnew chunk size HEX: " << tmp.substr(0, pos) << "\n";
+//				if(_request.isCgi() && _request.getType() == "POST")
+//					*file << "\n\nnew chunk size HEX: " << tmp.substr(0, pos) << "\n";
 				// converting request chunk size from HEX-string to DEC-long
 				ssize_t tmpChunkSize;
 				std::istringstream(tmp.substr(0, pos)) >> std::hex >> tmpChunkSize;
 //				std::cout << "new chunk size DEC: " << tmpChunkSize << "\n";
+//				if(_request.isCgi() && _request.getType() == "POST")
+//					*file << "new chunk size DEC: " << tmpChunkSize << "\n";
 				_request.setChunkSize(tmpChunkSize);
 				tmp.erase(0,pos + 2);
 				_request.setBuffer(tmp);
@@ -191,8 +206,12 @@ public:
 					if(_request.getChunkSize() == 0){
 //						_request.setLastChunkStatus(true);
 						_request.setReadStatus(REQUEST_READ_COMPLETE);
-						std::cout <<  "written:" << _request.getCounter() << "\n";
-						std::cout << "Request read status: REQUEST_READ_COMPLETE\n";
+//						std::cout <<  "written:" << _request.getCounter() << "\n";
+//						std::cout << _request.getRequestId() << " request read status: REQUEST_READ_COMPLETE\n";
+//						if(_request.isCgi() && _request.getType() == "POST") {
+//							*file << "written:" << _request.getCounter() << "\n";
+//							*file << _request.getRequestId() << " request read status: REQUEST_READ_COMPLETE\n";
+//						}
 					}
 					else
 					{
@@ -200,7 +219,13 @@ public:
 						// export chunkBuffer
 //						std::cout << "chunk complete! chunkBufferSize:" << _request.getBufferChunk().size() << "\n" ;
 						_request.setCounter(_request.getCounter() + _request.getBufferChunk().size());
-//						std::cout << "BufferSize:" << _request.getBuffer().size() << "\n" ;
+//						std::cout << "chunks: read: " << _request.getCounter() << " max body size: " << _request.getMaxBodySize() <<  "\n";
+						if(_request.getMaxBodySize() >= 0 && ((ssize_t)_request.getCounter() > _request.getMaxBodySize()))
+						{
+							_request.setIsOverMaxBodySize(true);
+							std::cout << RED << "OverMaxBobySize!" << WHITE << "\n";
+						}
+//						std::cout << "BufferSize:" << _request.getBuffer().size() << "\n";
 						exportChunk();
 					}
 					// clean chunkBuffer
@@ -221,14 +246,17 @@ public:
 		if(!_request.isCgi())
 		{
 			std::ofstream outFile;
-//		std::cout << "writing chunk to:" << _request.getFullPath() << "\n";
 			outFile.open(_request.getFullPath(), std::ios::app);
 			outFile << _request.getBufferChunk();
 			outFile.close();
 		}
 		else
 		{
+//			std::ofstream file;
+//			file.open("tmp/log/req_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::app);
+//			file << _request.getBufferChunk();
 			imitateCgi();
+//			file.close();
 		}
 	}
 
@@ -237,8 +265,14 @@ public:
 			std::string in = _request.getBufferChunk();
 	//		std::cout << "writing chunk to:" << _request.getFullPath() << "\n";
 			outFile.open(_response.getCgiResFileName(), std::ios::app);
-			for(size_t i=0;i < in.size(); i++){
-				outFile << (char)toupper(in[i]);
+			for(size_t i=0;i < in.size(); i++)
+			{
+				if(_request.isXSecretHeader())
+				{
+					outFile << "1";
+				}
+				else
+					outFile << (char)toupper(in[i]);
 			}
 			outFile.close();
 	}
@@ -258,7 +292,7 @@ public:
 		}
 		if(_request.getOptionFileExtension() == "bla"){
 			_request.setIsCgi(true);
-			std::cout << "!!!CGI!!!\n";
+//			std::cout << "!!!CGI!!!\n";
 		}
 		if(_request.isCgi()){
 			std::stringstream fileName;
@@ -273,7 +307,7 @@ public:
 		}
 		if((_request.getType() == "PUT" || _request.getType() == "POST") && !_request.isDirectory() && !_request.isCgi())
 		{
-			std::cout << "analyse request: POST/PUT: writing to file";
+//			std::cout << "analyse request: POST/PUT: writing to file";
 			std::fstream outFile;
 			outFile.open((_request.getFullPath()), std::ios::out | std::ios::trunc);
 			if(!outFile.is_open())
@@ -317,11 +351,11 @@ public:
 		for(;it != itEnd; it++){
 			if(filePath.find(it->getDirectoryName()) == 0)
 			{
-				std::cout << "path found in config: " << it->getDirectoryName() << "\n";
+//				std::cout << "path found in config: " << it->getDirectoryName() << "\n";
 				_response.setPathIsAvailable(true);
 				pos = it->getDirectoryAllowedMethods().find(_request.getType());
 				if(pos != std::string::npos || (_request.getType() == "POST" && _request.getOptionFileExtension() == "bla")){
-					std::cout << "Method is allowed\n";
+//					std::cout << "Method is allowed\n";
 					_response.setMethodIsAllowed(true);
 				}
 				filePath.erase(0,it->getDirectoryName().size());
@@ -333,6 +367,12 @@ public:
 				else{
 					_request.setFullPath(filePath);
 				}
+//				std::cout << "for this dir maxBosySize: " << it->getMaxBodySize() << "\n";
+				if(it->getMaxBodySize() >= 0)
+				{
+					std::cout << "MAX Body Size! "<< it->getMaxBodySize() << "\n";
+					_request.setMaxBodySize(it->getMaxBodySize());
+				}
 				break;
 			}
 		}
@@ -343,7 +383,7 @@ public:
 			if( stat(_request.getFullPath().c_str(),&s) == 0 && (s.st_mode & S_IFDIR))
 			{
 				_request.setIsDirectory(true);
-				std::cout << "analyse request: file is DIRECTORY\n";
+//				std::cout << "analyse request: file is DIRECTORY\n";
 			}
 		}
 		// split to file and path
@@ -354,22 +394,23 @@ public:
 			filePath = _request.getFullPath().substr(0, pos + 1);
 			_request.setOptionPath(filePath);
 			_request.setOptionFileName(fileName);
-			std::cout << "filename: " << fileName << " | filepath: " << filePath << "\n";
+//			std::cout << "filename: " << fileName << " | filepath: " << filePath << "\n";
 			pos = fileName.find_last_of('.');
 			if(pos != std::string::npos)
 			{
 				_request.setOptionFileExtension(fileName.substr(pos + 1, fileName.size() - pos));
-				std::cout << "extension: " << _request.getOptionFileExtension() << "\n";
+//				std::cout << "extension: " << _request.getOptionFileExtension() << "\n";
 			}
 		}
 		if(_request.getType() == "POST" && _request.getOptionFileExtension() == "bla"){
-			std::cout << "Method is allowed\n";
+//			std::cout << "Method is allowed\n";
 			_response.setMethodIsAllowed(true);
 		}
 	}
 
 	void generateResponse()
 	{
+		static int counterForFile = 0;
 		std::fstream inputFile;
 		std::string bufResp;
 		std::string body;
@@ -385,6 +426,8 @@ public:
 			bufResp = "HTTP/1.1 404 Not found\n";
 		else if(!_response.isMethodIsAllowed())
 			bufResp = "HTTP/1.1 405 Method Not Allowed\n";
+		else if(_request.isOverMaxBodySize())
+			bufResp = "HTTP/1.1 413 Payload Too Large\n";
 		else
 			bufResp = "HTTP/1.1 200 OK\r\n";
 
@@ -409,7 +452,7 @@ public:
 			bufResp += std::to_string((unsigned  long long )body.size());
 			bufResp +="\n";
 			bufResp += "Content-Type: ";
-			std::cout << "genResp: path: " << _request.getFullPath() << "\n";
+//			std::cout << "genResp: path: " << _request.getFullPath() << "\n";
 			//choosing type
 			if(_request.getOptionFileExtension() == "html")
 				bufResp += "text/html";
@@ -418,7 +461,7 @@ public:
 		}
 		else
 		{
-			if(_request.isCgi() && _request.getType() == "POST")
+			if(_request.isCgi() && _request.getType() == "POST" && !_request.isOverMaxBodySize())
 			{
 				body = readCgiRes();
 			}
@@ -428,8 +471,15 @@ public:
 		bufResp += "\n\n";
 		if(_request.getType() != "HEAD" && !body.empty())
 			bufResp += body;
-//		std::cout << GREEN << bufResp << WHITE;
+//		std::cout << GREEN << bufResp.substr(bufResp.size() - 10,bufResp.size() - 1) << WHITE;
 		allocateResponse(bufResp);
+//		if(_request.isCgi() && _request.getType() == "POST" && !_request.isOverMaxBodySize())	{
+//			std::ofstream logfile;
+//			logfile.open("tmp/log/resp_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::trunc);
+//			logfile << bufResp;
+//			logfile.close();
+//			counterForFile++;
+//		}
 //		_response.setResponse(response);
 		_status = WRITING;
 		inputFile.close();
@@ -459,12 +509,12 @@ public:
 			return;
 		}
 		_response.addBytesSent(ret);
-		std::cout << "sent: " << _response.getBytesSent() << "/ size: " << _response.getResponseSize() <<  "\n";
+//		std::cout << "sent: " << _response.getBytesSent() << "/ size: " << _response.getResponseSize() <<  "\n";
 		if(_response.getBytesSent() == (size_t)_response.getResponseSize())
 		{
 			if(_response.toCloseTheConnection())
 			{
-				std::cout << "connection will close!!\n";
+//				std::cout << "connection will close!!\n";
 				setStatus(CLOSING);
 			}
 			else
@@ -484,3 +534,4 @@ public:
 		return (str.str());
 	}
 };
+

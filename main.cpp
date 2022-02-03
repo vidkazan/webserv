@@ -4,15 +4,17 @@
 void configFileImitation(Webserv & webserv){
 	// generate servers
 	std::vector<ListenSocketConfigDirectory> dirs;
-	ListenSocketConfigDirectory dir1("/", "GET", "www/");
+	ListenSocketConfigDirectory dir1("/", "GET", "www/",-1);
 	dirs.push_back(dir1);
-	ListenSocketConfigDirectory dir2("/directory", "GET", "www/YoupiBanane/");
+	ListenSocketConfigDirectory dir2("/directory", "GET", "www/YoupiBanane/",-1);
 	dirs.push_back(dir2);
-	ListenSocketConfigDirectory dir6("/directory/nop", "GET", "www/YoupiBanane/nop/");
+	ListenSocketConfigDirectory dir3("/post_body", "POST", "www/post_body",100);
+	dirs.push_back(dir3);
+	ListenSocketConfigDirectory dir6("/directory/nop", "GET", "www/YoupiBanane/nop/",-1);
 	dirs.push_back(dir6);
-	ListenSocketConfigDirectory dir8("/directory/Yeah", "GET", "www/YoupiBanane/Yeah/");
+	ListenSocketConfigDirectory dir8("/directory/Yeah", "GET", "www/YoupiBanane/Yeah/",-1);
 	dirs.push_back(dir8);
-	ListenSocketConfigDirectory dir9("/put_test", "PUT", "www/put_test/");
+	ListenSocketConfigDirectory dir9("/put_test", "PUT", "www/put_test/",-1);
 	dirs.push_back(dir9);
 	std::sort(dirs.begin(), dirs.end()); //vector must be sorted
 	ListenSocketConfig config1(dirs, 2000, "127.0.0.1");
@@ -79,7 +81,7 @@ int main()
 			// finding a write event in client sockets array
 			if(FD_ISSET(it->getSocketFd(), &writefds))
 			{
-				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
+//				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
 				it->sendResponse();
 			}
 		}

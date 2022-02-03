@@ -6,7 +6,7 @@ HDRS = Webserv.hpp main.hpp ListenSocketConfigDirectory.hpp ListenSocketConfig.h
 
 OBJS = $(SRCS:.cpp=.o)
 
-FLAGS = -O3 -std=c++98 -Wno-c++11-compat-deprecated-writable-strings -Wall -Wextra -Werror
+FLAGS = -O3 -std=c++98 -Wno-c++11-compat-deprecated-writable-strings
 
 COMP = c++
 
