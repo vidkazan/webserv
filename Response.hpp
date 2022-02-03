@@ -15,10 +15,21 @@ private:
 	int _outputFileFd;
 	int _inputFileFd;
 	bool _fileIsFound;
+	bool _toCloseTheConnection;
 	std::string _cgiResFileName;
 public:
-	Response() : _bytesSent(0),_response(nullptr), _responseSize(-1), _pathIsAvailable(false), _requestIsValid(true), _methodIsAllowed(false), _outputFileFd(-1), _inputFileFd(-1), _fileIsFound(false){
-	};
+	Response() : _bytesSent(0),\
+				_response(nullptr), \
+				_responseSize(-1), \
+				_pathIsAvailable(false), \
+				_requestIsValid(true), \
+				_methodIsAllowed(false), \
+				_outputFileFd(-1), \
+				_inputFileFd(-1), \
+				_fileIsFound(false),\
+				_toCloseTheConnection(false){};
+	bool toCloseTheConnection(){return _toCloseTheConnection;}
+	void setToCloseTheConnection(bool to){_toCloseTheConnection = to;}
 	void setCgiResFileName(const std::string & name){_cgiResFileName = name;};
 	std::string getCgiResFileName(){
 		return _cgiResFileName;

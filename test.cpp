@@ -10,6 +10,8 @@ int main(){
 	env[0] = "REQUEST_METHOD=POST";
 	env[1] = "SERVER_PROTOCOL=HTTP/1.1";
 	env[2] = "PATH_INFO=youpi.bla";
+	env[3] = "X-Secret-Header-For-Test=1";
+	env[4] = 0;
 	char** av = (char **)malloc(sizeof (char *) * 5);
 	av[0] = "cgi_tester";
 	av[1] = 0;
@@ -25,4 +27,5 @@ int main(){
 	else
 	{
 		wait(0);
+	}
 }

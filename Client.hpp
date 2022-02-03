@@ -42,7 +42,7 @@ public:
 		if(_request.getReadStatus() == REQUEST_READ_HEADER)
 		{
 			parseRequestHeader();
-			printRequestInfo();
+//			printRequestInfo();
 		}
 		if(_request.getReadStatus() == REQUEST_READ_CHUNKED)
 			parseRequestBodyChunked();
@@ -72,6 +72,7 @@ public:
 		std::string tmp;
 		std::string line;
 		size_t pos;
+		std::cout << _request.getBuffer() << "\n";
 		while(true)
 		{
 			if(_request.getBuffer().find("\r\n") == 0)
@@ -109,6 +110,15 @@ public:
 				_request.setContentLength(std::stoi(line));
 				std::cout << "Request read status: REQUEST_READ_BODY\n";
 				_request.setReadStatus(REQUEST_READ_BODY);
+			}
+			else if(line.find("X-Secret-Header-For-Test: ") != std::string::npos){
+				if(line[line.size()-1] == '1')
+					_request.setIsXSecretHeader(true);
+				std::cout << "X-Secret-Header\n";
+			}
+			else if(line.find("Connection: close") != std::string::npos){
+				std::cout << "Connection: close found!\n";
+				_response.setToCloseTheConnection(true);
 			}
 			tmp = _request.getBuffer();
 			_request.setBuffer(tmp.erase(0, pos + 1));
@@ -452,9 +462,15 @@ public:
 		std::cout << "sent: " << _response.getBytesSent() << "/ size: " << _response.getResponseSize() <<  "\n";
 		if(_response.getBytesSent() == (size_t)_response.getResponseSize())
 		{
+			if(_response.toCloseTheConnection())
+			{
+				std::cout << "connection will close!!\n";
+				setStatus(CLOSING);
+			}
+			else
+				setStatus(READING);
 			Response response;
 			setResponse(response);
-			setStatus(READING);
 		}
 	}
 

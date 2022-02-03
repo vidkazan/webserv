@@ -16,6 +16,7 @@ private:
 	ssize_t _chunkSize;
 	bool _isCgi;
 	bool _isDirectory;
+	bool _isXSecretHeader;
 	size_t _count;
 	std::string _optionPath;
 	std::string _optionFileName;
@@ -34,6 +35,7 @@ public:
 				_chunkSize(-1), \
 				_isCgi(0), \
 				_isDirectory(0), \
+				_isXSecretHeader(0), \
 				_count(0){};
 	virtual ~Request()
 	{
@@ -50,8 +52,12 @@ public:
 
 	std::string getHost() const {return  _host;};
 	std::string getHTTPVersion(){return  _httpVersion;};
+	bool isXSecretHeader(){return _isXSecretHeader;}
 	bool isCgi(){return _isCgi;}
+
 	bool isDirectory(){return _isDirectory;}
+	void setIsXSecretHeader(bool x){_isXSecretHeader = x;}
+
 	void setIsCgi(bool cgi){_isCgi = cgi;}
 	void setIsDirectory(bool dir){_isDirectory = dir;}
 	void setBuffer(const std::string & req){
