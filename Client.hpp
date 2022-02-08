@@ -58,6 +58,7 @@ public:
 		}
 		file.close();
 	}
+
 	
 	void recvBuffer(std::ofstream * file){
 		ssize_t ret;
