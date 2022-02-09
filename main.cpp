@@ -10,6 +10,8 @@ void configFileImitation(Webserv & webserv){
 	dirs.push_back(dir2);
 	ListenSocketConfigDirectory dir3("/post_body", "POST", "www/post_body",100);
 	dirs.push_back(dir3);
+	ListenSocketConfigDirectory dir4("/upload", "POST", "www/upload",-1);
+	dirs.push_back(dir4);
 	ListenSocketConfigDirectory dir6("/directory/nop", "GET", "www/YoupiBanane/nop/",-1);
 	dirs.push_back(dir6);
 	ListenSocketConfigDirectory dir8("/directory/Yeah", "GET", "www/YoupiBanane/Yeah/",-1);

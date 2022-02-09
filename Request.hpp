@@ -5,7 +5,7 @@
 class Request{
 private:
 	// header
-	unsigned short _id;
+	short _id;
 	std::string _type;
 	std::string _option;
 	std::string _httpVersion;
@@ -27,7 +27,8 @@ private:
 	std::string _optionFileExtension;
 	std::string _fullPath;
 public:
-	Request(): _type(""),\
+	Request():	_id(0), \
+				_type(""),\
 				_option(""),\
 				_httpVersion(""),\
 				_host(""),\
@@ -43,10 +44,13 @@ public:
 				_isOverMaxBodySize(0), \
 				_maxBodySize(-1), \
 				_count(0)
-				{
-			_id = rand() + 33000;
-//			std::cout << "request id: " << _id << "\n";
-				};
+	{
+		while(_id < 1)
+		{
+			_id = rand();
+		}
+	};
+
 	virtual ~Request(){}
 	short getRequestId(){return _id;};
 	const std::string & getBuffer() const {return _buffer;};
@@ -71,12 +75,13 @@ public:
 		this->cleanBuffer();
 		_buffer = req;
 	};
+	void appendBuffer(char *str, size_t size){
+		_buffer.append(str, size);
+	}
 	void setBufferChunk(const std::string & buf){
-		_bufferChunk.erase();
 		_bufferChunk = buf;
 	};
 	void setBody(const std::string & body){
-		_body.clear();
 		_body = body;
 	};
 	void setType(const std::string & type){_type = type;};
