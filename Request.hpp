@@ -5,7 +5,7 @@
 class Request{
 private:
 	// header
-	unsigned short _id;
+	short _id;
 	std::string _type;
 	std::string _option;
 	std::string _httpVersion;
@@ -13,9 +13,11 @@ private:
 	std::string _body;
 	std::string _buffer;
 	std::string _bufferChunk;
+	std::string _multiPartFileName;
 	int _readStatus;
 	ssize_t _contentLength;
 	ssize_t _chunkSize;
+	bool _isMultiPart;
 	bool _isCgi;
 	bool _isDirectory;
 	bool _isXSecretHeader;
@@ -27,7 +29,8 @@ private:
 	std::string _optionFileExtension;
 	std::string _fullPath;
 public:
-	Request(): _type(""),\
+	Request():	_id(0), \
+				_type(""),\
 				_option(""),\
 				_httpVersion(""),\
 				_host(""),\
@@ -37,21 +40,25 @@ public:
 				_readStatus(REQUEST_READ_WAITING_FOR_HEADER), \
 				_contentLength(-1), \
 				_chunkSize(-1), \
+				_isMultiPart(0), \
 				_isCgi(0), \
 				_isDirectory(0), \
 				_isXSecretHeader(0), \
 				_isOverMaxBodySize(0), \
 				_maxBodySize(-1), \
 				_count(0)
-				{
-			_id = rand() + 33000;
-//			std::cout << "request id: " << _id << "\n";
-				};
+	{
+		while(_id < 1){
+			_id = rand();
+		}
+	};
+
 	virtual ~Request(){}
 	short getRequestId(){return _id;};
 	const std::string & getBuffer() const {return _buffer;};
 	const std::string & getBufferChunk() const {return _bufferChunk;};
 	std::string getBody(){return _body;};
+	std::string getMultiPartFileName(){return _multiPartFileName;};
 	std::string getType() const {return  _type;};
 	std::string getOption() const {return  _option;};
 	std::string getOptionPath() const {return  _optionPath;};
@@ -60,10 +67,12 @@ public:
 	std::string getHost() const {return  _host;};
 	std::string getHTTPVersion(){return  _httpVersion;};
 	bool isXSecretHeader(){return _isXSecretHeader;}
+	bool isMultiPart(){return _isMultiPart;}
 	bool isCgi(){return _isCgi;}
 	bool isOverMaxBodySize(){return _isOverMaxBodySize;}
 	bool isDirectory(){return _isDirectory;}
 	void setIsXSecretHeader(bool x){_isXSecretHeader = x;}
+	void setIsMultiPart(bool x){_isMultiPart = x;}
 	void setIsCgi(bool cgi){_isCgi = cgi;}
 	void setIsOverMaxBodySize(bool is){ _isOverMaxBodySize = is;}
 	void setIsDirectory(bool dir){_isDirectory = dir;}
@@ -71,12 +80,16 @@ public:
 		this->cleanBuffer();
 		_buffer = req;
 	};
+	void appendBuffer(char *str, size_t size){
+		_buffer.append(str, size);
+	}
 	void setBufferChunk(const std::string & buf){
-		_bufferChunk.erase();
 		_bufferChunk = buf;
 	};
+	void setMultiPartFileName(const std::string & name){
+		_multiPartFileName = name;
+	};
 	void setBody(const std::string & body){
-		_body.clear();
 		_body = body;
 	};
 	void setType(const std::string & type){_type = type;};
