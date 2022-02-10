@@ -35,14 +35,18 @@ public:
 		std::ofstream file;
 		file.open("tmp/log/fullReq_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::app);
 		recvBuffer(&file);
-		if(_request.getBuffer().find("\r\n\r\n") != std::string::npos && _request.getReadStatus() == REQUEST_READ_WAITING_FOR_HEADER)
+		if(_request.getBuffer().find("\r\n\r\n") != std::string::npos && _request.getReadStatus() == REQUEST_READ_WAITING_FOR_HEADER) {
+			file << _request.getBuffer() << "\n";
 			_request.setReadStatus(REQUEST_READ_HEADER);
+		}
 		if(_request.getReadStatus() == REQUEST_READ_HEADER)
 			parseRequestHeader(&file);
 		if(_request.getReadStatus() == REQUEST_READ_CHUNKED)
 			parseRequestBodyChunked(&file);
-		else if(_request.getReadStatus() == REQUEST_READ_BODY)
+		if(_request.getReadStatus() == REQUEST_READ_BODY)
 			parseRequestBody(&file);
+		if(_request.getReadStatus() == REQUEST_READ_MULTIPART)
+			parseRequestMultiPart(&file);
 		if(_request.getReadStatus() == REQUEST_READ_COMPLETE)
 			_status = WRITING;
 		file.close();
@@ -63,7 +67,6 @@ public:
 //		if(_request.getType() == "POST")
 //			*file<< "\n" << _request.getBuffer() << "\n\n"  << "buffer size: " << _request.getBuffer().size() << "\n";
 	}
-
 	void parseRequestHeader(std::ofstream * file)
 	{
 		std::string tmp;
@@ -76,11 +79,11 @@ public:
 			{
 				tmp = _request.getBuffer();
 				_request.setBuffer(tmp.erase(0, 2));
-				if (_request.getReadStatus() != REQUEST_READ_BODY && _request.getReadStatus() != REQUEST_READ_CHUNKED){
+				if (_request.getReadStatus() != REQUEST_READ_BODY && _request.getReadStatus() != REQUEST_READ_CHUNKED && _request.getReadStatus() != REQUEST_READ_MULTIPART){
 					_request.setReadStatus(REQUEST_READ_COMPLETE);
 					analyseRequest(file);
 				}
-				else if(_request.getReadStatus() == REQUEST_READ_BODY || _request.getReadStatus() == REQUEST_READ_CHUNKED)
+				else if(_request.getReadStatus() == REQUEST_READ_BODY || _request.getReadStatus() == REQUEST_READ_CHUNKED || _request.getReadStatus() == REQUEST_READ_MULTIPART)
 					analyseRequest(file);
 				return;
 			}
@@ -107,9 +110,11 @@ public:
 			else if(line.find("Content-Length: ") != std::string::npos){
 				line.erase(0, 15);
 				_request.setContentLength(std::stol(line));
-				if(_request.getType() == "POST")
-					*file << "Request read status: REQUEST_READ_BODY\n";
-				_request.setReadStatus(REQUEST_READ_BODY);
+				if(_request.getReadStatus() != REQUEST_READ_MULTIPART) {
+					if(_request.getType() == "POST")
+						*file << "Request read status: REQUEST_READ_BODY\n";
+					_request.setReadStatus(REQUEST_READ_BODY);
+				}
 			}
 			else if(line.find("X-Secret-Header-For-Test: 1") != std::string::npos){
 //				if(line[line.size()-1] == '1')
@@ -119,6 +124,12 @@ public:
 			else if(line.find("Connection: close") != std::string::npos){
 				std::cout << "Connection will be closed!\n";
 				_response.setToCloseTheConnection(true);
+			}
+			else if(line.find("Content-Type: multipart/form-data; boundary=----WebKitFormBoundary") != std::string::npos)
+			{
+				_request.setIsMultiPart(true);
+				_request.setReadStatus(REQUEST_READ_MULTIPART);
+				*file << "Request read status: REQUEST_READ_MULTIPART\n";
 			}
 			tmp = _request.getBuffer();
 			_request.setBuffer(tmp.erase(0, pos + 1));
@@ -141,6 +152,7 @@ public:
 	}
 	void parseRequestBody(std::ofstream * file)
 	{
+		std::cout << "parseBody" << "\n";
 		if(_request.getType() == "POST")
 			*file << "Parse Body: " << "content length: " << _request.getContentLength() << " buffer size: " << _request.getBuffer().size() << "\n";
 		_request.setContentLength(_request.getContentLength() - _request.getBuffer().size());
@@ -151,6 +163,43 @@ public:
 			outFile << _request.getBuffer();
 			outFile.close();
 		}
+		_request.setBuffer("");
+		if(_request.getContentLength() == 0)
+		{
+//			std::cout << _request.getRequestId() << " request read status: REQUEST_READ_COMPLETE\n";
+			_request.setReadStatus(REQUEST_READ_COMPLETE);
+		}
+	}
+	void parseRequestMultiPart(std::ofstream * file)
+	{
+		if(_request.getMultiPartFileName().empty())
+		{
+			size_t pos = _request.getBuffer().find("\r\n\r\n");
+			if(pos == std::string::npos)
+				return;
+			_request.setContentLength(_request.getContentLength() - _request.getBuffer().size());
+			std::string header = _request.getBuffer().substr(0, pos);
+			_request.setBuffer(_request.getBuffer().substr(pos + 4, _request.getBuffer().size() - 1));
+			pos = header.find("filename=\"");
+			header = header.substr(pos + 10, header.size() - 1);
+			pos = header.find('\"');
+			_request.setMultiPartFileName(header.substr(0,pos));
+			_request.setFullPath(_request.getFullPath() + _request.getMultiPartFileName());
+		}
+		else
+		{
+			_request.setContentLength(_request.getContentLength() - _request.getBuffer().size());
+		}
+		*file << "Parse Body: " << "content length: " << _request.getContentLength() << " buffer size: " << _request.getBuffer().size() << "\n";
+		size_t pos = _request.getBuffer().find("------WebKitFormBoundary");
+		if((pos != std::string::npos) && _request.getContentLength() == 0)
+		{
+			_request.setBuffer(_request.getBuffer().substr(0, pos - 1));
+		}
+		std::ofstream outFile;
+		outFile.open(_request.getFullPath(), std::ios::app);
+		outFile << _request.getBuffer();
+		outFile.close();
 		_request.setBuffer("");
 		if(_request.getContentLength() == 0)
 		{
@@ -297,17 +346,20 @@ public:
 		}
 		if((_request.getType() == "PUT" || _request.getType() == "POST") && !_request.isDirectory() && !_request.isCgi())
 		{
-			*file << "analyse request: POST/PUT: trunc file";
+			std::cout << "analyse request: POST/PUT: trunc file\n";
 			std::fstream outFile;
 			outFile.open((_request.getFullPath()), std::ios::out | std::ios::trunc);
 			if(!outFile.is_open())
-				std::cout << _request.getFullPath()  << " : error\n";
+			{
+				std::cout << _request.getFullPath() << " : error\n";
+			}
 			else
 			{
 				_response.setFileIsFound(true);
 				outFile.close();
 			}
 		}
+
 		if(_request.getType() == "GET" && !_request.isDirectory() && !_request.isCgi())
 		{
 			std::fstream inFile;
@@ -317,7 +369,19 @@ public:
 			else
 			{
 				_response.setFileIsFound(true);
-				_request.setFullPath(_request.getFullPath());
+				inFile.close();
+			}
+		}
+		if(_request.getType() == "DELETE")
+		{
+			std::fstream inFile;
+			inFile.open((_request.getFullPath()),std::ios::in);
+			if(!inFile.is_open())
+				std::cout << _request.getFullPath() << " : error\n";
+			else
+			{
+				_response.setFileIsFound(true);
+				std::remove(_request.getFullPath().c_str());
 				inFile.close();
 			}
 		}
@@ -441,6 +505,14 @@ public:
 			if(_request.isCgi() && _request.getType() == "POST" && !_request.isOverMaxBodySize())
 			{
 				body = readCgiRes();
+			}
+			else if(_request.isMultiPart())
+			{
+				inputFile.open("www/uploadSuccess.html", std::ios::in);
+				std::stringstream buffer;
+				buffer << inputFile.rdbuf();
+				body = buffer.str();
+				body.replace(body.find("/fnm/"),5,_request.getMultiPartFileName());
 			}
 			bufResp += "Content-Length: ";
 			bufResp += std::to_string((unsigned  long long )body.size());
