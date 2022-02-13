@@ -9,7 +9,7 @@ private:
 	Response _response;
 	Request _request;
 public:
-	Client(int fd, const ServerConfig& config): _socketFD(fd), _status(READING), _serverConfig(config){
+	Client(int fd): _socketFD(fd), _status(READING){
 	};
 	~Client(){};
 	void printRequestInfo(){

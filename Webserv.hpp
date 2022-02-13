@@ -150,10 +150,10 @@ public:
 			exit(EXIT_FAILURE);
 		}
 	}
-//	void addClientSocket(int fd,const ServerConfig& config){
-//		Client clientSocket(fd, config);
-//		_clientSockets.push_back(clientSocket);
-//	}
+	void addClient(int fd){
+		Client client(fd);
+		_clients.push_back(client);
+	}
 };
 
 class Webserv {
