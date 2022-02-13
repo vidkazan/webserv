@@ -2,21 +2,21 @@
 
 #include "main.hpp"
 
-class ListenSocket;
+class Server;
 
-class	ListenSocketConfigDirectory{
+class	ServerConfigDirectory{
 private:
 	std::string _directoryName;
 	std::string _directoryAllowedMethods;
 	std::string _directoryPath;
 	ssize_t		_maxBodySize;
 public:
-	ListenSocketConfigDirectory(const std::string&directoryName, const std::string&directoryAllowedMethods,
+	ServerConfigDirectory(const std::string&directoryName, const std::string&directoryAllowedMethods,
 								const std::string&directoryPath, ssize_t bodySize) : _directoryName(directoryName),
 																   _directoryAllowedMethods(directoryAllowedMethods),
 																   _directoryPath(directoryPath), _maxBodySize(bodySize){}
 
-	virtual ~ListenSocketConfigDirectory(){}
+	 ~ServerConfigDirectory(){}
 
 	const std::string&getDirectoryName() const{
 		return _directoryName;
@@ -51,7 +51,7 @@ public:
 		return count;
 	}
 
-	bool operator<(ListenSocketConfigDirectory rhs) const
+	bool operator<(ServerConfigDirectory rhs) const
 	{
 		std::string subStr;
 		unsigned short countThis;
@@ -65,11 +65,11 @@ public:
 		else
 			return false;
 	}
-	bool operator>(ListenSocketConfigDirectory rhs) const
+	bool operator>(ServerConfigDirectory rhs) const
 	{
 		std::string subStr;
-		unsigned short countThis = 0;
-		unsigned short countRhs = 0;
+		unsigned short countThis;
+		unsigned short countRhs;
 		subStr = _directoryName;
 		countThis = countSlash(subStr);
 		subStr = rhs.getDirectoryName();

@@ -2,7 +2,7 @@ NAME = webserv
 
 SRCS =	main.cpp Webserv.cpp utils.cpp
 
-HDRS = Webserv.hpp main.hpp ListenSocketConfigDirectory.hpp ListenSocketConfig.hpp Request.hpp Response.hpp Client.hpp ListenSocket.hpp
+HDRS = Webserv.hpp main.hpp Server.hpp ServerConfig.hpp Request.hpp Response.hpp Client.hpp ServerDirectory.hpp
 
 OBJS = $(SRCS:.cpp=.o)
 

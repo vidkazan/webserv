@@ -5,11 +5,11 @@ class Client {
 private:
 	int _socketFD;
 	int _status;
-	ListenSocketConfig _serverConfig;
+	ServerConfig _serverConfig;
 	Response _response;
 	Request _request;
 public:
-	Client(int fd, const ListenSocketConfig& config): _socketFD(fd), _status(READING), _serverConfig(config){
+	Client(int fd, const ServerConfig& config): _socketFD(fd), _status(READING), _serverConfig(config){
 	};
 	~Client(){};
 	void printRequestInfo(){
@@ -396,8 +396,8 @@ public:
 		std::string fileName;
 		std::string filePath;
 		filePath = _request.getOption();
-		std::vector<ListenSocketConfigDirectory>::const_reverse_iterator it = _serverConfig.getDirectories().rbegin();
-		std::vector<ListenSocketConfigDirectory>::const_reverse_iterator itEnd = _serverConfig.getDirectories().rend();
+		std::vector<ServerConfigDirectory>::const_reverse_iterator it = _serverConfig.getDirectories().rbegin();
+		std::vector<ServerConfigDirectory>::const_reverse_iterator itEnd = _serverConfig.getDirectories().rend();
 		for(;it != itEnd; it++){
 			if(filePath.find(it->getDirectoryName()) == 0)
 			{
