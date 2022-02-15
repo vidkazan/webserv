@@ -1,9 +1,8 @@
 #include "main.hpp"
 
 
-void configFileImitation2(Webserv2 & webserv2){
-	// generate port servers
-
+void configFileImitation2(Webserv2 & webserv2)
+{
 	// generate servers
 	std::vector<VirtualServerConfigDirectory> dirs;
 	VirtualServerConfigDirectory dir1("/", "GET", "www/",-1);
@@ -24,10 +23,21 @@ void configFileImitation2(Webserv2 & webserv2){
 	dirs.push_back(dir8);
 	VirtualServerConfigDirectory dir9("/put_test", "PUT", "www/put_test/",-1);
 	dirs.push_back(dir9);
-	std::sort(dirs.begin(), dirs.end()); //vector must be sorted
-	VirtualServerConfig config1(dirs, 2000, "127.0.0.1", "serverName");
+	std::sort(dirs.begin(), dirs.end());
+
+	std::vector<VirtualServerConfigDirectory> dirs2;
+	VirtualServerConfigDirectory dir21("/", "GET", "www/",-1);
+	dirs2.push_back(dir21);
+	std::sort(dirs2.begin(), dirs2.end());
+
 	webserv2.addPortServer(2000, "127.0.0.1");
-	webserv2.getPortServers()[0].addVirtualServer(config1); // FIXME valid virt servers add missing
+
+	VirtualServerConfig virtualServConfig1(dirs, 2000, "127.0.0.1", "localhost:2000");
+	VirtualServerConfig virtualServConfig2(dirs2, 2000, "127.0.0.1", "pepe.com");
+	// searching port server by ip:port
+
+	webserv2.findPortServerForVirtualConfig(virtualServConfig1);
+	webserv2.findPortServerForVirtualConfig(virtualServConfig2);
 }
 
 void startMessage(){
@@ -111,7 +121,7 @@ int main()
 					exit(EXIT_FAILURE);
 				}
 				fcntl(fd, F_SETFL, O_NONBLOCK);
-				webserv2.addClient(fd);
+				webserv2.addClient(fd, it->getVirtualServers());
 			}
 		}
 		// checking all connections for closing

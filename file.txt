@@ -2,8 +2,6 @@
                    |
     Port Server(class PortServer)
                    |
-    Virtual Server(class VirtualServer)
-                   |
     Virtual Server Config(class VirtualServerConfig)
                    |
     Virtual Server Config Directory(class VirtualServerConfigDirectory)
@@ -17,7 +15,6 @@ ConfigFileParse:
 
 // going through conf #2:
 - for new ServerName with ip:port pair create VirtualServer instance
-- add VirtualServer to Port Server class
 
 // while Accept:
 - add PortServer to client class

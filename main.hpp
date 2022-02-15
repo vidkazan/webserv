@@ -38,12 +38,12 @@
 #define REQUEST_READ_COMPLETE 15
 
 void printLog(std::string description,std::string msg,std::string color);
-#include "ServerConfigDirectory.hpp"
-#include "ServerConfig.hpp"
+#include "VirtualServerConfigDirectory.hpp"
+#include "VirtualServerConfig.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Client.hpp"
-#include "Server.hpp"
+#include "PortServer.hpp"
 #include "Webserv.hpp"
 
 
