@@ -5,11 +5,12 @@ class Client {
 private:
 	int _socketFD;
 	int _status;
-	ListenSocketConfig _serverConfig;
+	std::vector<VirtualServerConfig> _virtualServers;
+	VirtualServerConfig _serverConfig;
 	Response _response;
 	Request _request;
 public:
-	Client(int fd, const ListenSocketConfig& config): _socketFD(fd), _status(READING), _serverConfig(config){
+	Client(int fd, std::vector<VirtualServerConfig> virtualServers): _socketFD(fd), _status(READING), _virtualServers(virtualServers) {
 	};
 	~Client(){};
 	void printRequestInfo(){
@@ -28,7 +29,8 @@ public:
 	const Response&getResponse() const{return _response;}
 	const Request&getRequest() const{return _request;}
 	int getSocketFd() const{return _socketFD;}
-	void setStatus(int status){_status = status;};
+	void setStatus(int status){_status = status;}
+	void setVirtualServerConfig(const VirtualServerConfig & conf){_serverConfig = conf;}
 	void setResponse(const Response&response){_response = response;}
 	void readRequest()
 	{
@@ -87,10 +89,10 @@ public:
 					analyseRequest(file);
 				return;
 			}
-			pos = _request.getBuffer().find('\n');
+			pos = _request.getBuffer().find("\n");
 			if(pos == std::string::npos)
 				return;
-			line = _request.getBuffer().substr(0,pos);
+			line = _request.getBuffer().substr(0,pos - 1); // (pos -1):  -1 is \r
 			if (_request.getType().empty() && !line.empty())
 				parseRequestTypeOptionVersion(line);
 			else if(line.find("Host: ") != std::string::npos){
@@ -301,7 +303,6 @@ public:
 			file.close();
 		}
 	}
-
 	void imitateCgi(){
 			std::ofstream outFile;
 			std::string in = _request.getBufferChunk();
@@ -318,14 +319,30 @@ public:
 			}
 			outFile.close();
 	}
-	void analyseRequest(std::ofstream * file){
-		// check validness
+	void findVirtualServer()
+	{
+		bool isFound = false;
+		std::vector<VirtualServerConfig>::iterator it = _virtualServers.begin();
+		for(; it != _virtualServers.end(); it++)
+		{
+			if(it->getServerName() == _request.getHost())
+			{
+				setVirtualServerConfig(*it);
+				isFound = true;
+				break;
+			}
+		}
+		std::cout << "findVirtualServer: virtServ is found: " << isFound << "\n";
+	}
+	void analyseRequest(std::ofstream * file)
+	{
 		if(_request.getType().empty() || _request.getOption().empty() || _request.getHTTPVersion().empty() || _request.getHost().empty() )
 		{
 			_response.setRequestIsValid(false);
 			std::cout << GREEN << "request isn't valid!\n" << WHITE;
 			return;
 		}
+		findVirtualServer();
 		analysePath(file);
 		if(!_response.isMethodIsAllowed() || !_response.isPathIsAvailable())
 			return;
@@ -387,17 +404,12 @@ public:
 		}
 	}
 	void analysePath(std::ofstream * file){
-		// FILE SEARCHING
-
-		// 2. Search path in config
-		// 3. Split filename to name and extension
-
 		size_t pos;
 		std::string fileName;
 		std::string filePath;
 		filePath = _request.getOption();
-		std::vector<ListenSocketConfigDirectory>::const_reverse_iterator it = _serverConfig.getDirectories().rbegin();
-		std::vector<ListenSocketConfigDirectory>::const_reverse_iterator itEnd = _serverConfig.getDirectories().rend();
+		std::vector<VirtualServerConfigDirectory>::const_reverse_iterator it = _serverConfig.getDirectories().rbegin();
+		std::vector<VirtualServerConfigDirectory>::const_reverse_iterator itEnd = _serverConfig.getDirectories().rend();
 		for(;it != itEnd; it++){
 			if(filePath.find(it->getDirectoryName()) == 0)
 			{
