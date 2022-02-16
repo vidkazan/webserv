@@ -5,43 +5,36 @@ void configFileImitation2(Webserv2 & webserv2)
 {
 	// generate servers
 	std::vector<VirtualServerConfigDirectory> dirs;
-	VirtualServerConfigDirectory dir1("/", "GET", "www/",-1);
+	VirtualServerConfigDirectory dir1("/", "GET", "www/","/index.html",-1);
 	dirs.push_back(dir1);
-	VirtualServerConfigDirectory dir2("/directory", "GET", "www/YoupiBanane/",-1);
+	VirtualServerConfigDirectory dir2("/directory", "GET", "www/YoupiBanane/","",-1);
 	dirs.push_back(dir2);
-	VirtualServerConfigDirectory dir3("/post_body", "POST", "www/post_body",100);
+	VirtualServerConfigDirectory dir3("/post_body", "POST", "www/post_body","",100);
 	dirs.push_back(dir3);
-	VirtualServerConfigDirectory dir4("/upload", "POST", "www/upload",-1);
+	VirtualServerConfigDirectory dir4("/upload", "POST", "www/upload","",-1);
 	dirs.push_back(dir4);
-	VirtualServerConfigDirectory dir5("/files", "GET", "www/upload",-1);
+	VirtualServerConfigDirectory dir5("/files", "GET", "www/upload","",-1);
 	dirs.push_back(dir5);
-	VirtualServerConfigDirectory dir6("/directory/nop", "GET", "www/YoupiBanane/nop/",-1);
+	VirtualServerConfigDirectory dir6("/directory/nop", "GET", "www/YoupiBanane/nop/","",-1);
 	dirs.push_back(dir6);
-	VirtualServerConfigDirectory dir7("/delete", "DELETE", "www/upload",-1);
+	VirtualServerConfigDirectory dir7("/delete", "DELETE", "www/upload","",-1);
 	dirs.push_back(dir7);
-	VirtualServerConfigDirectory dir8("/directory/Yeah", "GET", "www/YoupiBanane/Yeah/",-1);
+	VirtualServerConfigDirectory dir8("/directory/Yeah", "GET", "www/YoupiBanane/Yeah/","",-1);
 	dirs.push_back(dir8);
-	VirtualServerConfigDirectory dir9("/put_test", "PUT", "www/put_test/",-1);
+	VirtualServerConfigDirectory dir9("/put_test", "PUT", "www/put_test/","",-1);
 	dirs.push_back(dir9);
 	std::sort(dirs.begin(), dirs.end());
+	VirtualServerConfig virtualServConfig1(dirs, 2001, "127.0.0.1", "localhost:2001");
 
-	std::vector<VirtualServerConfigDirectory> dirs2;
-	VirtualServerConfigDirectory dir21("/", "GET", "www/",-1);
-	dirs2.push_back(dir21);
-	std::sort(dirs2.begin(), dirs2.end());
+	webserv2.addPortServer(2001, "127.0.0.1");
 
-	webserv2.addPortServer(2000, "127.0.0.1");
-
-	VirtualServerConfig virtualServConfig1(dirs, 2000, "127.0.0.1", "localhost:2000");
-	VirtualServerConfig virtualServConfig2(dirs2, 2000, "127.0.0.1", "pepe.com");
-	// searching port server by ip:port
-
-	webserv2.findPortServerForVirtualConfig(virtualServConfig1);
-	webserv2.findPortServerForVirtualConfig(virtualServConfig2);
+	webserv2.addVirtualServer(virtualServConfig1);
 }
 
 void startMessage(){
-	printLog("", "______________________________________________________________|\n|_________________________SERVER START_________________________|\n|______________________________________________________________", GREEN);
+	printLog("", "______________________________________________________________|\n"
+				 			   "|_________________________SERVER START_________________________|\n"
+							   "|______________________________________________________________", GREEN);
 }
 
 int main()

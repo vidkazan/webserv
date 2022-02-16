@@ -28,8 +28,5 @@ public:
 	int getPort(){return _port;}
 	std::string getIp(){return _ip;}
 	std::vector<VirtualServerConfig> & getVirtualServers(){return _virtualServers;}
-	void addVirtualServer(const VirtualServerConfig & config)
-	{
-		_virtualServers.push_back(config);
-	}
+	void addVirtualServer(const VirtualServerConfig & config){_virtualServers.push_back(config);}
 };

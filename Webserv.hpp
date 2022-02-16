@@ -26,7 +26,7 @@ public:
 		Client client(fd, virtualServers);
 		_clients.push_back(client);
 	}
-	void findPortServerForVirtualConfig(VirtualServerConfig & conf)
+	void addVirtualServer(VirtualServerConfig & conf)
 	{
 		for(std::vector<PortServer>::iterator it1 = _portServers.begin();it1 != _portServers.end(); it1++)
 		{
