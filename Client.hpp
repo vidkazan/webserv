@@ -59,7 +59,7 @@ public:
 		bzero(&buf, 100000);
 		ret = recv(_socketFD, &buf, 99999, 0);
 		if (ret == -1 || ret == 0){
-			*file << "fd " << _socketFD << " status: closing\n";
+//			std::cout << "fd " << _socketFD << " status: closing\n";
 			_status = CLOSING;
 			return;
 		}
@@ -345,7 +345,9 @@ public:
 		findVirtualServer();
 		analysePath(file);
 		if(!_response.isMethodIsAllowed() || !_response.isPathIsAvailable())
+		{
 			return;
+		}
 		if(_request.getOptionFileExtension() == "bla"){
 			_request.setIsCgi(true);
 			*file << "is CGI\n";
@@ -420,12 +422,16 @@ public:
 					*file << "Method is allowed\n";
 					_response.setMethodIsAllowed(true);
 				}
+				// FIXME check redirections - tester not works with redirections
+				if(!it->getDirectoryRedirect().empty() && it->getDirectoryName() == _request.getOption())
+				{
+					std::cout << "redirects: " << it->getDirectoryRedirect() << " " << _request.getOption() << "\n";
+					_request.setRedirect(it->getDirectoryRedirect());
+					return;
+				}
 				filePath.erase(0,it->getDirectoryName().size());
 				filePath.insert(0,it->getDirectoryPath());
-				if(_request.getOption() == "/" && _request.getType() == "GET")   // костыыыыыыыль
-					_request.setFullPath("www/index.html");
-				else
-					_request.setFullPath(filePath);
+				_request.setFullPath(filePath);
 				*file << "for this dir maxBosySize: " << it->getMaxBodySize() << "\n";
 				if(it->getMaxBodySize() >= 0)
 				{
@@ -442,7 +448,14 @@ public:
 			if( stat(_request.getFullPath().c_str(),&s) == 0 && (s.st_mode & S_IFDIR))
 			{
 				_request.setIsDirectory(true);
-				*file << "analyse request: file is DIRECTORY\n";
+				std::cout << "analyse request: file is DIRECTORY " << "\n";
+				// FIXME check redirections - tester not works with redirections
+				if(*(_request.getOption().end() - 1) != '/')
+				{
+					std::cout << "redirects: " << " " << it->getDirectoryRedirect() << " " << _request.getOption() << "\n";
+					_request.setRedirect(_request.getOption() + "/");
+					return;
+				}
 			}
 		}
 		// split to file and path
@@ -460,7 +473,6 @@ public:
 		if(_request.getType() == "POST" && _request.getOptionFileExtension() == "bla")
 			_response.setMethodIsAllowed(true);
 	}
-
 	void generateResponse()
 	{
 		static int counterForFile = 0;
@@ -468,23 +480,29 @@ public:
 		std::string bufResp;
 		std::string body;
 
-//		std::cout << "| Path is aval: " << _response.isPathIsAvailable() << " |\n";
-//		std::cout << "| inFile is found: " << _response.isFileIsFound() << " |\n";
-//		std::cout << "| is CGI: " << _request.isCgi() << " |\n";
 		if(!_response.isRequestIsValid())
 			bufResp += "HTTP/1.1 400 Bad Request\n";
+		else if(!_response.isMethodIsAllowed())
+			bufResp = "HTTP/1.1 405 Method Not Allowed\n";
 		else if(!_response.isPathIsAvailable() || \
 			(!_response.isFileIsFound() && !_request.getOptionFileName().empty() && !_request.isDirectory() && !_request.isCgi()) || \
 			(_request.isDirectory() && (_request.getOption().find("Yeah") != std::string::npos)))
 			bufResp = "HTTP/1.1 404 Not found\n";
-		else if(!_response.isMethodIsAllowed())
-			bufResp = "HTTP/1.1 405 Method Not Allowed\n";
+		else if(!_request.getRedirect().empty())
+			bufResp = "HTTP/1.1 301 Moved Permanently\n";
 		else if(_request.isOverMaxBodySize())
 			bufResp = "HTTP/1.1 413 Payload Too Large\n";
 		else
 			bufResp = "HTTP/1.1 200 OK\r\n";
 
-		if((_request.getType() == "GET" && !_request.isCgi()) || _request.getType() == "HEAD")
+		if (bufResp.find("301") != std::string::npos)
+		{
+			bufResp += "Location: ";
+			bufResp += _request.getRedirect();
+			bufResp += "\r\n";
+			inputFile.open("www/301.html", std::ios::in);
+		}
+		else if((_request.getType() == "GET" && !_request.isCgi()) || _request.getType() == "HEAD")
 		{
 			if (bufResp.find("400") != std::string::npos)
 				inputFile.open("www/400.html", std::ios::in);
@@ -538,13 +556,11 @@ public:
 		logfile << bufResp;
 		logfile.close();
 		counterForFile++;
-//		_response.setResponse(response);
 		_status = WRITING;
 		inputFile.close();
 		Request request;
 		_request = request;
 	}
-
 	void allocateResponse(std::string bufResp){
 		char *res;
 		size_t i=0;
@@ -578,7 +594,6 @@ public:
 			setResponse(response);
 		}
 	}
-
 	std::string readCgiRes(){
 		std::ifstream file;
 		file.open(_response.getCgiResFileName(),0);
@@ -589,4 +604,3 @@ public:
 		return (str.str());
 	}
 };
-
