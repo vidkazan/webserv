@@ -22,6 +22,7 @@ private:
 	bool _isDirectory;
 	bool _isXSecretHeader;
 	bool _isOverMaxBodySize;
+	std::string _redirect;
 	ssize_t _maxBodySize;
 	size_t _count;
 	std::string _optionPath;
@@ -40,6 +41,7 @@ public:
 				_readStatus(REQUEST_READ_WAITING_FOR_HEADER), \
 				_contentLength(-1), \
 				_chunkSize(-1), \
+				_redirect(""), \
 				_isMultiPart(0), \
 				_isCgi(0), \
 				_isDirectory(0), \
@@ -69,10 +71,12 @@ public:
 	bool isXSecretHeader(){return _isXSecretHeader;}
 	bool isMultiPart(){return _isMultiPart;}
 	bool isCgi(){return _isCgi;}
+	std::string getRedirect(){return _redirect;}
 	bool isOverMaxBodySize(){return _isOverMaxBodySize;}
 	bool isDirectory(){return _isDirectory;}
 	void setIsXSecretHeader(bool x){_isXSecretHeader = x;}
 	void setIsMultiPart(bool x){_isMultiPart = x;}
+	void setRedirect(std::string redir){_redirect = redir;}
 	void setIsCgi(bool cgi){_isCgi = cgi;}
 	void setIsOverMaxBodySize(bool is){ _isOverMaxBodySize = is;}
 	void setIsDirectory(bool dir){_isDirectory = dir;}

@@ -5,22 +5,22 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <cstdio>
+//#include <cstdio>
 #include <iostream>
-#include <cstring>
+//#include <cstring>
 #include <vector>
-#include <iomanip>
+//#include <iomanip>
 #include <unistd.h>
 #include <fcntl.h>
-#include <cstdio>
+//#include <cstdio>
 #include <sstream>
 #include <fstream>
-#include <map>
+//#include <map>
 #include <vector>
-#include <list>
-#include <filesystem>
+//#include <list>
 #include <sys/stat.h>
-
+#include <algorithm>
+#include <strings.h>
 
 #define RED "\e[91m"
 #define YELLOW "\e[93m"
@@ -38,13 +38,13 @@
 #define REQUEST_READ_MULTIPART 14
 #define REQUEST_READ_COMPLETE 15
 
-void printLog(char *description,char *msg, char *color);
-#include "ListenSocketConfigDirectory.hpp"
-#include "ListenSocketConfig.hpp"
+void printLog(std::string description,std::string msg,std::string color);
+#include "VirtualServerConfigDirectory.hpp"
+#include "VirtualServerConfig.hpp"
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Client.hpp"
-#include "ListenSocket.hpp"
+#include "PortServer.hpp"
 #include "Webserv.hpp"
 
 

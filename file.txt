@@ -1,0 +1,23 @@
+    Physical Server(class Webserv)
+                   |
+    Port Server(class PortServer)
+                   |
+    Virtual Server Config(class VirtualServerConfig)
+                   |
+    Virtual Server Config Directory(class VirtualServerConfigDirectory)
+
+ConfigFileParse:
+
+// going through conf #1:
+- for new ip:port pair create PortServer instance
+- PortServer binding
+- add Port Server to Webserv class
+
+// going through conf #2:
+- for new ServerName with ip:port pair create VirtualServer instance
+
+// while Accept:
+- add PortServer to client class
+
+// while parsing host:
+- searching compatible Virtual Server by host - serverName, else set default Virtual Server

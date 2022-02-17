@@ -1,46 +1,51 @@
 #include "main.hpp"
 
 
-void configFileImitation(Webserv & webserv){
+void configFileImitation2(Webserv2 & webserv2)
+{
 	// generate servers
-	std::vector<ListenSocketConfigDirectory> dirs;
-	ListenSocketConfigDirectory dir1("/", "GET", "www/",-1);
+	std::vector<VirtualServerConfigDirectory> dirs;
+	VirtualServerConfigDirectory dir1("/", "GET", "www/","/index.html",-1);
 	dirs.push_back(dir1);
-	ListenSocketConfigDirectory dir2("/directory", "GET", "www/YoupiBanane/",-1);
+	VirtualServerConfigDirectory dir2("/directory", "GET", "www/YoupiBanane/","",-1);
 	dirs.push_back(dir2);
-	ListenSocketConfigDirectory dir3("/post_body", "POST", "www/post_body",100);
+	VirtualServerConfigDirectory dir3("/post_body", "POST", "www/post_body","",100);
 	dirs.push_back(dir3);
-	ListenSocketConfigDirectory dir4("/upload", "POST", "www/upload",-1);
+	VirtualServerConfigDirectory dir4("/upload", "POST", "www/upload","",-1);
 	dirs.push_back(dir4);
-	ListenSocketConfigDirectory dir5("/files", "GET", "www/upload",-1);
+	VirtualServerConfigDirectory dir5("/files", "GET", "www/upload","",-1);
 	dirs.push_back(dir5);
-	ListenSocketConfigDirectory dir6("/directory/nop", "GET", "www/YoupiBanane/nop/",-1);
+	VirtualServerConfigDirectory dir6("/directory/nop", "GET", "www/YoupiBanane/nop/","",-1);
 	dirs.push_back(dir6);
-	ListenSocketConfigDirectory dir7("/delete", "DELETE", "www/upload",-1);
+	VirtualServerConfigDirectory dir7("/delete", "DELETE", "www/upload","",-1);
 	dirs.push_back(dir7);
-	ListenSocketConfigDirectory dir8("/directory/Yeah", "GET", "www/YoupiBanane/Yeah/",-1);
+	VirtualServerConfigDirectory dir8("/directory/Yeah", "GET", "www/YoupiBanane/Yeah/","",-1);
 	dirs.push_back(dir8);
-	ListenSocketConfigDirectory dir9("/put_test", "PUT", "www/put_test/",-1);
+	VirtualServerConfigDirectory dir9("/put_test", "PUT", "www/put_test/","",-1);
 	dirs.push_back(dir9);
-	// ListenSocketConfigDirectory dir10("/cgi_bin", "GET", "www/cgi_bin/",-1);
-	// dirs.push_back(dir10);
-	std::sort(dirs.begin(), dirs.end()); //vector must be sorted
-	ListenSocketConfig config1(dirs, 2000, "127.0.0.1");
-	webserv.addListenSocket(config1);
+
+	std::sort(dirs.begin(), dirs.end());
+	VirtualServerConfig virtualServConfig1(dirs, 2001, "127.0.0.1", "localhost:2001");
+
+	webserv2.addPortServer(2001, "127.0.0.1");
+
+	webserv2.addVirtualServer(virtualServConfig1);
 }
 
 void startMessage(){
-	printLog(nullptr, "______________________________________________________________|\n|_________________________SERVER START_________________________|\n|______________________________________________________________", GREEN);
+	printLog("", "______________________________________________________________|\n"
+				 			   "|_________________________SERVER START_________________________|\n"
+							   "|______________________________________________________________", GREEN);
 }
 
 int main()
 {
-	Webserv webserv;
+	Webserv2 webserv2;
 	// config file parser is cominggg.....
-	configFileImitation(webserv);
+	configFileImitation2(webserv2);
 	startMessage();
 	// listening listen sockets
-	for(std::vector<ListenSocket>::iterator it = webserv.getServSockets().begin();it != webserv.getServSockets().end(); it++)
+	for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it != webserv2.getPortServers().end(); it++)
 		listen(it->getSocketFD(), 1000);
 	// MAIN LOOP
 	while(1)
@@ -51,14 +56,14 @@ int main()
 		FD_ZERO(&readfds);
 		FD_ZERO(&writefds);
 		// adding listen sockets to SELECT's read events catching array
-		for(std::vector<ListenSocket>::iterator it = webserv.getServSockets().begin();it != webserv.getServSockets().end(); it++)
+		for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it != webserv2.getPortServers().end(); it++)
 		{
 			FD_SET(it->getSocketFD(), &readfds);
 			if(it->getSocketFD() > largestFD)
 				largestFD = it->getSocketFD();
 		}
 		// adding client sockets to SELECT's read/write events catching array
-		for(std::vector<Client>::iterator it = webserv.getClientSockets().begin();it != webserv.getClientSockets().end(); it++)
+		for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
 		{
 			if(it->getStatus() == READING)
 				FD_SET(it->getSocketFd(), &readfds);
@@ -71,13 +76,13 @@ int main()
 //		std::cout << "select:\n";
 		if(select(largestFD + 1, &readfds, &writefds,0,0) < 0)
 		{
-			webserv.errorMsg("webserv: select error");
+			printLog("","webserv: select error",RED);
 			exit(EXIT_FAILURE);
 		}
 		// finding an event in client sockets array
-		for(std::vector<Client>::iterator it = webserv.getClientSockets().begin();it != webserv.getClientSockets().end(); it++)
+		for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
 		{
-			if(webserv.getClientSockets().empty())
+			if(webserv2.getClients().empty())
 				break;
 			// finding a read event in client sockets array
 			if (FD_ISSET(it->getSocketFd(), &readfds)){
@@ -95,7 +100,7 @@ int main()
 		}
 		// finding a new connection event in listen sockets array
 		int fd;
-		for(std::vector<ListenSocket>::iterator it = webserv.getServSockets().begin();it != webserv.getServSockets().end(); it++)
+		for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it != webserv2.getPortServers().end(); it++)
 		{
 			if(FD_ISSET(it->getSocketFD(), &readfds))
 			{
@@ -106,18 +111,18 @@ int main()
 				std::cout << "select: new client on port " << ntohs(it->getSockAddrInStruct().sin_port) << "\n";
 				fd = accept(it->getSocketFD(), (struct sockaddr *)&adrAccept, &adrAcceptLen);
 				if (fd < 0){
-					webserv.errorMsg("accept: fd < 0");
+					printLog("","accept error",RED);
 					exit(EXIT_FAILURE);
 				}
 				fcntl(fd, F_SETFL, O_NONBLOCK);
-				webserv.addClientSocket(fd, it->getConfig());
+				webserv2.addClient(fd, it->getVirtualServers());
 			}
 		}
 		// checking all connections for closing
-		for(std::vector<Client>::iterator it = webserv.getClientSockets().begin();it != webserv.getClientSockets().end(); it++){
+		for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++){
 			if(it->getStatus() == CLOSING){
 				close(it->getSocketFd());
-				webserv.getClientSockets().erase(it);
+				webserv2.getClients().erase(it);
 				break;
 			}
 		}

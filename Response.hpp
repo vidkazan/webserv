@@ -69,21 +69,10 @@ public:
 	bool isMethodIsAllowed() const{
 		return _methodIsAllowed;
 	}
-//	void setResponse(const std::string & resp){
-//		this->cleanResponse();
-//		_response = resp;
-//	};
 	void setResponse(char *resp, size_t size){
-//		this->cleanResponse();
-		// FIXME leaks!!!!!!!!!!!!!!!!!!!!
 		_responseSize = size;
 		_response = resp;
 	};
-
-//	void cleanResponse(){
-//		_response.erase();
-//	}
-
 	void setPathIsAvailable(bool pathIsAvailable){
 		_pathIsAvailable = pathIsAvailable;
 	}

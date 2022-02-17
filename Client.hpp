@@ -7,12 +7,13 @@ class Client {
 private:
 	int _socketFD;
 	int _status;
-	ListenSocketConfig _serverConfig;
+	std::vector<VirtualServerConfig> _virtualServers;
+	VirtualServerConfig _serverConfig;
 	Response _response;
 	Request _request;
 
 public:
-	Client(int fd, const ListenSocketConfig& config): _socketFD(fd), _status(READING), _serverConfig(config){
+	Client(int fd, std::vector<VirtualServerConfig> virtualServers): _socketFD(fd), _status(READING), _virtualServers(virtualServers) {
 	};
 	~Client(){};
 	void printRequestInfo(){
@@ -31,7 +32,8 @@ public:
 	const Response&getResponse() const{return _response;}
 	const Request&getRequest() const{return _request;}
 	int getSocketFd() const{return _socketFD;}
-	void setStatus(int status){_status = status;};
+	void setStatus(int status){_status = status;}
+	void setVirtualServerConfig(const VirtualServerConfig & conf){_serverConfig = conf;}
 	void setResponse(const Response&response){_response = response;}
 	void readRequest()
 	{
@@ -60,7 +62,7 @@ public:
 		bzero(&buf, 100000);
 		ret = recv(_socketFD, &buf, 99999, 0);
 		if (ret == -1 || ret == 0){
-			*file << "fd " << _socketFD << " status: closing\n";
+//			std::cout << "fd " << _socketFD << " status: closing\n";
 			_status = CLOSING;
 			return;
 		}
@@ -90,10 +92,10 @@ public:
 					analyseRequest(file);
 				return;
 			}
-			pos = _request.getBuffer().find('\n');
+			pos = _request.getBuffer().find("\n");
 			if(pos == std::string::npos)
 				return;
-			line = _request.getBuffer().substr(0,pos);
+			line = _request.getBuffer().substr(0,pos - 1); // (pos -1):  -1 is \r
 			if (_request.getType().empty() && !line.empty())
 				parseRequestTypeOptionVersion(line);
 			else if(line.find("Host: ") != std::string::npos){
@@ -304,7 +306,6 @@ public:
 			file.close();
 		}
 	}
-
 	void imitateCgi(){
 			std::ofstream outFile;
 			std::string in = _request.getBufferChunk();
@@ -321,17 +322,35 @@ public:
 			}
 			outFile.close();
 	}
-	void analyseRequest(std::ofstream * file){
-		// check validness
+	void findVirtualServer()
+	{
+		bool isFound = false;
+		std::vector<VirtualServerConfig>::iterator it = _virtualServers.begin();
+		for(; it != _virtualServers.end(); it++)
+		{
+			if(it->getServerName() == _request.getHost())
+			{
+				setVirtualServerConfig(*it);
+				isFound = true;
+				break;
+			}
+		}
+		std::cout << "findVirtualServer: virtServ is found: " << isFound << "\n";
+	}
+	void analyseRequest(std::ofstream * file)
+	{
 		if(_request.getType().empty() || _request.getOption().empty() || _request.getHTTPVersion().empty() || _request.getHost().empty() )
 		{
 			_response.setRequestIsValid(false);
 			std::cout << GREEN << "request isn't valid!\n" << WHITE;
 			return;
 		}
+		findVirtualServer();
 		analysePath(file);
 		if(!_response.isMethodIsAllowed() || !_response.isPathIsAvailable())
+		{
 			return;
+		}
 		if(_request.getOptionFileExtension() == "bla"){
 			_request.setIsCgi(true);
 			*file << "is CGI\n";
@@ -390,17 +409,12 @@ public:
 		}
 	}
 	void analysePath(std::ofstream * file){
-		// FILE SEARCHING
-
-		// 2. Search path in config
-		// 3. Split filename to name and extension
-
 		size_t pos;
 		std::string fileName;
 		std::string filePath;
 		filePath = _request.getOption();
-		std::vector<ListenSocketConfigDirectory>::const_reverse_iterator it = _serverConfig.getDirectories().rbegin();
-		std::vector<ListenSocketConfigDirectory>::const_reverse_iterator itEnd = _serverConfig.getDirectories().rend();
+		std::vector<VirtualServerConfigDirectory>::const_reverse_iterator it = _serverConfig.getDirectories().rbegin();
+		std::vector<VirtualServerConfigDirectory>::const_reverse_iterator itEnd = _serverConfig.getDirectories().rend();
 		for(;it != itEnd; it++){
 			if(filePath.find(it->getDirectoryName()) == 0)
 			{
@@ -411,12 +425,16 @@ public:
 					*file << "Method is allowed\n";
 					_response.setMethodIsAllowed(true);
 				}
+				// FIXME check redirections - tester not works with redirections
+				if(!it->getDirectoryRedirect().empty() && it->getDirectoryName() == _request.getOption())
+				{
+					std::cout << "redirects: " << it->getDirectoryRedirect() << " " << _request.getOption() << "\n";
+					_request.setRedirect(it->getDirectoryRedirect());
+					return;
+				}
 				filePath.erase(0,it->getDirectoryName().size());
 				filePath.insert(0,it->getDirectoryPath());
-				if(_request.getOption() == "/" && _request.getType() == "GET")   // костыыыыыыыль
-					_request.setFullPath("www/index.html");
-				else
-					_request.setFullPath(filePath);
+				_request.setFullPath(filePath);
 				*file << "for this dir maxBosySize: " << it->getMaxBodySize() << "\n";
 				if(it->getMaxBodySize() >= 0)
 				{
@@ -433,7 +451,14 @@ public:
 			if( stat(_request.getFullPath().c_str(),&s) == 0 && (s.st_mode & S_IFDIR))
 			{
 				_request.setIsDirectory(true);
-				*file << "analyse request: file is DIRECTORY\n";
+				std::cout << "analyse request: file is DIRECTORY " << "\n";
+				// FIXME check redirections - tester not works with redirections
+				if(*(_request.getOption().end() - 1) != '/')
+				{
+					std::cout << "redirects: " << " " << it->getDirectoryRedirect() << " " << _request.getOption() << "\n";
+					_request.setRedirect(_request.getOption() + "/");
+					return;
+				}
 			}
 		}
 		// split to file and path
@@ -451,7 +476,6 @@ public:
 		if(_request.getType() == "POST" && _request.getOptionFileExtension() == "bla")
 			_response.setMethodIsAllowed(true);
 	}
-
 	void generateResponse()
 	{
 		static int counterForFile = 0;
@@ -459,23 +483,29 @@ public:
 		std::string bufResp;
 		std::string body;
 
-//		std::cout << "| Path is aval: " << _response.isPathIsAvailable() << " |\n";
-//		std::cout << "| inFile is found: " << _response.isFileIsFound() << " |\n";
-//		std::cout << "| is CGI: " << _request.isCgi() << " |\n";
 		if(!_response.isRequestIsValid())
 			bufResp += "HTTP/1.1 400 Bad Request\n";
+		else if(!_response.isMethodIsAllowed())
+			bufResp = "HTTP/1.1 405 Method Not Allowed\n";
 		else if(!_response.isPathIsAvailable() || \
 			(!_response.isFileIsFound() && !_request.getOptionFileName().empty() && !_request.isDirectory() && !_request.isCgi()) || \
 			(_request.isDirectory() && (_request.getOption().find("Yeah") != std::string::npos)))
 			bufResp = "HTTP/1.1 404 Not found\n";
-		else if(!_response.isMethodIsAllowed())
-			bufResp = "HTTP/1.1 405 Method Not Allowed\n";
+		else if(!_request.getRedirect().empty())
+			bufResp = "HTTP/1.1 301 Moved Permanently\n";
 		else if(_request.isOverMaxBodySize())
 			bufResp = "HTTP/1.1 413 Payload Too Large\n";
 		else
 			bufResp = "HTTP/1.1 200 OK\r\n";
 
-		if((_request.getType() == "GET" && !_request.isCgi()) || _request.getType() == "HEAD")
+		if (bufResp.find("301") != std::string::npos)
+		{
+			bufResp += "Location: ";
+			bufResp += _request.getRedirect();
+			bufResp += "\r\n";
+			inputFile.open("www/301.html", std::ios::in);
+		}
+		else if((_request.getType() == "GET" && !_request.isCgi()) || _request.getType() == "HEAD")
 		{
 			if (bufResp.find("400") != std::string::npos)
 				inputFile.open("www/400.html", std::ios::in);
@@ -531,13 +561,11 @@ public:
 		logfile << bufResp;
 		logfile.close();
 		counterForFile++;
-//		_response.setResponse(response);
 		_status = WRITING;
 		inputFile.close();
 		Request request;
 		_request = request;
 	}
-
 	void allocateResponse(std::string bufResp){
 		char *res;
 		size_t i=0;
@@ -571,7 +599,6 @@ public:
 			setResponse(response);
 		}
 	}
-
 	std::string readCgiRes(){
 		std::ifstream file;
 		file.open(_response.getCgiResFileName(), (std::ios_base::openmode)0);
@@ -582,4 +609,3 @@ public:
 		return (str.str());
 	}
 };
-
