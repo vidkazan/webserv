@@ -1,6 +1,8 @@
 #pragma once
 #include "main.hpp"
+#include "AutoIndex.hpp"
 
+class AutoIndex;
 class Client {
 private:
 	int _socketFD;
@@ -8,6 +10,7 @@ private:
 	ListenSocketConfig _serverConfig;
 	Response _response;
 	Request _request;
+
 public:
 	Client(int fd, const ListenSocketConfig& config): _socketFD(fd), _status(READING), _serverConfig(config){
 	};
@@ -341,7 +344,7 @@ public:
 			_response.setCgiResFileName(fileName.str());
 			file.open(_response.getCgiResFileName(), std::ios::trunc);
 			if(!file.is_open())
-				std::cout << "analyse request: cgi: file open error\n";
+				std::cout << _response.getCgiResFileName() << " analyse request: cgi: file open error\n";
 			return;
 		}
 		if((_request.getType() == "PUT" || _request.getType() == "POST") && !_request.isDirectory() && !_request.isCgi())
@@ -487,6 +490,8 @@ public:
 			std::stringstream buffer;
 			buffer << inputFile.rdbuf();
 			body = buffer.str();
+			if (bufResp.find("404") != std::string::npos)
+				body = AutoIndex::generateAutoindexPage();
 			//std::cout << inputFile;
 			//std::cout << body << "\n";
 			bufResp += "Content-Length: ";
@@ -569,7 +574,7 @@ public:
 
 	std::string readCgiRes(){
 		std::ifstream file;
-		file.open(_response.getCgiResFileName(),0);
+		file.open(_response.getCgiResFileName(), (std::ios_base::openmode)0);
 		if(!file.is_open())
 			std::cout << "readCgiRes: file error\n";
 		std::stringstream str;

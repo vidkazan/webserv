@@ -1,5 +1,6 @@
 #pragma once
 #include "main.hpp"
+#include <algorithm>
 
 class ListenSocket {
 private:
@@ -10,7 +11,7 @@ public:
 	ListenSocket(const ListenSocketConfig & config): _config(config){
 		_adr.sin_addr.s_addr = 0;
 		_adr.sin_family = 0;
-		_adr.sin_len = 0;
+		// _adr.sin_len = 0;
 		_adr.sin_port = 0;
 
 		_socketFD = socket(AF_INET, SOCK_STREAM, 0);

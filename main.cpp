@@ -22,6 +22,8 @@ void configFileImitation(Webserv & webserv){
 	dirs.push_back(dir8);
 	ListenSocketConfigDirectory dir9("/put_test", "PUT", "www/put_test/",-1);
 	dirs.push_back(dir9);
+	// ListenSocketConfigDirectory dir10("/cgi_bin", "GET", "www/cgi_bin/",-1);
+	// dirs.push_back(dir10);
 	std::sort(dirs.begin(), dirs.end()); //vector must be sorted
 	ListenSocketConfig config1(dirs, 2000, "127.0.0.1");
 	webserv.addListenSocket(config1);
