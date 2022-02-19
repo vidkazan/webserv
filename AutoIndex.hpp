@@ -6,23 +6,30 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+/* если автоиндекс включен, пользователь вводит в url директорию (http://localhost:2001/cgi-bin/)
+	и в этой директории нет индекс файлов
+*/
 class AutoIndex {
 public:
-	static std::string generateAutoindexPage() {
+	static std::string generateAutoindexPage(char cwd[1024], std::string path) {
 		std::string res;
 		// res = "<h1>";
 		DIR *dp;
-		struct dirent *ep;     
-		dp = opendir ("./");
+		struct dirent *ep;
+		// cwd + path
+		// client.hpp 526/527
+		dp = opendir ("/Users/cvenkman/Desktop/webserv_linux/www/cgi-bin/");
 
-		res =\
-			"<!DOCTYPE html>\n\
+		res = "<!DOCTYPE html>\n\
 			<html>\n\
 				<head>\n\
 					<title>AutoIndex</title>\n\
 				</head>\n\
 				<body>\n\
-					<h1>AutoIndex</h1>\n\
+					<h1>";
+		res += cwd;
+		res += path;
+		res += "</h1>\n\
 					<table class="" order="">\n\
 					<tbody>\n";
 
@@ -30,7 +37,7 @@ public:
 		std::string type;
 		if (dp != NULL)
 		{
-			while (ep = readdir (dp)) {
+			while ((ep = readdir (dp))) {
 				stat(ep->d_name, &st_buff);
 
 			switch (st_buff.st_mode & S_IFMT) {

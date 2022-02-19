@@ -513,15 +513,18 @@ public:
 				inputFile.open("www/404.html", std::ios::in);
 			if (bufResp.find("405") != std::string::npos)
 				inputFile.open("www/405.html", std::ios::in);
-			if (bufResp.find("200") != std::string::npos && _request.isDirectory())
-				inputFile.open("www/isDirectory.html", std::ios::in);
+			// if (bufResp.find("200") != std::string::npos && _request.isDirectory())
+				// inputFile.open("www/isDirectory.html", std::ios::in);
 			if (bufResp.find("200") != std::string::npos)
 				inputFile.open(_request.getFullPath(), std::ios::in);
 			std::stringstream buffer;
 			buffer << inputFile.rdbuf();
 			body = buffer.str();
-			if (bufResp.find("404") != std::string::npos)
-				body = AutoIndex::generateAutoindexPage();
+
+			char cwd[1024];
+			getcwd(cwd, sizeof(cwd));
+			if (bufResp.find("200") != std::string::npos && _request.isDirectory())
+				body = AutoIndex::generateAutoindexPage(cwd, _request.getFullPath());
 			//std::cout << inputFile;
 			//std::cout << body << "\n";
 			bufResp += "Content-Length: ";

@@ -23,6 +23,8 @@ void configFileImitation2(Webserv2 & webserv2)
 	dirs.push_back(dir8);
 	VirtualServerConfigDirectory dir9("/put_test", "PUT", "www/put_test/","",-1);
 	dirs.push_back(dir9);
+		// VirtualServerConfigDirectory dir10("/test_index", "GET", "www/test_index","test_index/index.html",-1);
+		// dirs.push_back(dir10);
 
 	std::sort(dirs.begin(), dirs.end());
 	VirtualServerConfig virtualServConfig1(dirs, 2001, "127.0.0.1", "localhost:2001");
