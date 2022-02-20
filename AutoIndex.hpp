@@ -11,14 +11,16 @@
 */
 class AutoIndex {
 public:
-	static std::string generateAutoindexPage(char cwd[1024], std::string path) {
+	static std::string generateAutoindexPage(std::string path) {
+		// char cwd2[1024];
+		// getcwd(cwd2, sizeof(cwd2));
 		std::string res;
 		// res = "<h1>";
 		DIR *dp;
 		struct dirent *ep;
 		// cwd + path
 		// client.hpp 526/527
-		dp = opendir ("/Users/cvenkman/Desktop/webserv_linux/www/cgi-bin/");
+		dp = opendir(path.c_str());
 
 		res = "<!DOCTYPE html>\n\
 			<html>\n\
@@ -27,7 +29,7 @@ public:
 				</head>\n\
 				<body>\n\
 					<h1>";
-		res += cwd;
+		// res += cwd;
 		res += path;
 		res += "</h1>\n\
 					<table class="" order="">\n\
