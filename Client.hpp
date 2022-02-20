@@ -514,7 +514,6 @@ public:
 			if (bufResp.find("405") != std::string::npos)
 				inputFile.open("www/405.html", std::ios::in);
 			bool isNeedAutoindex = false;
-			std::cout << "===" << _request.isDirectory() << " " << _request.getFullPath() << "-\n";
 			if (bufResp.find("200") != std::string::npos && (_request.isDirectory() || _request.getFullPath() == "www/")) {
 				/* если директория */
 				bool isIndexValid;
