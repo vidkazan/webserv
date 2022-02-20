@@ -513,7 +513,6 @@ public:
 				inputFile.open("www/404.html", std::ios::in);
 			if (bufResp.find("405") != std::string::npos)
 				inputFile.open("www/405.html", std::ios::in);
-
 			bool isNeedAutoindex = false;
 			if (bufResp.find("200") != std::string::npos && _request.isDirectory()) {
 				/* если директория */
@@ -522,24 +521,18 @@ public:
 				std::ifstream indexFile(indexFilePath); // пытаемся открыть индекс файл
 				if(indexFile)
 					inputFile.open(indexFilePath, std::ios::in);
-				/*
-					если индекс файла нет, ставим флаг, и,
-					ниже, если isNeedAutoindex == true, 
-					записываем автоиндекс в body
-					(нужно переделать, убрать флаг)
-				*/
-				else
-					isNeedAutoindex = true;
+				else //если индекс файла нет, записываем автоиндекс в body
+					body = AutoIndex::generateAutoindexPage(_request.getFullPath());
 				indexFile.close();
 			}
 			if (bufResp.find("200") != std::string::npos)
 				inputFile.open(_request.getFullPath(), std::ios::in);
 			std::stringstream buffer;
 			buffer << inputFile.rdbuf();
-			if (isNeedAutoindex == false)
+			if (body.empty())
 				body = buffer.str();
-			else
-				body = AutoIndex::generateAutoindexPage(_request.getFullPath());
+			// else
+			// 	body = AutoIndex::generateAutoindexPage(_request.getFullPath());
 			//std::cout << inputFile;
 			//std::cout << body << "\n";
 			bufResp += "Content-Length: ";
