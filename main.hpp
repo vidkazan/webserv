@@ -19,7 +19,8 @@
 #include <vector>
 //#include <list>
 #include <sys/stat.h>
-
+#include <algorithm>
+#include <strings.h>
 
 #define RED "\e[91m"
 #define YELLOW "\e[93m"

@@ -1,6 +1,8 @@
 #pragma once
 #include "main.hpp"
+#include "AutoIndex.hpp"
 
+class AutoIndex;
 class Client {
 private:
 	int _socketFD;
@@ -9,6 +11,7 @@ private:
 	VirtualServerConfig _serverConfig;
 	Response _response;
 	Request _request;
+
 public:
 	Client(int fd, std::vector<VirtualServerConfig> virtualServers): _socketFD(fd), _status(READING), _virtualServers(virtualServers) {
 	};
@@ -360,7 +363,7 @@ public:
 			_response.setCgiResFileName(fileName.str());
 			file.open(_response.getCgiResFileName(), std::ios::trunc);
 			if(!file.is_open())
-				std::cout << "analyse request: cgi: file open error\n";
+				std::cout << _response.getCgiResFileName() << " analyse request: cgi: file open error\n";
 			return;
 		}
 		if((_request.getType() == "PUT" || _request.getType() == "POST") && !_request.isDirectory() && !_request.isCgi())
@@ -442,8 +445,8 @@ public:
 			}
 		}
 		// directory check
-		if(_request.getOption() != "/")
-		{
+		// if(_request.getOption() != "/")
+		// {
 			struct stat s;
 			if( stat(_request.getFullPath().c_str(),&s) == 0 && (s.st_mode & S_IFDIR))
 			{
@@ -457,7 +460,7 @@ public:
 					return;
 				}
 			}
-		}
+		// }
 		// split to file and path
 		pos = _request.getFullPath().find_last_of('/');
 		if (pos != std::string::npos && (pos != _request.getFullPath().size() - 1 || pos == 0) && !_request.isDirectory())
@@ -510,13 +513,26 @@ public:
 				inputFile.open("www/404.html", std::ios::in);
 			if (bufResp.find("405") != std::string::npos)
 				inputFile.open("www/405.html", std::ios::in);
-			if (bufResp.find("200") != std::string::npos && _request.isDirectory())
-				inputFile.open("www/isDirectory.html", std::ios::in);
+			bool isNeedAutoindex = false;
+			if (bufResp.find("200") != std::string::npos && _request.isDirectory()) {
+				/* если директория */
+				bool isIndexValid; 
+				std::string indexFilePath = _request.getFullPath() + "index.html";
+				std::ifstream indexFile(indexFilePath); // пытаемся открыть индекс файл
+				if(indexFile)
+					inputFile.open(indexFilePath, std::ios::in);
+				else //если индекс файла нет, записываем автоиндекс в body
+					body = AutoIndex::generateAutoindexPage(_request.getFullPath());
+				indexFile.close();
+			}
 			if (bufResp.find("200") != std::string::npos)
 				inputFile.open(_request.getFullPath(), std::ios::in);
 			std::stringstream buffer;
 			buffer << inputFile.rdbuf();
-			body = buffer.str();
+			if (body.empty())
+				body = buffer.str();
+			// else
+			// 	body = AutoIndex::generateAutoindexPage(_request.getFullPath());
 			//std::cout << inputFile;
 			//std::cout << body << "\n";
 			bufResp += "Content-Length: ";
@@ -596,7 +612,7 @@ public:
 	}
 	std::string readCgiRes(){
 		std::ifstream file;
-		file.open(_response.getCgiResFileName(),0);
+		file.open(_response.getCgiResFileName(), (std::ios_base::openmode)0);
 		if(!file.is_open())
 			std::cout << "readCgiRes: file error\n";
 		std::stringstream str;

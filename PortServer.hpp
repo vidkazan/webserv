@@ -12,7 +12,7 @@ public:
 	PortServer(int port, std::string ip): _ip(ip), _port(port){
 		_adr.sin_addr.s_addr = 0;
 		_adr.sin_family = 0;
-		_adr.sin_len = 0;
+		// _adr.sin_len = 0;
 		_adr.sin_port = 0;
 
 		_socketFD = socket(AF_INET, SOCK_STREAM, 0);

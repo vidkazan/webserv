@@ -1,14 +1,16 @@
 NAME = webserv
 
 SRCS =	main.cpp utils.cpp
+#HDRS = Webserv.hpp main.hpp ListenSocketConfigDirectory.hpp ListenSocketConfig.hpp Request.hpp Response.hpp Client.hpp ListenSocket.hpp AutoIndex.hpp
 
-HDRS = Webserv.hpp main.hpp PortServer.hpp VirtualServerConfig.hpp Request.hpp Response.hpp Client.hpp VirtualServerConfigDirectory.hpp
+HDRS = Webserv.hpp main.hpp PortServer.hpp VirtualServerConfig.hpp Request.hpp Response.hpp Client.hpp VirtualServerConfigDirectory.hpp AutoIndex.hpp
+
 
 OBJS = $(SRCS:.cpp=.o)
 
-FLAGS = -O3 -std=c++98 -Wno-c++11-compat-deprecated-writable-strings
+FLAGS = -O3 -Wno-c++11-compat-deprecated-writable-strings
 
-COMP = c++
+COMP = g++
 
 %.o: %.cpp		$(HDRS)
 				@$(COMP) $(FLAGS) -c $< -o $@
