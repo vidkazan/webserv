@@ -426,12 +426,12 @@ public:
 					_response.setMethodIsAllowed(true);
 				}
 				// FIXME check redirections - tester not works with redirections
-				// if(!it->getDirectoryRedirect().empty() && it->getDirectoryName() == _request.getOption())
-				// {
-				// 	std::cout << "redirects: " << it->getDirectoryRedirect() << " " << _request.getOption() << "\n";
-				// 	_request.setRedirect(it->getDirectoryRedirect());
-				// 	return;
-				// }
+				if(!it->getDirectoryRedirect().empty() && it->getDirectoryName() == _request.getOption())
+				{
+					std::cout << "redirects: " << it->getDirectoryRedirect() << " " << _request.getOption() << "\n";
+					_request.setRedirect(it->getDirectoryRedirect());
+					return;
+				}
 				filePath.erase(0,it->getDirectoryName().size());
 				filePath.insert(0,it->getDirectoryPath());
 				_request.setFullPath(filePath);
@@ -445,8 +445,8 @@ public:
 			}
 		}
 		// directory check
-		if(_request.getOption() != "/")
-		{
+		// if(_request.getOption() != "/")
+		// {
 			struct stat s;
 			if( stat(_request.getFullPath().c_str(),&s) == 0 && (s.st_mode & S_IFDIR))
 			{
@@ -460,7 +460,7 @@ public:
 					return;
 				}
 			}
-		}
+		// }
 		// split to file and path
 		pos = _request.getFullPath().find_last_of('/');
 		if (pos != std::string::npos && (pos != _request.getFullPath().size() - 1 || pos == 0) && !_request.isDirectory())
@@ -514,7 +514,7 @@ public:
 			if (bufResp.find("405") != std::string::npos)
 				inputFile.open("www/405.html", std::ios::in);
 			bool isNeedAutoindex = false;
-			if (bufResp.find("200") != std::string::npos && (_request.isDirectory() || _request.getFullPath() == "www/")) {
+			if (bufResp.find("200") != std::string::npos && _request.isDirectory()) {
 				/* если директория */
 				bool isIndexValid;
 				std::string indexFilePath = _request.getFullPath() + "index.html";

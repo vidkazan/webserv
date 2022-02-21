@@ -5,7 +5,7 @@ void configFileImitation2(Webserv2 & webserv2)
 {
 	// generate servers
 	std::vector<VirtualServerConfigDirectory> dirs;
-	VirtualServerConfigDirectory dir1("/", "GET", "www/","index.html",-1);
+	VirtualServerConfigDirectory dir1("/", "GET", "www/","",-1);
 	dirs.push_back(dir1);
 	VirtualServerConfigDirectory dir2("/directory", "GET", "www/YoupiBanane/","",-1);
 	dirs.push_back(dir2);
