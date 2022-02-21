@@ -516,7 +516,7 @@ public:
 			bool isNeedAutoindex = false;
 			if (bufResp.find("200") != std::string::npos && _request.isDirectory()) {
 				/* если директория */
-				bool isIndexValid;
+				bool isIndexValid; 
 				std::string indexFilePath = _request.getFullPath() + "index.html";
 				std::ifstream indexFile(indexFilePath); // пытаемся открыть индекс файл
 				if(indexFile)
