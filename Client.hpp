@@ -1,6 +1,7 @@
 #pragma once
 #include "main.hpp"
 #include "AutoIndex.hpp"
+#include "CGI.hpp"
 
 class AutoIndex;
 class Client {
@@ -507,6 +508,10 @@ public:
 		}
 		else if((_request.getType() == "GET" && !_request.isCgi()) || _request.getType() == "HEAD")
 		{
+			std::cout << "-----" << _request.getFullPath() << "\n";
+			if (bufResp.find("200") != std::string::npos && _request.getFullPath() == "www/cgi-bin/hello.c") {
+				body = CGI::createEnv();
+			}
 			if (bufResp.find("400") != std::string::npos)
 				inputFile.open("www/400.html", std::ios::in);
 			if (bufResp.find("404") != std::string::npos)

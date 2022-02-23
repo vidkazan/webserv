@@ -21,7 +21,6 @@
 #include <sys/stat.h>
 #include <algorithm>
 #include <strings.h>
-
 #define RED "\e[91m"
 #define YELLOW "\e[93m"
 #define GREEN "\e[92m"
@@ -46,6 +45,7 @@ void printLog(std::string description,std::string msg,std::string color);
 #include "Client.hpp"
 #include "PortServer.hpp"
 #include "Webserv.hpp"
-
+// #include "AutoIndex.hpp"
+// #include "CGI.hpp"
 
 #endif
