@@ -508,18 +508,19 @@ public:
 		}
 		else if((_request.getType() == "GET" && !_request.isCgi()) || _request.getType() == "HEAD")
 		{
-			std::cout << "-----" << _request.getFullPath() << "\n";
-			if (bufResp.find("200") != std::string::npos && _request.getFullPath() == "www/cgi-bin/hello.c") {
-				body = CGI::createEnv();
-			}
-			if (bufResp.find("400") != std::string::npos)
-				inputFile.open("www/400.html", std::ios::in);
-			if (bufResp.find("404") != std::string::npos)
-				inputFile.open("www/404.html", std::ios::in);
-			if (bufResp.find("405") != std::string::npos)
-				inputFile.open("www/405.html", std::ios::in);
 			bool isNeedAutoindex = false;
-			if (bufResp.find("200") != std::string::npos && _request.isDirectory()) {
+			std::cout << "-----" << _request.getFullPath() << "\n";
+			if (bufResp.find("200") != std::string::npos && _request.getFullPath() == "www/cgi-bin/cgi_tester") {
+				std::string file_path = CGI::createEnv();
+				inputFile.open(file_path, std::ios::in);
+			}
+			else if (bufResp.find("400") != std::string::npos)
+				inputFile.open("www/400.html", std::ios::in);
+			else if (bufResp.find("404") != std::string::npos)
+				inputFile.open("www/404.html", std::ios::in);
+			else if (bufResp.find("405") != std::string::npos)
+				inputFile.open("www/405.html", std::ios::in);
+			else if (bufResp.find("200") != std::string::npos && _request.isDirectory()) {
 				/* если директория */
 				bool isIndexValid; 
 				std::string indexFilePath = _request.getFullPath() + "index.html";
@@ -530,7 +531,7 @@ public:
 					body = AutoIndex::generateAutoindexPage(_request.getFullPath());
 				indexFile.close();
 			}
-			if (bufResp.find("200") != std::string::npos)
+			else if (bufResp.find("200") != std::string::npos)
 				inputFile.open(_request.getFullPath(), std::ios::in);
 			std::stringstream buffer;
 			buffer << inputFile.rdbuf();
