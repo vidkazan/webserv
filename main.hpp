@@ -46,6 +46,12 @@ void printLog(std::string description,std::string msg,std::string color);
 #include "Client.hpp"
 #include "PortServer.hpp"
 #include "Webserv.hpp"
+#include "parse/errorCodes.hpp"
+#include "parse/formatConfigFile.hpp"
+#include "parse/IParse.hpp"
+#include "parse/LocationConfig.hpp"
+#include "parse/serverConfig.hpp"
+
 
 
 #endif

@@ -1,34 +1,32 @@
 #include "main.hpp"
 
 
-void configFileImitation2(Webserv2 & webserv2)
+void setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 {
 	// generate servers
-	std::vector<VirtualServerConfigDirectory> dirs;
-	VirtualServerConfigDirectory dir1("/", "GET", "www/","",-1);
-	dirs.push_back(dir1);
-	VirtualServerConfigDirectory dir2("/directory", "GET", "www/YoupiBanane/","",-1);
-	dirs.push_back(dir2);
-	VirtualServerConfigDirectory dir3("/post_body", "POST", "www/post_body","",100);
-	dirs.push_back(dir3);
-	VirtualServerConfigDirectory dir4("/upload", "POST", "www/upload","",-1);
-	dirs.push_back(dir4);
-	VirtualServerConfigDirectory dir5("/files", "GET", "www/upload","",-1);
-	dirs.push_back(dir5);
-	VirtualServerConfigDirectory dir6("/directory/nop", "GET", "www/YoupiBanane/nop/","",-1);
-	dirs.push_back(dir6);
-	VirtualServerConfigDirectory dir7("/delete", "DELETE", "www/upload","",-1);
-	dirs.push_back(dir7);
-	VirtualServerConfigDirectory dir8("/directory/Yeah", "GET", "www/YoupiBanane/Yeah/","",-1);
-	dirs.push_back(dir8);
-	VirtualServerConfigDirectory dir9("/put_test", "PUT", "www/put_test/","",-1);
-	dirs.push_back(dir9);
+	std::vector<VirtualServerConfigDirectory>	dirs;
+	vector<LocationConfig *>					locations = sc->locations;
 
+	vector<LocationConfig *>::iterator 	b = locations.begin();
+	vector<LocationConfig *>::iterator 	e = locations.end();
+
+	string directoryName;
+	string directoryAllowedMethods;
+	string directoryPath;
+	ssize_t bodySize;
+
+	while (b != e) {
+		dirs.push_back(VirtualServerConfigDirectory((*b)->name,\
+							(*b)->allow_methods[0],\
+							(*b)->root, \
+							"",
+							(*b)->client_body_buffer_size)); // TODO logic for multimethods
+		b++;
+	}
 	std::sort(dirs.begin(), dirs.end());
-	VirtualServerConfig virtualServConfig1(dirs, 2001, "127.0.0.1", "localhost:2001");
 
-	webserv2.addPortServer(2001, "127.0.0.1");
-
+	VirtualServerConfig virtualServConfig1(dirs, sc->listen->port[0], sc->listen->rawIp, sc->server_name); // TODO logic for multiports
+	webserv2.addPortServer(sc->listen->port[0], sc->listen->rawIp);
 	webserv2.addVirtualServer(virtualServConfig1);
 }
 
@@ -38,11 +36,28 @@ void startMessage(){
 							   "|______________________________________________________________", GREEN);
 }
 
-int main()
+void parseConfigFile(Webserv2 & webserv2, int argc, char ** argv) {
+	formatConfigFile			a(argc, argv);
+//	vector<ServerConfig *>		_servers;
+	vector<string> strServers = a.getStringServers();
+
+
+	vector<string>::iterator b = strServers.begin();
+	vector<string>::iterator e = strServers.end();
+
+	while (b != e) {
+		ServerConfig * tmp = new ServerConfig (*b);
+		setVirtualServerConfig(webserv2, tmp);
+		delete tmp;
+		b++;
+	}
+}
+
+int main(int argc, char ** argv)
 {
 	Webserv2 webserv2;
 	// config file parser is cominggg.....
-	configFileImitation2(webserv2);
+	parseConfigFile(webserv2, argc, argv);
 	startMessage();
 	// listening listen sockets
 	for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it != webserv2.getPortServers().end(); it++)
