@@ -1,4 +1,3 @@
-Content-Type: text/plain
+Content-type: text/html
 
-Hello, world!
-
+<html><h1>Simple CGI for example !!!</h1></html>

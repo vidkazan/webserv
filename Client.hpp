@@ -506,15 +506,17 @@ public:
 			bufResp += "\r\n";
 			inputFile.open("www/301.html", std::ios::in);
 		}
-		else if((_request.getType() == "GET" && !_request.isCgi()) || _request.getType() == "HEAD")
+		// else if (bufResp.find("200") != std::string::npos && _request.getFullPath() == "www/cgi-bin/cgi_tester") {
+		if (_request.getFullPath() == "www/cgi-bin/cgi_tester") {
+				// CGI cgi(_request.getType());
+				// std::string file_path = cgi.createFileWithScriptOutput();
+				// inputFile.open(file_path, std::ios::in);
+				_request.setIsCgi(true);
+		}
+		if((_request.getType() == "GET" && !_request.isCgi()) || _request.getType() == "HEAD") //?? что за head (cgi)
 		{
-			bool isNeedAutoindex = false;
-			std::cout << "-----" << _request.getFullPath() << "\n";
-			if (bufResp.find("200") != std::string::npos && _request.getFullPath() == "www/cgi-bin/cgi_tester") {
-				std::string file_path = CGI::createEnv();
-				inputFile.open(file_path, std::ios::in);
-			}
-			else if (bufResp.find("400") != std::string::npos)
+			bool isAutoindex = false;
+			if (bufResp.find("400") != std::string::npos)
 				inputFile.open("www/400.html", std::ios::in);
 			else if (bufResp.find("404") != std::string::npos)
 				inputFile.open("www/404.html", std::ios::in);
@@ -527,8 +529,10 @@ public:
 				std::ifstream indexFile(indexFilePath); // пытаемся открыть индекс файл
 				if(indexFile)
 					inputFile.open(indexFilePath, std::ios::in);
-				else //если индекс файла нет, записываем автоиндекс в body
+				else { //если индекс файла нет, записываем автоиндекс в body 
 					body = AutoIndex::generateAutoindexPage(_request.getFullPath());
+					isAutoindex = true;
+				}
 				indexFile.close();
 			}
 			else if (bufResp.find("200") != std::string::npos)
@@ -551,12 +555,22 @@ public:
 				bufResp += "text/html";
 			if(_request.getOptionFileExtension() == "png")
 				bufResp += "image/png";
+			else if (isAutoindex == true)
+				bufResp += "text/html";
 		}
 		else
 		{
-			if(_request.isCgi() && _request.getType() == "POST" && !_request.isOverMaxBodySize())
+			// if(_request.isCgi() && _request.getType() == "POST" && !_request.isOverMaxBodySize())
+			if(_request.isCgi() && !_request.isOverMaxBodySize())
 			{
-				body = readCgiRes();
+				// body = readCgiRes();
+				std::fstream cgiTmpFile;
+				CGI cgi(_request.getType());
+				std::string file_path = cgi.createFileWithScriptOutput();
+				cgiTmpFile.open(file_path, std::ios::in);
+				std::stringstream bufferCgi;
+				bufferCgi << cgiTmpFile.rdbuf();
+				body = bufferCgi.str();
 			}
 			else if(_request.isMultiPart())
 			{
