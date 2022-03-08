@@ -541,14 +541,11 @@ public:
 			buffer << inputFile.rdbuf();
 			if (body.empty())
 				body = buffer.str();
-			// else
-			// 	body = AutoIndex::generateAutoindexPage(_request.getFullPath());
-			//std::cout << inputFile;
-			//std::cout << body << "\n";
 			bufResp += "Content-Length: ";
 			bufResp += std::to_string((unsigned  long long )body.size());
 			bufResp +="\n";
-			bufResp += "Content-Type: ";
+			//if (!_request.isCgi()) // костыль, пока не знаю, всегда ли cgi будет писать type 
+				bufResp += "Content-Type: ";
 //			std::cout << "genResp: path: " << _request.getFullPath() << "\n";
 			//choosing type
 			if(_request.getOptionFileExtension() == "html")
@@ -565,12 +562,9 @@ public:
 			{
 				// body = readCgiRes();
 				std::fstream cgiTmpFile;
-				CGI cgi(_request.getType());
-				std::string file_path = cgi.createFileWithScriptOutput();
-				cgiTmpFile.open(file_path, std::ios::in);
-				std::stringstream bufferCgi;
-				bufferCgi << cgiTmpFile.rdbuf();
-				body = bufferCgi.str();
+				CGI *cgi = new CGI(_request.getType());
+				body = cgi->executeCgiScript();
+				delete cgi;
 			}
 			else if(_request.isMultiPart())
 			{
@@ -586,6 +580,7 @@ public:
 		bufResp += "\n\n";
 		if(_request.getType() != "HEAD" && !body.empty())
 			bufResp += body;
+		std::cout << "-=-=--\n" << bufResp << "\n----25--\n";
 		allocateResponse(bufResp);
 		std::ofstream logfile;
 		logfile.open("tmp/log/resp_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::trunc);
