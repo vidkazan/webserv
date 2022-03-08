@@ -38,6 +38,8 @@
 #define REQUEST_READ_COMPLETE 15
 
 void printLog(std::string description,std::string msg,std::string color);
+#include "AutoIndex.hpp"
+#include "CGI.hpp"
 #include "VirtualServerConfigDirectory.hpp"
 #include "VirtualServerConfig.hpp"
 #include "Request.hpp"
@@ -45,7 +47,5 @@ void printLog(std::string description,std::string msg,std::string color);
 #include "Client.hpp"
 #include "PortServer.hpp"
 #include "Webserv.hpp"
-// #include "AutoIndex.hpp"
-// #include "CGI.hpp"
 
 #endif

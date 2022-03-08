@@ -1,9 +1,6 @@
 #pragma once
 #include "main.hpp"
-#include "AutoIndex.hpp"
-#include "CGI.hpp"
 
-class AutoIndex;
 class Client {
 private:
 	int _socketFD;
@@ -352,7 +349,7 @@ public:
 		{
 			return;
 		}
-		if(_request.getOptionFileExtension() == "bla"){
+		if(_request.getOptionFileExtension() == "bla" || _request.getFullPath() == "www/cgi-bin/a.out"){ // тут заменить на конфиг файл
 			_request.setIsCgi(true);
 			*file << "is CGI\n";
 		}
@@ -506,14 +503,7 @@ public:
 			bufResp += "\r\n";
 			inputFile.open("www/301.html", std::ios::in);
 		}
-		// else if (bufResp.find("200") != std::string::npos && _request.getFullPath() == "www/cgi-bin/cgi_tester") {
-		if (_request.getFullPath() == "www/cgi-bin/cgi_tester") {
-				// CGI cgi(_request.getType());
-				// std::string file_path = cgi.createFileWithScriptOutput();
-				// inputFile.open(file_path, std::ios::in);
-				_request.setIsCgi(true);
-		}
-		if((_request.getType() == "GET" && !_request.isCgi()) || _request.getType() == "HEAD") //?? что за head (cgi)
+		if((_request.getType() == "GET" && !_request.isCgi()) || _request.getType() == "HEAD")
 		{
 			bool isAutoindex = false;
 			if (bufResp.find("400") != std::string::npos)
@@ -562,7 +552,7 @@ public:
 			{
 				// body = readCgiRes();
 				std::fstream cgiTmpFile;
-				CGI *cgi = new CGI(_request.getType());
+				CGI *cgi = new CGI(_request.getType(), _request.getFullPath());
 				body = cgi->executeCgiScript();
 				delete cgi;
 			}
@@ -580,7 +570,6 @@ public:
 		bufResp += "\n\n";
 		if(_request.getType() != "HEAD" && !body.empty())
 			bufResp += body;
-		std::cout << "-=-=--\n" << bufResp << "\n----25--\n";
 		allocateResponse(bufResp);
 		std::ofstream logfile;
 		logfile.open("tmp/log/resp_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::trunc);
@@ -625,6 +614,7 @@ public:
 			setResponse(response);
 		}
 	}
+	/* не стала удалять, но вроде как больше не нужен
 	std::string readCgiRes(){
 		std::ifstream file;
 		file.open(_response.getCgiResFileName(), (std::ios_base::openmode)0);
@@ -634,4 +624,5 @@ public:
 		str << file.rdbuf();
 		return (str.str());
 	}
+	*/
 };
