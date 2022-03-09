@@ -567,9 +567,13 @@ public:
 			bufResp += "Content-Length: ";
 			bufResp += std::to_string((unsigned  long long )body.size());
 		}
-		bufResp += "\n\n";
+		if (!_request.isCgi())
+			bufResp += "\n\n";
+		else
+			bufResp += "\n";
 		if(_request.getType() != "HEAD" && !body.empty())
 			bufResp += body;
+		std::cout << "+++++ " << bufResp << "\n+++++end\n";
 		allocateResponse(bufResp);
 		std::ofstream logfile;
 		logfile.open("tmp/log/resp_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::trunc);

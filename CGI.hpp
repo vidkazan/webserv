@@ -6,14 +6,14 @@
 
 class CGI {
 private:
-	std::string path;
-
+	std::string cgiScriptPath;
+	std::string cgiScriptFullPath;
 	std::vector<std::string> cgiEnvVector;
 	char **env;
 	char **argv;
 	std::fstream cgiTmpFile;
 
-	int createEnv() {
+	int initEnv() {
 		env = (char **)malloc(sizeof(char *) * cgiEnvVector.size() + 1);
 		if (!env)
 			return 500;
@@ -25,24 +25,28 @@ private:
 		return 0;
 	}
 
-	int createArgv() {
+	int initArgv() {
 		argv = (char **)malloc(sizeof(char *) * 2);
 		if (!argv)
 			return 500;
-		argv[0] = (char *)malloc(sizeof(char) * path.size() + 1);
+		argv[0] = (char *)malloc(sizeof(char) * cgiScriptPath.size() + 1);
 		if (!argv[0])
 			return 500;
-		strcpy(argv[0], path.c_str());
+		strcpy(argv[0], cgiScriptPath.c_str());
  		argv[1] = NULL;
 		return 0;
 	}
 	
+	// принимать два параметра - второй с ошибкой
 	std::string createBodyFromPage(std::string page) {
 		if (page == ERROR_500) {
 			perror("ERROR CGI: ");
 		}
 		cgiTmpFile.open(page);
 		std::stringstream bufferCgi;
+		if (page == ERROR_500) { // костыль
+			bufferCgi << "Content-Type: text/html\n\n";
+		}
 		bufferCgi << cgiTmpFile.rdbuf();
 		std::string body = bufferCgi.str();
 		cgiTmpFile.close();
@@ -51,10 +55,17 @@ private:
 		return body;
 	}
 
+	void createFullPathToScript() {
+		char cwd[1024];
+		getcwd(cwd, sizeof(cwd));
+		std::string cwdStr(cwd);
+		this->cgiScriptFullPath = cwdStr + "/" + cgiScriptPath;
+	}
+
 public:
 
-	CGI(std::string _requestMethod, std::string _path) : env(NULL), argv(NULL) {
-		this->path = const_cast<std::string &>(_path);
+	CGI(std::string _requestMethod, std::string _cgiScriptPath) : env(NULL), argv(NULL), cgiScriptPath(_cgiScriptPath) {
+		//this->path = const_cast<std::string &>(_path);
 		/*----обязательно----*/
 		cgiEnvVector.push_back("GATEWAY_INTERFACE: CGI/1.1");
 		cgiEnvVector.push_back("SERVER_PROTOCOL: HTTP/1.1");
@@ -66,9 +77,10 @@ public:
 		cgiEnvVector.push_back("SCRIPT_NAME: a.out");
 		cgiEnvVector.push_back("CONTENT_LENGTH: 48");
 		cgiEnvVector.push_back("CONTENT_TYPE: text/html");
+		createFullPathToScript();
+		cgiEnvVector.push_back("PATH_INFO: " + cgiScriptFullPath);
 		/*
 		если кидать PATH_INFO то нужно и PATH_TRANSLATED
-		cgiEnvVector.push_back("PATH_INFO: /Users/cvenkman/Desktop/webserv/www/cgi-bin/a.out");
 		*/
 		/*
 		cgiEnvVector.push_back("REQUEST_LINE");
@@ -88,7 +100,7 @@ public:
 	}
 
 	std::string executeCgiScript() {
-		if (createEnv() != 0 || createArgv() != 0)
+		if (initEnv() != 0 || initArgv() != 0)
 			return createBodyFromPage(ERROR_500);
 
 		pid_t pid = fork();
@@ -113,6 +125,12 @@ public:
 			if (WIFEXITED(status) == 0)
 				return createBodyFromPage(ERROR_500);
 		}
-		return createBodyFromPage(TMP_CGI);
+		std::string body = createBodyFromPage(TMP_CGI);
+		if (strncmp(body.c_str(), "Content-type:", 13) != 0) {
+			// из-за этого выходит две ошибки ERROR CGI:
+			std::cout << "ERROR CGI: no Content-type: in cgi script\n";
+			return createBodyFromPage(ERROR_500);
+		}
+		return body;
 	}
 };
