@@ -349,7 +349,8 @@ public:
 		{
 			return;
 		}
-		if(_request.getOptionFileExtension() == "bla" || _request.getFullPath() == "www/cgi-bin/a.out"){ // тут заменить на конфиг файл
+		if(_request.getOptionFileExtension() == "bla" ||
+			_request.getFullPath() == "www/cgi-bin/a.out"){ // тут заменить на конфиг файл
 			_request.setIsCgi(true);
 			*file << "is CGI\n";
 		}
@@ -568,12 +569,12 @@ public:
 			bufResp += std::to_string((unsigned  long long )body.size());
 		}
 		if (!_request.isCgi())
-			bufResp += "\n\n";
+			bufResp += "\n\n"; // тоже возможно костыль
 		else
 			bufResp += "\n";
 		if(_request.getType() != "HEAD" && !body.empty())
 			bufResp += body;
-		std::cout << "+++++ " << bufResp << "\n+++++end\n";
+		std::cout << "+++++ " << bufResp << "\n+++++end\n"; // убрать)
 		allocateResponse(bufResp);
 		std::ofstream logfile;
 		logfile.open("tmp/log/resp_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::trunc);
