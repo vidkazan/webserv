@@ -354,17 +354,17 @@ public:
 			_request.setIsCgi(true);
 			*file << "is CGI\n";
 		}
-		if(_request.isCgi()){
-			std::stringstream fileName;
-			std::ofstream file;
-			fileName << "tmp/tmp_";
-			fileName << _socketFD;
-			_response.setCgiResFileName(fileName.str());
-			file.open(_response.getCgiResFileName(), std::ios::trunc);
-			if(!file.is_open())
-				std::cout << _response.getCgiResFileName() << " analyse request: cgi: file open error\n";
-			return;
-		}
+		// if(_request.isCgi()){ //это тоже не знаю, нужно ли
+		// 	std::stringstream fileName;
+		// 	std::ofstream file;
+		// 	fileName << "tmp/tmp_";
+		// 	fileName << _socketFD;
+		// 	_response.setCgiResFileName(fileName.str());
+		// 	file.open(_response.getCgiResFileName(), std::ios::trunc);
+		// 	if(!file.is_open())
+		// 		std::cout << _response.getCgiResFileName() << " analyse request: cgi: file open error\n";
+		// 	return;
+		// }
 		if((_request.getType() == "PUT" || _request.getType() == "POST") && !_request.isDirectory() && !_request.isCgi())
 		{
 			std::cout << "analyse request: POST/PUT: trunc file\n";
@@ -535,8 +535,7 @@ public:
 			bufResp += "Content-Length: ";
 			bufResp += std::to_string((unsigned  long long )body.size());
 			bufResp +="\n";
-			//if (!_request.isCgi()) // костыль, пока не знаю, всегда ли cgi будет писать type 
-				bufResp += "Content-Type: ";
+			bufResp += "Content-Type: ";
 //			std::cout << "genResp: path: " << _request.getFullPath() << "\n";
 			//choosing type
 			if(_request.getOptionFileExtension() == "html")
@@ -555,6 +554,12 @@ public:
 				std::fstream cgiTmpFile;
 				CGI *cgi = new CGI(_request.getType(), _request.getFullPath());
 				body = cgi->executeCgiScript();
+
+				std::string contentTypeCgi = cgi->getContentTypeStr();
+				bufResp += "Content-Length: ";
+				bufResp += std::to_string((unsigned  long long )body.size() - contentTypeCgi.length() - 2);
+				bufResp += "\n";
+
 				delete cgi;
 			}
 			else if(_request.isMultiPart())
@@ -565,13 +570,13 @@ public:
 				body = buffer.str();
 				body.replace(body.find("/fnm/"),5,_request.getMultiPartFileName());
 			}
-			bufResp += "Content-Length: ";
-			bufResp += std::to_string((unsigned  long long )body.size());
+			if (!_request.isCgi()) { // если cgi, то в if на 552 строке bufResp зполняется (т.к. Content-Length: есть в скриптах)
+				bufResp += "Content-Length: ";
+				bufResp += std::to_string((unsigned  long long )body.size());
+			}
 		}
-		if (!_request.isCgi())
-			bufResp += "\n\n"; // тоже возможно костыль
-		else
-			bufResp += "\n";
+		if (!_request.isCgi()) // если cgi, то в if на 552 строке bufResp зполняется (первый \n в скрипте, второй - в if на 552)
+			bufResp += "\n\n";
 		if(_request.getType() != "HEAD" && !body.empty())
 			bufResp += body;
 		std::cout << "+++++ " << bufResp << "\n+++++end\n"; // убрать)

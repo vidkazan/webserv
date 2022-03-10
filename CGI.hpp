@@ -12,6 +12,7 @@ private:
 	char **env;
 	char **argv;
 	std::fstream cgiTmpFile;
+	std::string contentTypeStr;
 
 	int initEnv() {
 		env = (char **)malloc(sizeof(char *) * cgiEnvVector.size() + 1);
@@ -40,6 +41,7 @@ private:
 	// принимать два параметра - второй с ошибкой
 	std::string createBodyFromPage(std::string page) {
 		if (page == ERROR_500) {
+			this->contentTypeStr = "Content-Type: text/html";
 			perror("ERROR CGI: ");
 		}
 		cgiTmpFile.open(page);
@@ -147,7 +149,29 @@ public:
 			std::cout << "ERROR CGI: no Content-type: in cgi script\n";
 			return createBodyFromPage(ERROR_500);
 		}
+/*--------------------------------------------------------*/
+		// заменить цикл какой-нибудь функцией 
+		//find()
+		char *body_c_str = (char *)malloc(sizeof(char) * body.length());
+		body_c_str = (char *)body.c_str(); // я в шоке боже мой
+		int y = 0;
+		char *body_c_str_new = (char *)malloc(sizeof(char) * body.length());
+		while (body_c_str[y] != '\n') {
+			body_c_str_new[y] = body_c_str[y];
+			y++;
+		}
+		body_c_str_new[y] = '\0';
+		std::string contentTypeStr_(body_c_str_new);
+		this->contentTypeStr = contentTypeStr_;
+		// free(body_c_str);
+		// free(body_c_str_new);
+/*--------------------------------------------------------*/
+
+		// std::string body = "Content-type: text/html\n\n<html>\n<h1>wfsd</h1>\n</html>\n";
 		return body;
+	}
+	std::string getContentTypeStr() {
+		return this->contentTypeStr;
 	}
 };
 
