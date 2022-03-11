@@ -42,7 +42,6 @@ public:
 					res += "\">";
 					res += ep->d_name;
 					res += "</a> ";
-					// res += std::to_string(st_buff.st_size);
 					res += "<br>\n";
 			}
 			res += "</body>\n\

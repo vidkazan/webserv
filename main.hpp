@@ -21,7 +21,6 @@
 #include <sys/stat.h>
 #include <algorithm>
 #include <strings.h>
-
 #define RED "\e[91m"
 #define YELLOW "\e[93m"
 #define GREEN "\e[92m"
@@ -39,6 +38,8 @@
 #define REQUEST_READ_COMPLETE 15
 
 void printLog(std::string description,std::string msg,std::string color);
+#include "AutoIndex.hpp"
+#include "CGI.hpp"
 #include "VirtualServerConfigDirectory.hpp"
 #include "VirtualServerConfig.hpp"
 #include "Request.hpp"
@@ -46,6 +47,5 @@ void printLog(std::string description,std::string msg,std::string color);
 #include "Client.hpp"
 #include "PortServer.hpp"
 #include "Webserv.hpp"
-
 
 #endif

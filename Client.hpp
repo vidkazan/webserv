@@ -1,8 +1,7 @@
 #pragma once
 #include "main.hpp"
-#include "AutoIndex.hpp"
 
-class AutoIndex;
+
 class Client {
 private:
 	int _socketFD;
@@ -351,21 +350,22 @@ public:
 		{
 			return;
 		}
-		if(_request.getOptionFileExtension() == "bla"){
+		if(_request.getOptionFileExtension() == "bla" ||
+			_request.getFullPath() == "www/cgi-bin/a.out"){ // тут заменить на конфиг файл
 			_request.setIsCgi(true);
 			*file << "is CGI\n";
 		}
-		if(_request.isCgi()){
-			std::stringstream fileName;
-			std::ofstream file;
-			fileName << "tmp/tmp_";
-			fileName << _socketFD;
-			_response.setCgiResFileName(fileName.str());
-			file.open(_response.getCgiResFileName(), std::ios::trunc);
-			if(!file.is_open())
-				std::cout << _response.getCgiResFileName() << " analyse request: cgi: file open error\n";
-			return;
-		}
+		// if(_request.isCgi()){ //это тоже не знаю, нужно ли
+		// 	std::stringstream fileName;
+		// 	std::ofstream file;
+		// 	fileName << "tmp/tmp_";
+		// 	fileName << _socketFD;
+		// 	_response.setCgiResFileName(fileName.str());
+		// 	file.open(_response.getCgiResFileName(), std::ios::trunc);
+		// 	if(!file.is_open())
+		// 		std::cout << _response.getCgiResFileName() << " analyse request: cgi: file open error\n";
+		// 	return;
+		// }
 		if((_request.getType() == "PUT" || _request.getType() == "POST") && !_request.isDirectory() && !_request.isCgi())
 		{
 			std::cout << "analyse request: POST/PUT: trunc file\n";
@@ -505,52 +505,71 @@ public:
 			bufResp += "\r\n";
 			inputFile.open("www/301.html", std::ios::in);
 		}
-		else if((_request.getType() == "GET" && !_request.isCgi()) || _request.getType() == "HEAD")
+		if((_request.getType() == "GET" && !_request.isCgi()) || _request.getType() == "HEAD")
 		{
+			bool isAutoindex = false;
 			if (bufResp.find("400") != std::string::npos)
 				inputFile.open("www/400.html", std::ios::in);
-			if (bufResp.find("404") != std::string::npos)
+			else if (bufResp.find("404") != std::string::npos)
 				inputFile.open("www/404.html", std::ios::in);
-			if (bufResp.find("405") != std::string::npos)
+			else if (bufResp.find("405") != std::string::npos)
 				inputFile.open("www/405.html", std::ios::in);
-			bool isNeedAutoindex = false;
-			if (bufResp.find("200") != std::string::npos && _request.isDirectory()) {
+			else if (bufResp.find("200") != std::string::npos && _request.isDirectory()) {
 				/* если директория */
 				bool isIndexValid; 
 				std::string indexFilePath = _request.getFullPath() + "index.html";
 				std::ifstream indexFile(indexFilePath); // пытаемся открыть индекс файл
 				if(indexFile)
 					inputFile.open(indexFilePath, std::ios::in);
-				else //если индекс файла нет, записываем автоиндекс в body
+				else { //если индекс файла нет, записываем автоиндекс в body 
 					body = AutoIndex::generateAutoindexPage(_request.getFullPath());
+					isAutoindex = true;
+				}
 				indexFile.close();
 			}
-			if (bufResp.find("200") != std::string::npos)
+			else if (bufResp.find("200") != std::string::npos)
 				inputFile.open(_request.getFullPath(), std::ios::in);
 			std::stringstream buffer;
 			buffer << inputFile.rdbuf();
 			if (body.empty())
 				body = buffer.str();
-			// else
-			// 	body = AutoIndex::generateAutoindexPage(_request.getFullPath());
-			//std::cout << inputFile;
-			//std::cout << body << "\n";
 			bufResp += "Content-Length: ";
 			bufResp += std::to_string((unsigned  long long )body.size());
 			bufResp +="\n";
 			bufResp += "Content-Type: ";
-//			std::cout << "genResp: path: " << _request.getFullPath() << "\n";
+			//	std::cout << "genResp: path: " << _request.getFullPath() << "\n";
 			//choosing type
 			if(_request.getOptionFileExtension() == "html")
 				bufResp += "text/html";
 			if(_request.getOptionFileExtension() == "png")
 				bufResp += "image/png";
+			else if (isAutoindex == true)
+				bufResp += "text/html";
 		}
 		else
 		{
-			if(_request.isCgi() && _request.getType() == "POST" && !_request.isOverMaxBodySize())
+			if(_request.isCgi() && !_request.isOverMaxBodySize())
 			{
-				body = readCgiRes();
+				// body = readCgiRes();
+				CGI *cgi = new CGI(_request.getType(), _request.getFullPath());
+				try {
+					cgi->executeCgiScript();
+					bufResp += cgi->getContentTypeStr();
+					bufResp += "\n";
+					body = cgi->getBody();
+				}
+				catch(const std::exception& e) {
+					/*
+						в классе CGI есть статические перемнные
+						с готовым body и сторокой с ContentType при ошибке 500
+					*/
+					std::cerr << "ERROR IN CGI: " << e.what() << '\n';
+					bufResp = "HTTP/1.1 500 Internal Server Error\n";
+					bufResp += CGI::error500ContentType;
+					bufResp += "\n";
+					body = CGI::error500Body;
+				}
+				delete cgi;
 			}
 			else if(_request.isMultiPart())
 			{
@@ -564,7 +583,7 @@ public:
 			bufResp += std::to_string((unsigned  long long )body.size());
 		}
 		bufResp += "\n\n";
-		if(_request.getType() != "HEAD" && !body.empty())
+		if(_request.getType() != "HEAD")
 			bufResp += body;
 		allocateResponse(bufResp);
 		std::ofstream logfile;
@@ -610,6 +629,7 @@ public:
 			setResponse(response);
 		}
 	}
+	/* не стала удалять, но вроде как больше не нужен
 	std::string readCgiRes(){
 		std::ifstream file;
 		file.open(_response.getCgiResFileName(), (std::ios_base::openmode)0);
@@ -619,4 +639,5 @@ public:
 		str << file.rdbuf();
 		return (str.str());
 	}
+	*/
 };
