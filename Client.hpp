@@ -551,16 +551,23 @@ public:
 			if(_request.isCgi() && !_request.isOverMaxBodySize())
 			{
 				// body = readCgiRes();
-				std::fstream cgiTmpFile;
-				CGI *cgi = new CGI(_request.getType(), _request.getFullPath());
-				body = cgi->executeCgiScript();
-
-				std::string contentTypeCgi = cgi->getContentTypeStr();
-				bufResp += "Content-Length: ";
-				bufResp += std::to_string((unsigned  long long )body.size() - contentTypeCgi.length() - 2);
-				bufResp += "\n";
-
-				delete cgi;
+				// std::fstream cgiTmpFile; // моe
+				try {
+					CGI *cgi = new CGI(_request.getType(), _request.getFullPath());
+					body = cgi->executeCgiScript();
+					std::string contentTypeCgi = cgi->getContentTypeStr();
+					bufResp += "Content-Length: ";
+					bufResp += std::to_string((unsigned  long long )body.size() - contentTypeCgi.length() - 2);
+					bufResp += "\n";
+					delete cgi;
+				}
+				catch(const CGI::CreateFullPathException& e) {
+					std::cerr << e.what() << '\n';
+					// body = CGI::error500Body;
+					// bufResp += "Content-Length: ";
+					// bufResp += std::to_string(CGI::error500BodySize);
+					// bufResp += "\n";
+				}
 			}
 			else if(_request.isMultiPart())
 			{

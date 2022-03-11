@@ -4,6 +4,8 @@
 #define ERROR_500 "www/500.html"
 #define TMP_CGI "tmp_cgi_file.$"
 
+
+
 class CGI {
 private:
 	std::string cgiScriptPath;
@@ -14,28 +16,28 @@ private:
 	std::fstream cgiTmpFile;
 	std::string contentTypeStr;
 
-	int initEnv() {
-		env = (char **)malloc(sizeof(char *) * cgiEnvVector.size() + 1);
-		if (!env)
-			return 500;
+	bool initEnv() {
+	env = (char **)malloc(sizeof(char *) * cgiEnvVector.size() + 1);
+	if (!env)
+		return false;
 
-		std::vector<std::string>::iterator it = cgiEnvVector.begin();
-		for (int i = 0; it != cgiEnvVector.end(); it++, i++)
-			env[i] = strdup((*it).c_str());
-		env[cgiEnvVector.size()] = NULL;
-		return 0;
-	}
+	std::vector<std::string>::iterator it = cgiEnvVector.begin();
+	for (int i = 0; it != cgiEnvVector.end(); it++, i++)
+		env[i] = strdup((*it).c_str());
+	env[cgiEnvVector.size()] = NULL;
+	return true;
+}
 
-	int initArgv() {
+	bool initArgv() {
 		argv = (char **)malloc(sizeof(char *) * 2);
 		if (!argv)
-			return 500;
+			return false;
 		argv[0] = (char *)malloc(sizeof(char) * cgiScriptPath.size() + 1);
 		if (!argv[0])
-			return 500;
+			return false;
 		strcpy(argv[0], cgiScriptPath.c_str());
  		argv[1] = NULL;
-		return 0;
+		return true;
 	}
 	
 	// принимать два параметра - второй с ошибкой
@@ -59,12 +61,24 @@ private:
 
 	void createFullPathToScript() {
 		char cwd[1024];
-		getcwd(cwd, sizeof(cwd));
+		if (getcwd(cwd, sizeof(cwd)) == NULL) {
+			perror("ERROR GETCWD in cgi: ");
+			throw CreateFullPathException();
+		}
 		std::string cwdStr(cwd);
 		this->cgiScriptFullPath = cwdStr + "/" + cgiScriptPath;
 	}
 
 public:
+
+	// static std::string error500Body;
+	// static int error500BodySize;
+	class CreateFullPathException : public std::exception {
+		public:
+			CreateFullPathException() {};
+			const char* what() const throw() {return "getcwd error"; };
+			~CreateFullPathException() throw() {};
+	};
 
 	CGI(std::string _requestMethod, std::string _cgiScriptPath) : env(NULL), argv(NULL), cgiScriptPath(_cgiScriptPath) {
 		//this->path = const_cast<std::string &>(_path);
@@ -77,8 +91,10 @@ public:
 		/*--конец обязательного--*/
 		cgiEnvVector.push_back("REQUEST_METHOD: " + _requestMethod);
 		cgiEnvVector.push_back("SCRIPT_NAME: a.out");
-		cgiEnvVector.push_back("CONTENT_LENGTH: 48");
-		cgiEnvVector.push_back("CONTENT_TYPE: text/html");
+		if (_requestMethod == "POST") {
+			cgiEnvVector.push_back("CONTENT_LENGTH: 48");
+			cgiEnvVector.push_back("CONTENT_TYPE: text/html");
+		}
 		createFullPathToScript();
 		cgiEnvVector.push_back("PATH_INFO: " + cgiScriptFullPath);
 		/*
@@ -103,7 +119,7 @@ public:
 	}
 
 	std::string executeCgiScript() {
-		if (initEnv() != 0 || initArgv() != 0)
+		if (!initEnv() || !initArgv())
 			return createBodyFromPage(ERROR_500);
 
 		int pip[2];
