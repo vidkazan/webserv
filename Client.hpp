@@ -1,6 +1,7 @@
 #pragma once
 #include "main.hpp"
 
+
 class Client {
 private:
 	int _socketFD;
@@ -536,7 +537,7 @@ public:
 			bufResp += std::to_string((unsigned  long long )body.size());
 			bufResp +="\n";
 			bufResp += "Content-Type: ";
-//			std::cout << "genResp: path: " << _request.getFullPath() << "\n";
+			//	std::cout << "genResp: path: " << _request.getFullPath() << "\n";
 			//choosing type
 			if(_request.getOptionFileExtension() == "html")
 				bufResp += "text/html";
@@ -547,27 +548,28 @@ public:
 		}
 		else
 		{
-			// if(_request.isCgi() && _request.getType() == "POST" && !_request.isOverMaxBodySize())
 			if(_request.isCgi() && !_request.isOverMaxBodySize())
 			{
 				// body = readCgiRes();
-				// std::fstream cgiTmpFile; // моe
+				CGI *cgi = new CGI(_request.getType(), _request.getFullPath());
 				try {
-					CGI *cgi = new CGI(_request.getType(), _request.getFullPath());
-					body = cgi->executeCgiScript();
-					std::string contentTypeCgi = cgi->getContentTypeStr();
-					bufResp += "Content-Length: ";
-					bufResp += std::to_string((unsigned  long long )body.size() - contentTypeCgi.length() - 2);
+					cgi->executeCgiScript();
+					bufResp += cgi->getContentTypeStr();
 					bufResp += "\n";
-					delete cgi;
+					body = cgi->getBody();
 				}
-				catch(const CGI::CreateFullPathException& e) {
-					std::cerr << e.what() << '\n';
-					// body = CGI::error500Body;
-					// bufResp += "Content-Length: ";
-					// bufResp += std::to_string(CGI::error500BodySize);
-					// bufResp += "\n";
+				catch(const std::exception& e) {
+					/*
+						в классе CGI есть статические перемнные
+						с готовым body и сторокой с ContentType при ошибке 500
+					*/
+					std::cerr << "ERROR IN CGI: " << e.what() << '\n';
+					bufResp = "HTTP/1.1 500 Internal Server Error\n";
+					bufResp += CGI::error500ContentType;
+					bufResp += "\n";
+					body = CGI::error500Body;
 				}
+				delete cgi;
 			}
 			else if(_request.isMultiPart())
 			{
@@ -577,16 +579,12 @@ public:
 				body = buffer.str();
 				body.replace(body.find("/fnm/"),5,_request.getMultiPartFileName());
 			}
-			if (!_request.isCgi()) { // если cgi, то в if на 552 строке bufResp зполняется (т.к. Content-Length: есть в скриптах)
-				bufResp += "Content-Length: ";
-				bufResp += std::to_string((unsigned  long long )body.size());
-			}
+			bufResp += "Content-Length: ";
+			bufResp += std::to_string((unsigned  long long )body.size());
 		}
-		if (!_request.isCgi()) // если cgi, то в if на 552 строке bufResp зполняется (первый \n в скрипте, второй - в if на 552)
-			bufResp += "\n\n";
-		if(_request.getType() != "HEAD" && !body.empty())
+		bufResp += "\n\n";
+		if(_request.getType() != "HEAD")
 			bufResp += body;
-		std::cout << "+++++ " << bufResp << "\n+++++end\n"; // убрать)
 		allocateResponse(bufResp);
 		std::ofstream logfile;
 		logfile.open("tmp/log/resp_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::trunc);
