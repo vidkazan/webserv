@@ -7,9 +7,9 @@ include_directories(.)
 
 add_executable(webserv
         Client.hpp
-        ListenSocket.hpp
-        ListenSocketConfig.hpp
-        ListenSocketConfigDirectory.hpp
+        Server.hpp
+        ServerConfig.hpp
+        ServerConfigDirectory.hpp
         main.cpp
         main.hpp
         Request.hpp
