@@ -2,9 +2,11 @@
 #include "main.hpp"
 
 #include <dirent.h>
+/*
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+*/
 
 /* если автоиндекс включен, пользователь вводит в url директорию (http://localhost:2001/cgi-bin/)
 	и в этой директории нет индекс файлов
@@ -42,6 +44,7 @@ public:
 					res += "\">";
 					res += ep->d_name;
 					res += "</a> ";
+					// res += std::to_string(st_buff.st_size);
 					res += "<br>\n";
 			}
 			res += "</body>\n\

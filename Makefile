@@ -1,10 +1,29 @@
 NAME = webserv
 
-SRCS =	main.cpp utils.cpp CGI.cpp 
+
+SRCS =	main.cpp CGI.cpp utils.cpp parse/formatConfigFile.cpp \
+                           parse/ListenConfig.cpp \
+                           parse/LocationConfig.cpp \
+                           parse/serverConfig.cpp \
+                           parse/tools.cpp
+
 #HDRS = Webserv.hpp main.hpp ListenSocketConfigDirectory.hpp ListenSocketConfig.hpp Request.hpp Response.hpp Client.hpp ListenSocket.hpp AutoIndex.hpp
 
-HDRS = Webserv.hpp main.hpp PortServer.hpp VirtualServerConfig.hpp Request.hpp Response.hpp \
-	Client.hpp VirtualServerConfigDirectory.hpp AutoIndex.hpp CGI.hpp 
+HDRS = Webserv.hpp\
+ 		main.hpp \
+ 		PortServer.hpp \
+ 		VirtualServerConfig.hpp \
+ 		Request.hpp \
+ 		Response.hpp \
+ 		Client.hpp \
+ 		VirtualServerConfigDirectory.hpp \
+ 		AutoIndex.hpp \
+ 		CGI.hpp \
+ 		parse/errorCodes.hpp \
+        parse/formatConfigFile.hpp \
+        parse/IParse.hpp \
+        parse/LocationConfig.hpp \
+        parse/serverConfig.hpp
 
 
 OBJS = $(SRCS:.cpp=.o)

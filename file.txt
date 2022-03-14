@@ -20,4 +20,31 @@ ConfigFileParse:
 - add PortServer to client class
 
 // while parsing host:
+
 - searching compatible Virtual Server by host - serverName, else set default Virtual Server
+
+
+
+----STATES----
+
+REDIRECT
+
+ERROR_REQUEST_NOT_VALID
+ERROR_METHOD_NOT_ALLOWED
+ERROR_PATH_NOT_AVAILABLE
+ERROR_BODY_OVER_MAX_SIZE
+
+GET_DIR
+GET_AUTOINDEX
+GET_REDIRECT
+GET_FILE
+GET_FILE__FILE_NOT_FOUND
+GET_CGI
+
+POST_FILE
+POST_MULTI_PART
+POST_CGI
+
+DELETE_FILE
+
+HEAD_FILE
