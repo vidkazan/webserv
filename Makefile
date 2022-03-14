@@ -1,5 +1,6 @@
 NAME = webserv
 
+
 SRCS =	main.cpp CGI.cpp utils.cpp parse/formatConfigFile.cpp \
                            parse/ListenConfig.cpp \
                            parse/LocationConfig.cpp \
@@ -23,6 +24,7 @@ HDRS = Webserv.hpp\
         parse/IParse.hpp \
         parse/LocationConfig.hpp \
         parse/serverConfig.hpp
+
 
 OBJS = $(SRCS:.cpp=.o)
 

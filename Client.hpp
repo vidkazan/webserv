@@ -26,6 +26,7 @@ public:
 		std::ofstream file;
 		file.open("tmp/log/fullReq_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::app);
 		recvBuffer(&file);
+    
 		int previousReadStatus = -1;
 		while(previousReadStatus != _request.getReadStatus())
 		{
@@ -67,6 +68,7 @@ public:
 			_status = CLOSING;
 			return;
 		}
+
 		_request.appendBuffer(buf, ret);
 	}
 	void parseRequestHeader(std::ofstream * file)
@@ -81,6 +83,7 @@ public:
 			{
 				tmp = _request.getBuffer();
 				_request.setBuffer(tmp.erase(0, 2));
+
 //				switch (_request.getReadStatus()) {
 //					case REQUEST_READ_HEADER:
 //						_request.setReadStatus(REQUEST_READ_COMPLETE);
@@ -212,6 +215,7 @@ public:
 		}
 		*file << "Parse Body: " << "content length: " << _request.getContentLength() << " buffer size: " << _request.getBuffer().size() << "\n";
 		size_t pos = _request.getBuffer().find("------WebKitFormBoundary");
+
 		if((pos != std::string::npos) && _request.getContentLength() == 0){
 			_request.setBuffer(_request.getBuffer().substr(0, pos - 1));
 		}
@@ -220,6 +224,7 @@ public:
 		outFile << _request.getBuffer();
 		outFile.close();
 		_request.setBuffer("");
+
 		if(_request.getContentLength() == 0){
 			_request.setReadStatus(REQUEST_READ_COMPLETE);
 		}
@@ -371,6 +376,7 @@ public:
 		}
 		findVirtualServer();
 		analysePath(file);
+
 		if(!_response.isMethodIsAllowed()){
 			_request.setRequestErrors(ERROR_METHOD_NOT_ALLOWED);
 		}
@@ -480,6 +486,7 @@ public:
 				_response.setPathIsAvailable(true);
                 _request.setDirectoryConfig(*it);
 				pos = it->getDirectoryAllowedMethods().find(_request.getType());
+
 				if(pos != std::string::npos || (_request.getRequestMethod() == POST && _request.getOptionFileExtension() == "bla")){
 					*file << "Method is allowed\n";
 					_response.setMethodIsAllowed(true);
@@ -493,6 +500,7 @@ public:
 					return;
 				}
 				_request.setIsAutoIndex(it->isAutoindex());
+
 				filePath.erase(0,it->getDirectoryName().size());
 				filePath.insert(0,it->getDirectoryPath());
 				_request.setFullPath(filePath);
@@ -506,6 +514,7 @@ public:
 			}
 		}
 		// directory check
+
 		struct stat s;
 		if( stat(_request.getFullPath().c_str(),&s) == 0 && (s.st_mode & S_IFDIR))
 		{
@@ -525,6 +534,7 @@ public:
 //				return;
 //			}
 		}
+
 		// split to file and path
 		pos = _request.getFullPath().find_last_of('/');
 		if (pos != std::string::npos && (pos != _request.getFullPath().size() - 1 || pos == 0) && (_request.getRequestOptionType() != OPTION_DIR))
@@ -537,6 +547,7 @@ public:
 			if(pos != std::string::npos)
 				_request.setOptionFileExtension(fileName.substr(pos + 1, fileName.size() - pos));
 		}
+
 		if(_request.getRequestMethod() == POST && _request.getOptionFileExtension() == "bla")
 			_response.setMethodIsAllowed(true);
 	}
@@ -546,6 +557,7 @@ public:
 		std::fstream inputFile;
 		std::string bufResp;
 		std::string body;
+
 		switch (_request.getRequestErrors()) {
 			case ERROR_REDIRECT:
 				bufResp = "HTTP/1.1 301 Moved Permanently\n";
@@ -708,7 +720,7 @@ public:
 		}
 
 		bufResp += "\n\n";
-		if(_request.getType() != "HEAD" && !body.empty())
+		if(_request.getType() != "HEAD")
 			bufResp += body;
 		allocateResponse(bufResp);
 		std::ofstream logfile;
@@ -749,6 +761,7 @@ public:
 			setResponse(response);
 		}
 	}
+
 	std::string readCgiRes(){
 		std::ifstream file;
 		file.open(_response.getCgiOutputFileName(), (std::ios_base::openmode)0);
@@ -762,3 +775,4 @@ public:
 		std::cout << "| RS:" << _request.getReadStatus() << " | M:" << _request.getRequestMethod() << " | B:" << _request.getRequestBodyType() <<  " | O:" << _request.getRequestOptionType() << " | E:" << _request.getRequestErrors() << " |"  << place << "\n";;
 	}
 };
+

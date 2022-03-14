@@ -1,5 +1,7 @@
 #pragma once
+
 #include "main.hpp"
+
 #define ERROR_500 "www/500.html"
 #define TMP_CGI "tmp_cgi_file.$"
 #define CGI_ERROR "ERROR IN CGI: "
@@ -15,6 +17,7 @@ private:
 	std::string contentTypeStr;
 	std::string bodyAndHeader;
 	std::string body;
+
     std::string _cgiOutputFileName;
     std::string _cgiInputFileName;
 
@@ -40,7 +43,9 @@ public:
 			~CreateFullPathException() throw() {};
 	};
 
+
 	CGI(std::string _requestMethod, std::string _cgiScriptPath, std::string cgiInputFileName, std::string cgiOutputFileName);
+
 	~CGI();
 	void executeCgiScript();
 	std::string getContentTypeStr();

@@ -55,10 +55,12 @@ private:
 	std::string _buffer;
 	std::string _bufferChunk;
 	std::string _multiPartFileName;
+
 	ssize_t _contentLength;
 	ssize_t _chunkSize;
 	bool _isAutoIndex;
 	bool _isXSecretHeader;
+
 	std::string _redirect;
 	ssize_t _maxBodySize;
 	size_t _count;
@@ -87,6 +89,7 @@ public:
 				_isAutoIndex(0), \
 				_isXSecretHeader(0), \
 				_maxBodySize(-1), \
+
 				_count(0), \
 				_readStatus(REQUEST_READ_WAITING_FOR_HEADER), \
 				_requestMethod(NO_METHOD), \
@@ -98,6 +101,7 @@ public:
 			_id = rand();
 		}
 	};
+
 	ReadStatus getReadStatus() const{return _readStatus;}
 	RequestMethod & getRequestMethod(){return _requestMethod;};
 	RequestErrors & getRequestErrors(){return _requestErrors;};
@@ -123,11 +127,13 @@ public:
 	std::string getHost() const {return  _host;};
 	std::string getHTTPVersion(){return  _httpVersion;};
 	bool isXSecretHeader(){return _isXSecretHeader;}
+
 	bool isAutoIndex(){return _isAutoIndex;}
 	std::string getRedirect(){return _redirect;}
 	void setIsXSecretHeader(bool x){_isXSecretHeader = x;}
 	void setRedirect(std::string redir){_redirect = redir;}
 	void setIsAutoIndex(bool ai){_isAutoIndex = ai;}
+
 	void setBuffer(const std::string & req){
 		this->cleanBuffer();
 		_buffer = req;

@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
 #include <iostream>
 #include <vector>
 #include <unistd.h>
@@ -12,6 +13,7 @@
 #include <sys/stat.h>
 #include <algorithm>
 #include <strings.h>
+
 
 #define RED "\e[91m"
 #define YELLOW "\e[93m"
@@ -49,6 +51,7 @@ void printLog(std::string description,std::string msg,std::string color);
 #include "Client.hpp"
 #include "PortServer.hpp"
 #include "Webserv.hpp"
+
 #include "parse/errorCodes.hpp"
 #include "parse/formatConfigFile.hpp"
 #include "parse/IParse.hpp"

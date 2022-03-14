@@ -17,6 +17,7 @@ int CGI::error500BodySize = 40;
 **	@param	_requestMethod		POST/GET
 **	@param	_cgiScriptPath		cgi script path
 */
+
 CGI::CGI(std::string _requestMethod, std::string _cgiScriptPath, std::string cgiOutputFileName, std::string cgiInputFileName)
 		: env(NULL), argv(NULL), cgiScriptPath(_cgiScriptPath), _cgiOutputFileName(cgiOutputFileName), _cgiInputFileName(cgiInputFileName) {
 	/*----обязательно----*/
@@ -71,9 +72,9 @@ CGI::~CGI() {
 void CGI::executeCgiScript() {
 	createFullPathToScript(); // здесь, а не в конструкторе, т.к. выбрасывает исключение
 	cgiEnvVector.push_back("PATH_INFO=" + cgiScriptFullPath);
-
 	initEnv();
 	initArgv();
+
 
 //	int pip[2];
 //	if (pipe(pip) != 0)
@@ -110,13 +111,17 @@ void CGI::executeCgiScript() {
 	}
 	else if (pid > 0) {
 		int status;
+
 //		close(pip[0]);
 //		close(pip[1]);
+
 		waitpid(pid, &status, 0);
 		if (WIFEXITED(status) == 0)
 			throw CreateFullPathException("process failed");
 	}
+
 	createBodyFromPage(this->getCgiOutputFileName());
+
 	initContentType();
 }
 
@@ -176,7 +181,9 @@ void CGI::createBodyFromPage(std::string page) {
 	this->body = bodyWithoutHeader;
 	cgiTmpFile.close();
 	// if (page == TMP_CGI)
+
 //		remove(page.c_str());
+
 	// return bodyWithoutHeader;
 }
 

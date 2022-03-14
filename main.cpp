@@ -1,6 +1,5 @@
 #include "main.hpp"
 
-
 void setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 {
 	// generate servers

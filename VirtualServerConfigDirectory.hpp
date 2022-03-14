@@ -9,6 +9,7 @@ class VirtualServerConfigDirectory
 		std::string _directoryPath;
 		std::string _directoryRedirect;
 		ssize_t		_maxBodySize;
+
 		bool 		_isAutoIndex;
 		std::string _index;
 		std::string _cgi_path;
@@ -23,6 +24,7 @@ class VirtualServerConfigDirectory
 							  _directoryAllowedMethods(directoryAllowedMethods), \
 							  _directoryPath(directoryPath), \
 							  _directoryRedirect(directoryRedirect), \
+
 							  _maxBodySize(bodySize), \
 							  _isAutoIndex (autoindex), \
 							  _index (index), \
@@ -32,11 +34,14 @@ class VirtualServerConfigDirectory
 		~VirtualServerConfigDirectory(){}
 
         bool isAutoindex() const{return _isAutoIndex;}
+
 		const std::string&getDirectoryName() const{return _directoryName;}
 		const std::string&getDirectoryAllowedMethods() const{return _directoryAllowedMethods;}
 		const std::string&getDirectoryPath() const{return _directoryPath;}
 		const std::string&getDirectoryRedirect() const{return _directoryRedirect;}
+
         const std::string&getDirectoryIndexName() const{return _index;}
+
 		ssize_t getMaxBodySize() const{return _maxBodySize;}
 		unsigned short countSlash(const std::string & str) const
 		{

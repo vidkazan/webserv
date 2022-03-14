@@ -46,13 +46,16 @@ public:
 	size_t getBytesSent() const{return _bytesSent;}
 	ssize_t getResponseSize() const{return _responseSize;}
 	char* getResponse() const {return _response;};
+
 	bool isPathIsAvailable() const{return _pathIsAvailable;}
 	bool isFileIsFound() const{return _fileIsFound;}
 	bool isMethodIsAllowed() const{return _methodIsAllowed;}
+
 	void setResponse(char *resp, size_t size){
 		_responseSize = size;
 		_response = resp;
 	};
+
 	void setPathIsAvailable(bool pathIsAvailable){_pathIsAvailable = pathIsAvailable;}
 	void setMethodIsAllowed(bool methodIsAllowed){_methodIsAllowed = methodIsAllowed;}
 	void setFileIsFound(bool state){_fileIsFound = state;}
@@ -60,4 +63,5 @@ public:
 	void setRequestIsValid(bool requestIsValid){_requestIsValid = requestIsValid;}
 	void setBytesSent(size_t bytes){_bytesSent = bytes;}
 	void addBytesSent(size_t addBytes){_bytesSent += addBytes;}
+
 };

@@ -20,6 +20,7 @@ ConfigFileParse:
 - add PortServer to client class
 
 // while parsing host:
+
 - searching compatible Virtual Server by host - serverName, else set default Virtual Server
 
 
