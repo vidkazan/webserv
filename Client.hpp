@@ -383,7 +383,7 @@ public:
 		if(!_response.isPathIsAvailable()){
 			_request.setRequestErrors(ERROR_PATH_NOT_AVAILABLE);
 		}
-		if(_request.getOptionFileExtension() == "bla"){
+		if(_request.getOptionFileExtension() == "bla") {
 			_request.setRequestOptionType(OPTION_CGI);
 		}
 		switch (_request.getRequestErrors()) {
@@ -611,6 +611,9 @@ public:
 							case OPTION_DIR: {
                                 bool isIndexValid;
                                 std::string indexFilePath = _request.getFullPath() + _request.getDirectoryConfig().getDirectoryIndexName();
+								// std::cout << "_request.getFullPath(): " << _request.getFullPath() << "\n";
+								// std::cout << "indexFilePath: " << indexFilePath << "\n";
+								// std::cout << "index name: " <<  _request.getDirectoryConfig().getDirectoryIndexName() << "\n";
                                 std::ifstream indexFile(indexFilePath); // пытаемся открыть индекс файл
                                 if (!_request.getDirectoryConfig().getDirectoryIndexName().empty() && indexFile.is_open())
                                     inputFile.open(indexFilePath, std::ios::in);
@@ -620,9 +623,11 @@ public:
                                     inputFile.open("www/isDirectory.html");
                                 break;
                             }
-							case OPTION_FILE:
+							case OPTION_FILE: {
+								std::cout << "index name: " << _request.getFullPath() << "\n";
 								inputFile.open(_request.getFullPath(), std::ios::in);
 								break;
+							}
                             case NO_OPTION:
                                 break;
 							case OPTION_CGI:
@@ -631,8 +636,9 @@ public:
                                                     _response.getCgiOutputFileName(), _response.getCgiInputFileName());
                                 try {
                                     cgi->executeCgiScript();
-                                    bufResp += cgi->getContentTypeStr();
-                                    bufResp += "\n";
+                                    // bufResp += cgi->getContentTypeStr();
+                                    // bufResp += "\n";
+									bufResp = cgi->getBufResp();
                                     body = cgi->getBody();
                                 }
                                 catch (const std::exception &e) {
@@ -640,11 +646,11 @@ public:
                                         в классе CGI есть статические перемнные
                                         с готовым body и сторокой с ContentType при ошибке 500
                                     */
-                                    std::cerr << "ERROR IN CGI: " << e.what() << '\n';
-                                    bufResp = "HTTP/1.1 500 Internal Server Error\n";
-                                    bufResp += CGI::error500ContentType;
-                                    bufResp += "\n";
-                                    body = CGI::error500Body;
+									std::cerr << "ERROR IN CGI: " << e.what() << '\n';
+									bufResp = "HTTP/1.1 500 Internal Server Error\n";
+									bufResp += CGI::error500ContentType;
+									bufResp += "\n";
+									body = CGI::error500Body;
                                 }
                                 delete cgi;
                             }
@@ -658,6 +664,7 @@ public:
 					buffer << inputFile.rdbuf();
 					if (body.empty())
 						body = buffer.str();
+					// std::cout << "---body---\n" << body << "\n---body---\n";
 				}
 					bufResp += "Content-Length: ";
 					bufResp += std::to_string((unsigned long long) body.size());
@@ -668,13 +675,13 @@ public:
 						bufResp += "text/html";
 					if (_request.getOptionFileExtension() == "png")
 						bufResp += "image/png";
+						// std::cout << "------\n" << bufResp << "\n----\n";
 				break;
 			}
 			case PUT:
 			case POST:{
 				switch (_request.getRequestOptionType()){
 					case OPTION_CGI:
-//						body = readCgiRes();
                         {
                             CGI *cgi = new CGI(_request.getType(), _request.getFullPath(), \
                                                     _response.getCgiOutputFileName(), _response.getCgiInputFileName());

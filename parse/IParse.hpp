@@ -90,11 +90,19 @@ protected:
 	}
 
 	void _setRoot() {
+		// this->_rawErase("root ");
+		// string root = this->_getSingleValue();
+
+		// _checkDir(root);
+		// this->root = root;
 		this->_rawErase("root ");
 		string root = this->_getSingleValue();
 
 		_checkDir(root);
+		if (*(root.end() - 1) != '/')
+			root += "/";
 		this->root = root;
+
 	}
 
 	void _setIndex() {
