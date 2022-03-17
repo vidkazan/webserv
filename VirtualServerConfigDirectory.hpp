@@ -42,6 +42,9 @@ class VirtualServerConfigDirectory
 
         const std::string&getDirectoryIndexName() const{return _index;}
 
+		const std::string& getCgiExtention() const{return this->_cgi_extention; }
+		const std::string& getCgiPath() const{return this->_cgi_path; }
+
 		ssize_t getMaxBodySize() const{return _maxBodySize;}
 		unsigned short countSlash(const std::string & str) const
 		{

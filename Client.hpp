@@ -209,6 +209,7 @@ public:
 			pos = header.find('\"');
 			_request.setMultiPartFileName(header.substr(0,pos));
 			_request.setFullPath(_request.getFullPath() + _request.getMultiPartFileName());
+			std::cout << "212 " << _request.getFullPath() << " + " << _request.getMultiPartFileName() << "\n";
 		}
 		else {
 			_request.setContentLength(_request.getContentLength() - _request.getBuffer().size());
@@ -365,6 +366,7 @@ public:
             std::cout << "default virtual server is set\n";
         }
     }
+	
 	void analyseRequest(std::ofstream * file)
 	{
 		if(_request.getRequestMethod() == NO_METHOD || _request.getOption().empty() || _request.getHTTPVersion().empty() || _request.getHost().empty() )
@@ -383,7 +385,7 @@ public:
 		if(!_response.isPathIsAvailable()){
 			_request.setRequestErrors(ERROR_PATH_NOT_AVAILABLE);
 		}
-		if(_request.getOptionFileExtension() == "bla") {
+		if (this->isCgi()) {
 			_request.setRequestOptionType(OPTION_CGI);
 		}
 		switch (_request.getRequestErrors()) {
@@ -472,6 +474,17 @@ public:
 					_request.setRequestErrors(ERROR_FILE_NOT_FOUND);
 		}
 	}
+
+	bool isCgi() {
+		if (_request.getOptionFileExtension() == "bla" ||
+			(_request.getDirectoryConfig().getCgiExtention() != "" &&
+				_request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention()))
+		{
+				return true;
+		}
+		return false;
+	}
+
 	void analysePath(std::ofstream * file){
 		size_t pos;
 		std::string fileName;
@@ -500,10 +513,18 @@ public:
 					return;
 				}
 				_request.setIsAutoIndex(it->isAutoindex());
-
+				
+				//на http://localhost:2001/cgi-bin/printEnv.bla
+				std::cout << "506 " << it->getDirectoryName() << "\n"; // если есть директория в конфиге - /cgi-bin
+																// если нет - /
+				std::cout << "508 " << it->getDirectoryPath() << "\n"; // если есть директория в конфиге - www/cgi-bin/
+																// если нет - www/
 				filePath.erase(0,it->getDirectoryName().size());
 				filePath.insert(0,it->getDirectoryPath());
-				_request.setFullPath(filePath);
+				_request.setFullPath(filePath);	
+				std::cout << "513 " << filePath << "\n";	// если есть директория в конфиге - www/cgi-bin//printEnv.bla
+													// если нет - www/cgi-bin/printEnv.bla
+
 				*file << "for this dir maxBosySize: " << it->getMaxBodySize() << "\n";
 				if(it->getMaxBodySize() >= 0)
 				{
@@ -611,9 +632,6 @@ public:
 							case OPTION_DIR: {
                                 bool isIndexValid;
                                 std::string indexFilePath = _request.getFullPath() + _request.getDirectoryConfig().getDirectoryIndexName();
-								// std::cout << "_request.getFullPath(): " << _request.getFullPath() << "\n";
-								// std::cout << "indexFilePath: " << indexFilePath << "\n";
-								// std::cout << "index name: " <<  _request.getDirectoryConfig().getDirectoryIndexName() << "\n";
                                 std::ifstream indexFile(indexFilePath); // пытаемся открыть индекс файл
                                 if (!_request.getDirectoryConfig().getDirectoryIndexName().empty() && indexFile.is_open())
                                     inputFile.open(indexFilePath, std::ios::in);
@@ -632,6 +650,7 @@ public:
                                 break;
 							case OPTION_CGI:
                             {
+								std::cout << "cgi--- " << _request.getFullPath() << "\n";
                                 CGI *cgi = new CGI(_request.getType(), _request.getFullPath(), \
                                                     _response.getCgiOutputFileName(), _response.getCgiInputFileName());
                                 try {
@@ -664,7 +683,6 @@ public:
 					buffer << inputFile.rdbuf();
 					if (body.empty())
 						body = buffer.str();
-					// std::cout << "---body---\n" << body << "\n---body---\n";
 				}
 					bufResp += "Content-Length: ";
 					bufResp += std::to_string((unsigned long long) body.size());
@@ -675,7 +693,6 @@ public:
 						bufResp += "text/html";
 					if (_request.getOptionFileExtension() == "png")
 						bufResp += "image/png";
-						// std::cout << "------\n" << bufResp << "\n----\n";
 				break;
 			}
 			case PUT:

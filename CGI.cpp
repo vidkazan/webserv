@@ -54,7 +54,10 @@ void CGI::createFullPathToScript() {
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		throw StandartFunctionsException("getcwd");
 	std::string cwdStr(cwd);
-	this->scriptFullPath = cwdStr + "/" + scriptPath;
+	std::cout << "--- " << cwdStr << "\n";
+	std::cout << "--- " << cwdStr[cwdStr.size() - 1] << "\n";
+		this->scriptFullPath = cwdStr + "/" + scriptPath;
+		std::cout << "--- " << scriptFullPath << "\n";
 }
 
 /**
