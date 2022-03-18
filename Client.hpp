@@ -122,10 +122,6 @@ public:
 					_request.setRequestBodyType(BODY_BASE);
 				}
 			}
-			else if(line.find("X-Secret-Header-For-Test: 1") != std::string::npos){
-					_request.setIsXSecretHeader(true);
-				std::cout << "X-Secret-Header\n";
-			}
 			else if(line.find("Connection: close") != std::string::npos){
 				std::cout << "Connection will be closed!\n";
 				_response.setToCloseTheConnection(true);
@@ -330,22 +326,22 @@ public:
 				break;
 		}
 	}
-    void imitateCgi(){
-        std::ofstream outFile;
-        std::string in = _request.getBufferChunk();
-        std::cout << "writing chunk to:" << _request.getFullPath() << "\n";
-        outFile.open(_response.getCgiOutputFileName(), std::ios::app);
-        for(size_t i=0;i < in.size(); i++)
-        {
-            if(_request.isXSecretHeader())
-            {
-                outFile << "1";
-            }
-            else
-                outFile << (char)toupper(in[i]);
-        }
-        outFile.close();
-    }
+//    void imitateCgi(){
+//        std::ofstream outFile;
+//        std::string in = _request.getBufferChunk();
+//        std::cout << "writing chunk to:" << _request.getFullPath() << "\n";
+//        outFile.open(_response.getCgiOutputFileName(), std::ios::app);
+//        for(size_t i=0;i < in.size(); i++)
+//        {
+//            if(_request.isXSecretHeader())
+//            {
+//                outFile << "1";
+//            }
+//            else
+//                outFile << (char)toupper(in[i]);
+//        }
+//        outFile.close();
+//    }
     void findVirtualServer()
     {
         bool isFound = false;
@@ -443,6 +439,7 @@ public:
 					}
 					case GET:
 					case HEAD:{
+                        std::cout << _request.getFullPath() << "\n";
 						std::fstream inFile;
 						inFile.open((_request.getFullPath()),std::ios::in);
 						if(!inFile.is_open() || opendir(_request.getFullPath().c_str()))
@@ -476,9 +473,10 @@ public:
 	}
 
 	bool isCgi() {
-		if (_request.getDirectoryConfig().getDirectoryPath() == _request.getDirectoryConfig().getCgiPath() &&
-			(_request.getOptionFileExtension() == "bla" ||
-			_request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention()))
+//		if (_request.getDirectoryConfig().getDirectoryPath() == _request.getDirectoryConfig().getCgiPath() &&
+//        if ((_request.getOptionFileExtension() == "bla" || _request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention()))
+        std::cout << _request.getOptionFileExtension() << " " << _request.getDirectoryConfig().getCgiExtention() << "\n" ;
+        if ((_request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention()) && !_request.getDirectoryConfig().getCgiExtention().empty())
 		{
 			//_request.getDirectoryConfig().getCgiExtention() != ""
 				return true;
@@ -534,20 +532,10 @@ public:
 		if( stat(_request.getFullPath().c_str(),&s) == 0 && (s.st_mode & S_IFDIR))
 		{
 			_request.setRequestOptionType(OPTION_DIR);
-//				std::cout << "analyse request: file is DIRECTORY " << "\n";
-			// FIXME check redirections - tester not works with redirections
-//			if(*(_request.getOption().end() - 1) != '/')
-//			{
-//				std::cout << "redirects: " << " " << it->getDirectoryRedirect() << " " << _request.getOption() << "\n";
-//				_request.setRedirect(_request.getOption() + "/");
-//				_request.setRequestErrors(ERROR_REDIRECT);
-//				return;
-//			}
-//			if(*(_request.getOption().end() - 1) != '/')
-//			{
-//				_request.setRequestOptionType(OPTION_FILE);
-//				return;
-//			}
+            if (_request.getDirectoryConfig().getDirectoryIndexName().empty() && !_request.isAutoIndex()){
+                _request.setRequestErrors(ERROR_FILE_NOT_FOUND);
+                return;
+            }
 		}
 
 		// split to file and path
@@ -624,15 +612,12 @@ public:
 					case 200:
 						switch (_request.getRequestOptionType()){
 							case OPTION_DIR: {
-                                bool isIndexValid;
-                                std::string indexFilePath = _request.getFullPath() + _request.getDirectoryConfig().getDirectoryIndexName();
-                                std::ifstream indexFile(indexFilePath); // пытаемся открыть индекс файл
-                                if (!_request.getDirectoryConfig().getDirectoryIndexName().empty() && indexFile.is_open())
-                                    inputFile.open(indexFilePath, std::ios::in);
+                                if (!_request.getDirectoryConfig().getDirectoryIndexName().empty())
+                                    inputFile.open(_request.getFullPath() + _request.getDirectoryConfig().getDirectoryIndexName(), std::ios::in);
                                 else if (_request.isAutoIndex())//если индекс файла нет, записываем автоиндекс в body
                                     body = AutoIndex::generateAutoindexPage(_request.getFullPath());
-                                else
-                                    inputFile.open("www/isDirectory.html");
+//                                else
+//                                    inputFile.open("www/isDirectory.html");
                                 break;
                             }
 							case OPTION_FILE: {
