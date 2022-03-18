@@ -28,7 +28,7 @@ HDRS = Webserv.hpp\
 
 OBJS = $(SRCS:.cpp=.o)
 
-FLAGS = -O3 -Wno-c++11-compat-deprecated-writable-strings
+FLAGS = -O3 -g -Wno-c++11-compat-deprecated-writable-strings
 
 COMP = g++
 

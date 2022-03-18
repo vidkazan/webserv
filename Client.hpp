@@ -209,6 +209,7 @@ public:
 			pos = header.find('\"');
 			_request.setMultiPartFileName(header.substr(0,pos));
 			_request.setFullPath(_request.getFullPath() + _request.getMultiPartFileName());
+			std::cout << "212 " << _request.getFullPath() << " + " << _request.getMultiPartFileName() << "\n";
 		}
 		else {
 			_request.setContentLength(_request.getContentLength() - _request.getBuffer().size());
@@ -365,6 +366,7 @@ public:
             std::cout << "default virtual server is set\n";
         }
     }
+	
 	void analyseRequest(std::ofstream * file)
 	{
 		if(_request.getRequestMethod() == NO_METHOD || _request.getOption().empty() || _request.getHTTPVersion().empty() || _request.getHost().empty() )
@@ -383,7 +385,7 @@ public:
 		if(!_response.isPathIsAvailable()){
 			_request.setRequestErrors(ERROR_PATH_NOT_AVAILABLE);
 		}
-		if(_request.getOptionFileExtension() == "bla"){
+		if (this->isCgi()) {
 			_request.setRequestOptionType(OPTION_CGI);
 		}
 		switch (_request.getRequestErrors()) {
@@ -472,6 +474,18 @@ public:
 					_request.setRequestErrors(ERROR_FILE_NOT_FOUND);
 		}
 	}
+
+	bool isCgi() {
+		if (_request.getDirectoryConfig().getDirectoryPath() == _request.getDirectoryConfig().getCgiPath() &&
+			(_request.getOptionFileExtension() == "bla" ||
+			_request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention()))
+		{
+			//_request.getDirectoryConfig().getCgiExtention() != ""
+				return true;
+		}
+		return false;
+	}
+
 	void analysePath(std::ofstream * file){
 		size_t pos;
 		std::string fileName;
@@ -500,10 +514,11 @@ public:
 					return;
 				}
 				_request.setIsAutoIndex(it->isAutoindex());
-
+				
 				filePath.erase(0,it->getDirectoryName().size());
 				filePath.insert(0,it->getDirectoryPath());
 				_request.setFullPath(filePath);
+	
 				*file << "for this dir maxBosySize: " << it->getMaxBodySize() << "\n";
 				if(it->getMaxBodySize() >= 0)
 				{
@@ -620,19 +635,23 @@ public:
                                     inputFile.open("www/isDirectory.html");
                                 break;
                             }
-							case OPTION_FILE:
+							case OPTION_FILE: {
+								std::cout << "index name: " << _request.getFullPath() << "\n";
 								inputFile.open(_request.getFullPath(), std::ios::in);
 								break;
+							}
                             case NO_OPTION:
                                 break;
 							case OPTION_CGI:
                             {
+								std::cout << "cgi--- " << _request.getFullPath() << "\n";
                                 CGI *cgi = new CGI(_request.getType(), _request.getFullPath(), \
                                                     _response.getCgiOutputFileName(), _response.getCgiInputFileName());
                                 try {
                                     cgi->executeCgiScript();
-                                    bufResp += cgi->getContentTypeStr();
-                                    bufResp += "\n";
+                                    // bufResp += cgi->getContentTypeStr();
+                                    // bufResp += "\n";
+									bufResp = cgi->getBufResp();
                                     body = cgi->getBody();
                                 }
                                 catch (const std::exception &e) {
@@ -640,11 +659,11 @@ public:
                                         в классе CGI есть статические перемнные
                                         с готовым body и сторокой с ContentType при ошибке 500
                                     */
-                                    std::cerr << "ERROR IN CGI: " << e.what() << '\n';
-                                    bufResp = "HTTP/1.1 500 Internal Server Error\n";
-                                    bufResp += CGI::error500ContentType;
-                                    bufResp += "\n";
-                                    body = CGI::error500Body;
+									std::cerr << "ERROR IN CGI: " << e.what() << '\n';
+									bufResp = "HTTP/1.1 500 Internal Server Error\n";
+									bufResp += CGI::error500ContentType;
+									bufResp += "\n";
+									body = CGI::error500Body;
                                 }
                                 delete cgi;
                             }
@@ -674,7 +693,6 @@ public:
 			case POST:{
 				switch (_request.getRequestOptionType()){
 					case OPTION_CGI:
-//						body = readCgiRes();
                         {
                             CGI *cgi = new CGI(_request.getType(), _request.getFullPath(), \
                                                     _response.getCgiOutputFileName(), _response.getCgiInputFileName());

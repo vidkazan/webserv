@@ -8,12 +8,13 @@
 
 class CGI {
 private:
-	std::string cgiScriptPath;
-	std::string cgiScriptFullPath;
+	std::string scriptFileName;
+	std::string scriptPath;
+	std::string scriptFullPath;
+	std::string cgiBufResp;
 	std::vector<std::string> cgiEnvVector;
 	char **env;
 	char **argv;
-	// std::fstream cgiTmpFile;
 	std::string contentTypeStr;
 	std::string bodyAndHeader;
 	std::string body;
@@ -25,7 +26,7 @@ private:
 	void initArgv();
 	void initContentType();
 
-	void createBodyFromPage(std::string page);
+	void createBodyFromFile();
 	void createFullPathToScript();
 
 public:
@@ -34,13 +35,13 @@ public:
 	static std::string error500ContentType;
 	static int error500BodySize;
 
-	class CreateFullPathException : public std::exception {
+	class StandartFunctionsException : public std::exception {
 		private:
 			std::string error;
 		public:
-			CreateFullPathException(std::string const& error) : error(error) {};
+			StandartFunctionsException(std::string const& error) : error(error) {};
 			const char* what() const throw() {return error.c_str(); };
-			~CreateFullPathException() throw() {};
+			~StandartFunctionsException() throw() {};
 	};
 
 
@@ -48,8 +49,10 @@ public:
 
 	~CGI();
 	void executeCgiScript();
+	bool checkScriptRights();
 	std::string getContentTypeStr();
 	std::string getBody();
+	std::string getBufResp();
 
     std::string getCgiInputFileName(){return _cgiInputFileName;}
     std::string getCgiOutputFileName(){return _cgiOutputFileName;}

@@ -62,7 +62,15 @@ void parseConfigFile(Webserv2 & webserv2, int argc, char ** argv) {
 int main(int argc, char ** argv)
 {
 	Webserv2 webserv2;
-	parseConfigFile(webserv2, argc, argv);
+	try
+	{
+		parseConfigFile(webserv2, argc, argv);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		exit(1);
+	}
 	startMessage();
 	// listening listen sockets
 	for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it != webserv2.getPortServers().end(); it++)
