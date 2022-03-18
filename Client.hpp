@@ -476,10 +476,11 @@ public:
 	}
 
 	bool isCgi() {
-		if (_request.getOptionFileExtension() == "bla" ||
-			(_request.getDirectoryConfig().getCgiExtention() != "" &&
-				_request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention()))
+		if (_request.getDirectoryConfig().getDirectoryPath() == _request.getDirectoryConfig().getCgiPath() &&
+			(_request.getOptionFileExtension() == "bla" ||
+			_request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention()))
 		{
+			//_request.getDirectoryConfig().getCgiExtention() != ""
 				return true;
 		}
 		return false;
@@ -514,17 +515,10 @@ public:
 				}
 				_request.setIsAutoIndex(it->isAutoindex());
 				
-				//на http://localhost:2001/cgi-bin/printEnv.bla
-				std::cout << "506 " << it->getDirectoryName() << "\n"; // если есть директория в конфиге - /cgi-bin
-																// если нет - /
-				std::cout << "508 " << it->getDirectoryPath() << "\n"; // если есть директория в конфиге - www/cgi-bin/
-																// если нет - www/
 				filePath.erase(0,it->getDirectoryName().size());
 				filePath.insert(0,it->getDirectoryPath());
-				_request.setFullPath(filePath);	
-				std::cout << "513 " << filePath << "\n";	// если есть директория в конфиге - www/cgi-bin//printEnv.bla
-													// если нет - www/cgi-bin/printEnv.bla
-
+				_request.setFullPath(filePath);
+	
 				*file << "for this dir maxBosySize: " << it->getMaxBodySize() << "\n";
 				if(it->getMaxBodySize() >= 0)
 				{

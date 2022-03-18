@@ -54,10 +54,10 @@ void CGI::createFullPathToScript() {
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		throw StandartFunctionsException("getcwd");
 	std::string cwdStr(cwd);
-	std::cout << "--- " << cwdStr << "\n";
-	std::cout << "--- " << cwdStr[cwdStr.size() - 1] << "\n";
+	// std::cout << "--- " << cwdStr << "\n";
+	// std::cout << "--- " << cwdStr[cwdStr.size() - 1] << "\n";
 		this->scriptFullPath = cwdStr + "/" + scriptPath;
-		std::cout << "--- " << scriptFullPath << "\n";
+		// std::cout << "--- " << scriptFullPath << "\n";
 }
 
 /**
@@ -71,35 +71,9 @@ CGI::~CGI() {
 	free(argv);
 }
 
-void CGI::checkScriptRights() {
-	// if (access(scriptFullPath.c_str(), F_OK) == -1) {
-	// 	std::fstream inputFile;
-	// 	std::cerr << "ERROR IN CGI: cgi script not found\n";
-	// 	cgiBufResp = "HTTP/1.1 404 Not found\n";
-	// 	inputFile.open("www/404.html", std::ios::in);
-	// 	std::stringstream buffer;
-	// 	buffer << inputFile.rdbuf();
-	// 	body = buffer.str();
-	// 	return ;
-	// }
-	// if (access(scriptFullPath.c_str(), X_OK) == -1) {
-	// 	throw StandartFunctionsException("no rights");
-	// }
-}
-
-/**
-**	@brief	execute cgi script via fork & execve
-**	@return	std::string	script output in html (without "Content-type:")
-*/
-void CGI::executeCgiScript() {
-	createFullPathToScript(); // здесь, а не в конструкторе, т.к. выбрасывает исключение
-	cgiEnvVector.push_back("PATH_INFO=" + scriptFullPath);
-	initEnv();
-	initArgv();
-//noRights.bla
-
-	// checkScriptRights();
-		if (access(scriptFullPath.c_str(), F_OK) == -1) {
+bool CGI::checkScriptRights() { // изменить логик bool
+	if (access(scriptFullPath.c_str(), F_OK) == -1) {
+		/* проверяем на существование */
 		std::fstream inputFile;
 		std::cerr << "ERROR IN CGI: cgi script not found\n";
 		cgiBufResp = "HTTP/1.1 404 Not found\n";
@@ -107,18 +81,33 @@ void CGI::executeCgiScript() {
 		std::stringstream buffer;
 		buffer << inputFile.rdbuf();
 		body = buffer.str();
-		return ;
+		return false;
 	}
 	if (access(scriptFullPath.c_str(), X_OK) == -1) {
+		/* проверяем на право выполнения */
 		throw StandartFunctionsException("no rights");
 	}
+	return true;
+}
+
+/**
+**	@brief	execute cgi script via fork & execve
+**	@return	std::string	script output in html (without "Content-type:")
+*/
+void CGI::executeCgiScript() {
+	createFullPathToScript();
+	/* здесь, а не в конструкторе, т.к. выбрасывает исключение */
+	cgiEnvVector.push_back("PATH_INFO=" + scriptFullPath);
+	// std::cout << "--- PATH_INFO=" << scriptFullPath << "\n";
+	initEnv();
+	initArgv();
+	if (checkScriptRights() == false)
+		return;
 
 	pid_t pid = fork();
 	if (pid < 0)
 		throw StandartFunctionsException("cannot fork()");
 	else if (pid == 0) {
-		// std::cout << "--- input: " << getCgiInputFileName() << "\n";
-		// std::cout << "--- output: " << getCgiOutputFileName() << "\n";
 	
         int fd_in = open(getCgiInputFileName().c_str(), O_RDONLY, 0777);
         if (fd_in == -1)
@@ -126,10 +115,6 @@ void CGI::executeCgiScript() {
 		int fd_out = open(getCgiOutputFileName().c_str(), O_RDWR | O_CREAT | O_TRUNC, 0777);
         if (fd_out == -1)
 			throw StandartFunctionsException("cannot open() output file");
-
-		// std::cout << "--- file path: " << scriptPath << "\n";
-		// std::cout << "--- dir: " << (scriptPath.substr(0, scriptPath.find_last_of('/'))).c_str() << "\n";
-		// std::cout << "--- file argv[0]: " << argv[0] << "\n";
 
 		if (chdir((scriptPath.substr(0, scriptPath.find_last_of('/'))).c_str()) == -1)
 			throw StandartFunctionsException("cannot change directory");

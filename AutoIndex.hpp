@@ -2,11 +2,6 @@
 #include "main.hpp"
 
 #include <dirent.h>
-/*
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-*/
 
 /* если автоиндекс включен, пользователь вводит в url директорию (http://localhost:2001/cgi-bin/)
 	и в этой директории нет индекс файлов
@@ -25,9 +20,6 @@ public:
 		std::string res;
 		DIR *dp;
 		struct dirent *ep;
-		// cwd + path
-		// client.hpp 526/527
-		std::cout << ";  " << path << "\n";
 		dp = opendir(path.c_str());
 
 		res = "<!DOCTYPE html>\n\
@@ -58,7 +50,6 @@ public:
 					</html>\n";
 
 			(void) closedir (dp);
-					// std::cout << "-----\n" << res << "-----\n";
 		}
 		else {
 			perror ("Couldn't open the directory");

@@ -15,7 +15,6 @@ private:
 	std::vector<std::string> cgiEnvVector;
 	char **env;
 	char **argv;
-	// std::fstream cgiTmpFile;
 	std::string contentTypeStr;
 	std::string bodyAndHeader;
 	std::string body;
@@ -50,7 +49,7 @@ public:
 
 	~CGI();
 	void executeCgiScript();
-	void checkScriptRights();
+	bool checkScriptRights();
 	std::string getContentTypeStr();
 	std::string getBody();
 	std::string getBufResp();
