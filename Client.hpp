@@ -326,22 +326,6 @@ public:
 				break;
 		}
 	}
-//    void imitateCgi(){
-//        std::ofstream outFile;
-//        std::string in = _request.getBufferChunk();
-//        std::cout << "writing chunk to:" << _request.getFullPath() << "\n";
-//        outFile.open(_response.getCgiOutputFileName(), std::ios::app);
-//        for(size_t i=0;i < in.size(); i++)
-//        {
-//            if(_request.isXSecretHeader())
-//            {
-//                outFile << "1";
-//            }
-//            else
-//                outFile << (char)toupper(in[i]);
-//        }
-//        outFile.close();
-//    }
     void findVirtualServer()
     {
         bool isFound = false;
@@ -362,7 +346,6 @@ public:
             std::cout << "default virtual server is set\n";
         }
     }
-	
 	void analyseRequest(std::ofstream * file)
 	{
 		if(_request.getRequestMethod() == NO_METHOD || _request.getOption().empty() || _request.getHTTPVersion().empty() || _request.getHost().empty() )
@@ -402,6 +385,8 @@ public:
 			case OPTION_DIR:
 				break;
 			case OPTION_CGI: {
+                if(_request.getRequestMethod() == POST && _request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention())
+                    _request.setFullPath(_request.getDirectoryConfig().getCgiPath());
 				std::stringstream OutputFileName;
 				std::ofstream cgiOutput;
 				OutputFileName << "tmp/tmp_cgi_output_";
@@ -499,8 +484,7 @@ public:
                 _request.setDirectoryConfig(*it);
 				pos = it->getDirectoryAllowedMethods().find(_request.getType());
 
-				if(pos != std::string::npos || (_request.getRequestMethod() == POST && _request.getOptionFileExtension() == "bla")){
-					*file << "Method is allowed\n";
+				if(pos != std::string::npos || (_request.getRequestMethod() == POST && _request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention())){
 					_response.setMethodIsAllowed(true);
 				}
 				// FIXME check redirections - tester not works with redirections
@@ -512,11 +496,9 @@ public:
 					return;
 				}
 				_request.setIsAutoIndex(it->isAutoindex());
-				
 				filePath.erase(0,it->getDirectoryName().size());
 				filePath.insert(0,it->getDirectoryPath());
 				_request.setFullPath(filePath);
-	
 				*file << "for this dir maxBosySize: " << it->getMaxBodySize() << "\n";
 				if(it->getMaxBodySize() >= 0)
 				{

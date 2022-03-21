@@ -1,5 +1,16 @@
 #include "main.hpp"
 
+void printWebservData(Webserv2 &webserv2)
+{
+    //print port servers
+    for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it!=webserv2.getPortServers().end();it++){
+        std::cout << it->getIp() << " " << it->getPort() << "\n";
+        for(std::vector<VirtualServerConfig>::iterator it2 = it->getVirtualServers().begin();it2!=it->getVirtualServers().end();it2++){
+            std::cout << " " << it2->getIp() << " " << it2->getPort() << " " << it2->getServerName() <<  "\n";
+        }
+    }
+}
+
 void setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 {
 	// generate servers
@@ -31,7 +42,7 @@ void setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
     VirtualServerConfig virtualServConfig1(dirs, \
       sc->listen->port[0], \
       (char *)sc->listen->rawIp.c_str(), \
-      "localhost:2001");
+      sc->server_name);
 	webserv2.addPortServer(sc->listen->port[0], (char *)sc->listen->rawIp.c_str());
 	webserv2.addVirtualServer(virtualServConfig1);
 }
@@ -76,6 +87,7 @@ int main(int argc, char ** argv)
 	for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it != webserv2.getPortServers().end(); it++)
 		listen(it->getSocketFD(), 1000);
 	// MAIN LOOP
+    printWebservData(webserv2);
 	while(1)
 	{
 		// preparing for SELECT

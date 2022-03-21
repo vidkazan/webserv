@@ -85,6 +85,7 @@ bool CGI::checkScriptRights() { // изменить логик bool
 	}
 	if (access(scriptFullPath.c_str(), X_OK) == -1) {
 		/* проверяем на право выполнения */
+        std::cout << scriptFullPath << "\n";
 		throw StandartFunctionsException("no rights");
 	}
 	return true;

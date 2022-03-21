@@ -59,7 +59,6 @@ private:
 	ssize_t _contentLength;
 	ssize_t _chunkSize;
 	bool _isAutoIndex;
-	bool _isXSecretHeader;
 
 	std::string _redirect;
 	ssize_t _maxBodySize;
@@ -87,7 +86,6 @@ public:
 				_chunkSize(-1), \
 				_redirect(""), \
 				_isAutoIndex(0), \
-				_isXSecretHeader(0), \
 				_maxBodySize(-1), \
 
 				_count(0), \
@@ -126,11 +124,8 @@ public:
 	std::string getOptionFileExtension() const {return  _optionFileExtension;};
 	std::string getHost() const {return  _host;};
 	std::string getHTTPVersion(){return  _httpVersion;};
-	bool isXSecretHeader(){return _isXSecretHeader;}
-
 	bool isAutoIndex(){return _isAutoIndex;}
 	std::string getRedirect(){return _redirect;}
-	void setIsXSecretHeader(bool x){_isXSecretHeader = x;}
 	void setRedirect(std::string redir){_redirect = redir;}
 	void setIsAutoIndex(bool ai){_isAutoIndex = ai;}
 
