@@ -5,23 +5,22 @@
 class AutoIndex;
 class Client {
 private:
-	int _socketFD;
-	int _status;
+	int                              _socketFD;
+	int                              _status;
 	std::vector<VirtualServerConfig> _virtualServers;
-	VirtualServerConfig _serverConfig;
-	Response _response;
-	Request _request;
+	VirtualServerConfig              _serverConfig;
+	Response                         _response;
+	Request                          _request;
 
 public:
-	Client(int fd, std::vector<VirtualServerConfig> virtualServers): _socketFD(fd), _status(READING), _virtualServers(virtualServers) {
-	};
-	~Client(){};
-	int getStatus() const {return _status;};
-	int getSocketFd() const{return _socketFD;}
-	void setStatus(int status){_status = status;}
-	void setVirtualServerConfig(const VirtualServerConfig & conf){_serverConfig = conf;}
-	void setResponse(const Response&response){_response = response;}
-	void readRequest()
+	            Client(int fd, std::vector<VirtualServerConfig> virtualServers): _socketFD(fd), _status(READING), _virtualServers(virtualServers) {};
+	            ~Client(){};
+	int         getStatus() const {return _status;};
+	int         getSocketFd() const{return _socketFD;}
+	void        setStatus(int status){_status = status;}
+	void        setVirtualServerConfig(const VirtualServerConfig & conf){_serverConfig = conf;}
+	void        setResponse(const Response&response){_response = response;}
+	void        readRequest()
 	{
 		std::ofstream file;
 		file.open("tmp/log/fullReq_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::app);
@@ -59,7 +58,7 @@ public:
 		}
 		file.close();
 	}
-	void recvBuffer(std::ofstream * file){
+	void        recvBuffer(std::ofstream * file){
 		ssize_t ret;
 		char buf[100000];
 		bzero(&buf, 100000);
@@ -71,7 +70,7 @@ public:
 
 		_request.appendBuffer(buf, ret);
 	}
-	void parseRequestHeader(std::ofstream * file)
+	void        parseRequestHeader(std::ofstream * file)
 	{
 		std::string tmp;
 		std::string line;
@@ -136,7 +135,7 @@ public:
 			_request.setBuffer(tmp.erase(0, pos + 1));
 		}
 	}
-	void parseRequestTypeOptionVersion(std::string str)
+	void        parseRequestTypeOptionVersion(std::string str)
 	{
 		size_t pos = str.find(' ');
 		if(pos != std::string::npos) {
@@ -163,7 +162,7 @@ public:
 		if(!str.empty())
 			_request.setHTTPVersion(str);
 	}
-	void parseRequestBody(std::ofstream * file)
+	void        parseRequestBody(std::ofstream * file)
 	{
 		if(_request.getRequestMethod() == POST) {
 			std::cout << "parse Body: " << "content length: " << _request.getContentLength() << " buffer size: " << _request.getBuffer().size() << " buffer: " << _request.getBuffer() << "\n";
@@ -190,7 +189,7 @@ public:
 			_request.setReadStatus(REQUEST_READ_COMPLETE);
 		}
 	}
-	void parseRequestMultiPart(std::ofstream * file)
+	void        parseRequestMultiPart(std::ofstream * file)
 	{
 		if(_request.getMultiPartFileName().empty())
 		{
@@ -226,7 +225,7 @@ public:
 			_request.setReadStatus(REQUEST_READ_COMPLETE);
 		}
 	}
-	void parseRequestBodyChunked(std::ofstream * file)
+	void        parseRequestBodyChunked(std::ofstream * file)
 	{
 		std::string tmp;
 		size_t pos;
@@ -300,7 +299,7 @@ public:
 			}
 		}
 	}
-	void exportChunk(){
+	void        exportChunk(){
 		switch (_request.getRequestOptionType()) {
 			case OPTION_CGI:
 			{
@@ -326,7 +325,7 @@ public:
 				break;
 		}
 	}
-    void findVirtualServer()
+    void        findVirtualServer()
     {
         bool isFound = false;
         std::vector<VirtualServerConfig>::iterator def = _virtualServers.begin();
@@ -346,7 +345,7 @@ public:
             std::cout << "default virtual server is set\n";
         }
     }
-	void analyseRequest(std::ofstream * file)
+	void        analyseRequest(std::ofstream * file)
 	{
 		if(_request.getRequestMethod() == NO_METHOD || _request.getOption().empty() || _request.getHTTPVersion().empty() || _request.getHost().empty() )
 		{
@@ -456,8 +455,7 @@ public:
 					_request.setRequestErrors(ERROR_FILE_NOT_FOUND);
 		}
 	}
-
-	bool isCgi() {
+	bool        isCgi() {
 //		if (_request.getDirectoryConfig().getDirectoryPath() == _request.getDirectoryConfig().getCgiPath() &&
 //        if ((_request.getOptionFileExtension() == "bla" || _request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention()))
         std::cout << _request.getOptionFileExtension() << " " << _request.getDirectoryConfig().getCgiExtention() << "\n" ;
@@ -468,8 +466,7 @@ public:
 		}
 		return false;
 	}
-
-	void analysePath(std::ofstream * file){
+	void        analysePath(std::ofstream * file){
 		size_t pos;
 		std::string fileName;
 		std::string filePath;
@@ -536,7 +533,7 @@ public:
 		if(_request.getRequestMethod() == POST && _request.getOptionFileExtension() == "bla")
 			_response.setMethodIsAllowed(true);
 	}
-	void generateResponse()
+	void        generateResponse()
 	{
 		printStates("generate response");
 		std::fstream inputFile;
@@ -717,7 +714,7 @@ public:
 		Request request;
 		_request = request;
 	}
-	void allocateResponse(std::string bufResp){
+	void        allocateResponse(std::string bufResp){
 		char *res;
 		size_t i=0;
 		size_t size = bufResp.size();
@@ -727,7 +724,7 @@ public:
 		}
 		_response.setResponse(res,i);
 	}
-	void sendResponse()
+	void        sendResponse()
 	{
 		ssize_t ret = send(_socketFD, _response.getResponse() + _response.getBytesSent(),_response.getResponseSize() - _response.getBytesSent(),0); //  SIGPIPE ignore
 		if(ret <= 0)
@@ -746,7 +743,6 @@ public:
 			setResponse(response);
 		}
 	}
-
 	std::string readCgiRes(){
 		std::ifstream file;
 		file.open(_response.getCgiOutputFileName(), (std::ios_base::openmode)0);
@@ -756,7 +752,7 @@ public:
 		str << file.rdbuf();
 		return (str.str());
 	}
-	void printStates(std::string place){
+	void        printStates(std::string place){
 		std::cout << "| RS:" << _request.getReadStatus() << " | M:" << _request.getRequestMethod() << " | B:" << _request.getRequestBodyType() <<  " | O:" << _request.getRequestOptionType() << " | E:" << _request.getRequestErrors() << " |"  << place << "\n";;
 	}
 };

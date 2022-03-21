@@ -1,6 +1,6 @@
 #include "main.hpp"
 
-void printWebservData(Webserv2 &webserv2)
+void    printWebservData(Webserv2 &webserv2)
 {
     //print port servers
     for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it!=webserv2.getPortServers().end();it++){
@@ -11,7 +11,7 @@ void printWebservData(Webserv2 &webserv2)
     }
 }
 
-void setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
+void    setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 {
 	// generate servers
 	std::vector<VirtualServerConfigDirectory>	dirs;
@@ -47,13 +47,13 @@ void setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 	webserv2.addVirtualServer(virtualServConfig1);
 }
 
-void startMessage(){
+void    startMessage(){
 	printLog("", "______________________________________________________________|\n"
 				 			   "|_________________________SERVER START_________________________|\n"
 							   "|______________________________________________________________", GREEN);
 }
 
-void parseConfigFile(Webserv2 & webserv2, int argc, char ** argv) {
+void    parseConfigFile(Webserv2 & webserv2, int argc, char ** argv) {
 	formatConfigFile			a(argc, argv);
 //	vector<ServerConfig *>		_servers;
 	vector<string> strServers = a.getStringServers();
@@ -70,7 +70,7 @@ void parseConfigFile(Webserv2 & webserv2, int argc, char ** argv) {
 	}
 }
 
-int main(int argc, char ** argv)
+int     main(int argc, char ** argv)
 {
 	Webserv2 webserv2;
 	try
