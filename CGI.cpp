@@ -3,6 +3,12 @@
 #include <cstdint>
 #include <filesystem>
 
+std::ifstream::pos_type filesize(const char* filename)
+{
+    std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+    return in.tellg();
+}
+
 void    printEnv(char** env){
     while(*env){
         std::cout << *env << "\n";
@@ -109,7 +115,6 @@ void CGI::executeCgiScript() {
 		return;
 	pid_t pid = fork();
 	if (pid == 0) {
-
         int fd_in = open(getCgiInputFileName().c_str(), O_RDONLY, 0777);
         if (fd_in == -1)
             throw StandartFunctionsException("cannot open() input file");
@@ -183,15 +188,15 @@ void CGI::createBodyFromFile()
 	cgiTmpFile.open(getCgiOutputFileName());
     if(!cgiTmpFile.is_open())
         throw StandartFunctionsException("createBodyFromFile: error open output file");
+    size_t size = filesize(getCgiOutputFileName().c_str());
+    std::cout << GREEN << "filesize: " << size << WHITE << "\n";
 	std::stringstream bufferCgi;
 	bufferCgi << cgiTmpFile.rdbuf();
 	bodyAndHeader = bufferCgi.str();
-
     size_t pos = bodyAndHeader.find("\r\n\r\n") + 4;
     this->body = bodyAndHeader.substr(pos,bodyAndHeader.size() - pos);
 	cgiTmpFile.close();
 }
-
 /**
 **	@brief	get first string with content type from body
 **			(throw if the body does not contain a line with or no \\n)

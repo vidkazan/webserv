@@ -22,8 +22,8 @@ public:
 	void        setResponse(const Response&response){_response = response;}
 	void        readRequest()
 	{
-		std::ofstream file;
-		file.open("tmp/log/fullReq_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::app);
+        std::ofstream file;
+        file.open("tmp/log/fullReq_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::app);
 		recvBuffer(&file);
     
 		int previousReadStatus = -1;
@@ -537,7 +537,8 @@ public:
 	}
 	void        generateResponse()
 	{
-		printStates((_request.getOption()));
+        std::string tmp = std::to_string(getSocketFd()) + " " + _request.getOption();
+		printStates(tmp);
 		std::fstream inputFile;
 		std::string bufResp;
 		std::string body;
@@ -667,6 +668,8 @@ public:
 //                                bufResp += cgi->getContentTypeStr();
 //                                bufResp += "\n";
                                 body = cgi->getBody();
+                                std::remove(_response.getCgiInputFileName().c_str());
+                                std::remove(_response.getCgiOutputFileName().c_str());
                             }
                             catch (const std::exception &e) {
                                 /*
@@ -702,7 +705,6 @@ public:
 			case OTHER_METHOD:
 				break;
 		}
-
 		bufResp += "\n\n";
 		if(_request.getType() != "HEAD")
 			bufResp += body;
