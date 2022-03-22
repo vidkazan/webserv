@@ -3,17 +3,17 @@
 
 class PortServer;
 
-class Webserv2 {
+class Webserv2{
 private:
-	std::vector<PortServer> _portServers;
-	std::vector<Client> _clients;
+	std::vector<PortServer>     _portServers;
+	std::vector<Client>         _clients;
 public:
-	Webserv2(){}
-	~Webserv2(){}
-	void configFileParse(){}
-	std::vector<PortServer>& getPortServers(){return _portServers;}
-	std::vector<Client>& getClients(){return _clients;}
-	void addPortServer(int port, std::string ip)
+	                            Webserv2(){}
+	                            ~Webserv2(){}
+	void                        configFileParse(){}
+	std::vector<PortServer>&    getPortServers(){return _portServers;}
+	std::vector<Client>&        getClients(){return _clients;}
+	void                        addPortServer(int port, std::string ip)
 	{
 		PortServer portServer(port, ip);
 		_portServers.push_back(portServer);
@@ -22,11 +22,11 @@ public:
 			exit(EXIT_FAILURE);
 		}
 	}
-	void addClient(int fd, std::vector<VirtualServerConfig> virtualServers){
+	void                        addClient(int fd, std::vector<VirtualServerConfig> virtualServers){
 		Client client(fd, virtualServers);
 		_clients.push_back(client);
 	}
-	void addVirtualServer(VirtualServerConfig & conf)
+	void                        addVirtualServer(VirtualServerConfig & conf)
 	{
 		for(std::vector<PortServer>::iterator it1 = _portServers.begin();it1 != _portServers.end(); it1++)
 		{

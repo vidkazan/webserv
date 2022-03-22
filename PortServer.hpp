@@ -3,13 +3,13 @@
 
 class PortServer{
 private:
-	int _port;
-	std::string _ip;
-	int _socketFD;
-	struct sockaddr_in _adr;
-	std::vector<VirtualServerConfig> _virtualServers;
+	int                                 _port;
+	std::string                         _ip;
+	int                                 _socketFD;
+	struct sockaddr_in                  _adr;
+	std::vector<VirtualServerConfig>    _virtualServers;
 public:
-	PortServer(int port, std::string ip): _ip(ip), _port(port){
+	                                    PortServer(int port, std::string ip): _ip(ip), _port(port){
 		_adr.sin_addr.s_addr = 0;
 		_adr.sin_family = 0;
 		// _adr.sin_len = 0;
@@ -22,11 +22,11 @@ public:
 		_adr.sin_port = htons(port);
 		_adr.sin_addr.s_addr = inet_addr(_ip.c_str());
 	};
-	virtual ~PortServer(){};
-	int getSocketFD() const {return _socketFD;};
-	struct sockaddr_in& getSockAddrInStruct(){return _adr;};
-	int getPort(){return _port;}
-	std::string getIp(){return _ip;}
-	std::vector<VirtualServerConfig> & getVirtualServers(){return _virtualServers;}
-	void addVirtualServer(const VirtualServerConfig & config){_virtualServers.push_back(config);}
+	virtual                             ~PortServer(){};
+	int                                 getSocketFD() const {return _socketFD;};
+	struct sockaddr_in                  &getSockAddrInStruct(){return _adr;};
+	int                                 getPort(){return _port;}
+	std::string                         getIp(){return _ip;}
+	std::vector<VirtualServerConfig>    &getVirtualServers(){return _virtualServers;}
+	void                                addVirtualServer(const VirtualServerConfig & config){_virtualServers.push_back(config);}
 };
