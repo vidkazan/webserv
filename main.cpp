@@ -87,7 +87,7 @@ int     main(int argc, char ** argv)
 	for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it != webserv2.getPortServers().end(); it++)
 		listen(it->getSocketFD(), 1000);
 	// MAIN LOOP
-    printWebservData(webserv2);
+//    printWebservData(webserv2);
 	while(1)
 	{
 		// preparing for SELECT

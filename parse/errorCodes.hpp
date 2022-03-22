@@ -12,6 +12,7 @@
 #define ERR_INTERPRET "error: config_parse: can not interpret parameter"
 #define ERR_INVALID "error: config_parse: invalid value"
 #define ERR_INVALID_DIR "error: config_parse: invalid directory"
+#define ERR_INVALID_FILE "error: config_parse: invalid file"
 #define ERR_ARG "error: argument"
 #define ERR_PARSE "error: config parse"
 

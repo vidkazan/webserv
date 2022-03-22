@@ -50,7 +50,7 @@ void LocationConfig::_setName(string & value) {
 void LocationConfig::_setCGIPath() {
 	this->_rawErase("cgi_path ");
 	string directory = this->_getSingleValue();
-	this->_checkDir(directory);
+	this->_checkFile(directory);
 	this->cgi_path = directory;
 }
 

@@ -28,10 +28,12 @@ CGI::CGI(std::string _requestMethod, std::string _cgiScriptPath, std::string cgi
 	cgiEnvVector.push_back("SERVER_NAME=127.0.0.1");
 	cgiEnvVector.push_back("SERVER_PORT=2001");
 	cgiEnvVector.push_back("REQUEST_METHOD=" + _requestMethod);
+    cgiEnvVector.push_back("HTTP_X_SECRET_HEADER_FOR_TEST=1");
 	/*--конец обязательного--*/
-	cgiEnvVector.push_back("SCRIPT_NAME=a.out");
+//	cgiEnvVector.push_back("SCRIPT_NAME=a.out");
 
 	scriptFileName = scriptPath.substr(scriptPath.find_last_of('/') + 1, scriptPath.size());
+    scriptPath = scriptPath.substr(0,scriptPath.find_last_of('/'));
 //	if (_requestMethod == "POST") {
 //		cgiEnvVector.push_back("CONTENT_LENGTH=48");
 //		cgiEnvVector.push_back("CONTENT_TYPE=text/html");
@@ -56,8 +58,7 @@ void CGI::createFullPathToScript() {
 	std::string cwdStr(cwd);
 	// std::cout << "--- " << cwdStr << "\n";
 	// std::cout << "--- " << cwdStr[cwdStr.size() - 1] << "\n";
-		this->scriptFullPath = cwdStr + "/" + scriptPath;
-		// std::cout << "--- " << scriptFullPath << "\n";
+    this->scriptFullPath = cwdStr + "/" + scriptPath + "/" + scriptFileName;
 }
 
 /**
@@ -98,48 +99,45 @@ bool CGI::checkScriptRights() { // изменить логик bool
 void CGI::executeCgiScript() {
 	createFullPathToScript();
 	/* здесь, а не в конструкторе, т.к. выбрасывает исключение */
-	cgiEnvVector.push_back("PATH_INFO=" + scriptFullPath);
-	// std::cout << "--- PATH_INFO=" << scriptFullPath << "\n";
+    std::string path_info = "PATH_INFO=" + scriptFullPath.substr(0,scriptFullPath.find_last_of('/') + 1);
+	cgiEnvVector.push_back(path_info);
+
+//	 std::cout << "--- PATH_INFO=" << path_info << "\n";
 	initEnv();
 	initArgv();
 	if (checkScriptRights() == false)
 		return;
-
 	pid_t pid = fork();
-	if (pid < 0)
-		throw StandartFunctionsException("cannot fork()");
-	else if (pid == 0) {
-	
+	if (pid == 0) {
+
         int fd_in = open(getCgiInputFileName().c_str(), O_RDONLY, 0777);
         if (fd_in == -1)
             throw StandartFunctionsException("cannot open() input file");
 		int fd_out = open(getCgiOutputFileName().c_str(), O_RDWR | O_CREAT | O_TRUNC, 0777);
         if (fd_out == -1)
 			throw StandartFunctionsException("cannot open() output file");
-
-		if (chdir((scriptPath.substr(0, scriptPath.find_last_of('/'))).c_str()) == -1)
+        if ((chdir(scriptPath.c_str())) == -1)
 			throw StandartFunctionsException("cannot change directory");
-
         if (dup2(fd_in, 0) == -1 || dup2(fd_out, 1) == -1)
             throw StandartFunctionsException("cannot dup2()");
-        if (close(fd_out) == -1 || close(fd_in) == -1 || close(0) == -1)
+        if (close(fd_out) == -1 || close(fd_in) == -1)
             throw StandartFunctionsException("cannot close()");
-
-		if (execve(argv[0], argv, env))
+        if (execve(argv[0], argv, env))
 			strerror(errno);
 		exit(EXIT_FAILURE);
 	}
 	else if (pid > 0) {
 		int status;
 		waitpid(pid, &status, 0);
-		if (WIFEXITED(status) == 0)
-			throw StandartFunctionsException("process failed");
+		if (WIFEXITED(status) == 0) {
+            throw StandartFunctionsException("process failed");
+        }
 	}
-	createBodyFromFile();
-	initContentType();
+    createBodyFromFile();
+//    initContentType();
 	cgiBufResp = "HTTP/1.1 200 OK\r\n";
-	cgiBufResp += this->getContentTypeStr();
-	cgiBufResp += "\n";
+//	cgiBufResp += this->getContentTypeStr();
+//	cgiBufResp += "\n";
 }
 
 /**
@@ -179,17 +177,18 @@ void CGI::initArgv() {
 ** 			and delete first string with content type
 **	@param	page		file name
 */
-void CGI::createBodyFromFile() {
+void CGI::createBodyFromFile()
+{
 	std::fstream cgiTmpFile;
 	cgiTmpFile.open(getCgiOutputFileName());
-
+    if(!cgiTmpFile.is_open())
+        throw StandartFunctionsException("createBodyFromFile: error open output file");
 	std::stringstream bufferCgi;
 	bufferCgi << cgiTmpFile.rdbuf();
 	bodyAndHeader = bufferCgi.str();
 
-	std::string bodyWithoutHeader(bodyAndHeader,
-		bodyAndHeader.find_first_of("\n") + 2, bodyAndHeader.length());
-	this->body = bodyWithoutHeader;
+    size_t pos = bodyAndHeader.find("\r\n\r\n") + 4;
+    this->body = bodyAndHeader.substr(pos,bodyAndHeader.size() - pos);
 	cgiTmpFile.close();
 }
 

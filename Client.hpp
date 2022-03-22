@@ -83,11 +83,6 @@ public:
 				tmp = _request.getBuffer();
 				_request.setBuffer(tmp.erase(0, 2));
 
-//				switch (_request.getReadStatus()) {
-//					case REQUEST_READ_HEADER:
-//						_request.setReadStatus(REQUEST_READ_COMPLETE);
-//					default:
-//						break;
                 if(_request.getReadStatus() == REQUEST_READ_HEADER)
                     _request.setReadStatus(REQUEST_READ_COMPLETE);
 				analyseRequest(file);
@@ -121,8 +116,13 @@ public:
 					_request.setRequestBodyType(BODY_BASE);
 				}
 			}
+            else if(line.find("X-Secret-Header-For-Test: 1") != std::string::npos){
+//				if(line[line.size()-1] == '1')
+                _request.setIsXSecretHeader(true);
+//                std::cout << "X-Secret-Header\n";
+            }
 			else if(line.find("Connection: close") != std::string::npos){
-				std::cout << "Connection will be closed!\n";
+//				std::cout << "Connection will be closed!\n";
 				_response.setToCloseTheConnection(true);
 			}
 			else if(line.find("Content-Type: multipart/form-data; boundary=----WebKitFormBoundary") != std::string::npos)
@@ -165,7 +165,7 @@ public:
 	void        parseRequestBody(std::ofstream * file)
 	{
 		if(_request.getRequestMethod() == POST) {
-			std::cout << "parse Body: " << "content length: " << _request.getContentLength() << " buffer size: " << _request.getBuffer().size() << " buffer: " << _request.getBuffer() << "\n";
+//			std::cout << "parse Body: " << "content length: " << _request.getContentLength() << " buffer size: " << _request.getBuffer().size() << " buffer: " << _request.getBuffer() << "\n";
 		}
 		_request.setContentLength(_request.getContentLength() - _request.getBuffer().size());
 		if(_request.getRequestOptionType() != OPTION_CGI)
@@ -204,7 +204,7 @@ public:
 			pos = header.find('\"');
 			_request.setMultiPartFileName(header.substr(0,pos));
 			_request.setFullPath(_request.getFullPath() + _request.getMultiPartFileName());
-			std::cout << "212 " << _request.getFullPath() << " + " << _request.getMultiPartFileName() << "\n";
+//			std::cout << "212 " << _request.getFullPath() << " + " << _request.getMultiPartFileName() << "\n";
 		}
 		else {
 			_request.setContentLength(_request.getContentLength() - _request.getBuffer().size());
@@ -409,11 +409,11 @@ public:
 				switch (_request.getRequestMethod()) {
 					case POST:
 					case PUT:{
-						std::cout << "analyse request: POST/PUT: trunc file\n";
+//						std::cout << "analyse request: POST/PUT: trunc file\n";
 						std::fstream outFile;
 						outFile.open((_request.getFullPath()), std::ios::out | std::ios::trunc);
 						if(!outFile.is_open()){
-							std::cout << _request.getFullPath() << " : error\n";
+//							std::cout << _request.getFullPath() << " : error\n";
 						}
 						else{
 							_response.setFileIsFound(true);
@@ -423,11 +423,11 @@ public:
 					}
 					case GET:
 					case HEAD:{
-                        std::cout << _request.getFullPath() << "\n";
+//                        std::cout << _request.getFullPath() << "\n";
 						std::fstream inFile;
 						inFile.open((_request.getFullPath()),std::ios::in);
 						if(!inFile.is_open() || opendir(_request.getFullPath().c_str()))
-							std::cout << _request.getFullPath() << " : error\n";
+                            std::cout << RED << _request.getFullPath() << " : error\n" << WHITE;
 						else{
 							_response.setFileIsFound(true);
 							inFile.close();
@@ -438,7 +438,7 @@ public:
 						std::fstream inFile;
 						inFile.open((_request.getFullPath()),std::ios::in);
 						if(!inFile.is_open() || opendir(_request.getFullPath().c_str()))
-							std::cout << _request.getFullPath() << " : error\n";
+							std::cout << RED << _request.getFullPath() << " : error\n" << WHITE;
 						else
 						{
 							_response.setFileIsFound(true);
@@ -452,16 +452,14 @@ public:
 						_request.setRequestErrors(ERROR_REQUEST_NOT_VALID);
 				}
 				if(_request.getRequestOptionType() == OPTION_FILE && !_response.isFileIsFound())
-					_request.setRequestErrors(ERROR_FILE_NOT_FOUND);
+                {
+                    _request.setRequestErrors(ERROR_FILE_NOT_FOUND);
+                }
 		}
 	}
 	bool        isCgi() {
-//		if (_request.getDirectoryConfig().getDirectoryPath() == _request.getDirectoryConfig().getCgiPath() &&
-//        if ((_request.getOptionFileExtension() == "bla" || _request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention()))
-        std::cout << _request.getOptionFileExtension() << " " << _request.getDirectoryConfig().getCgiExtention() << "\n" ;
         if ((_request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention()) && !_request.getDirectoryConfig().getCgiExtention().empty())
 		{
-			//_request.getDirectoryConfig().getCgiExtention() != ""
 				return true;
 		}
 		return false;
@@ -481,7 +479,11 @@ public:
                 _request.setDirectoryConfig(*it);
 				pos = it->getDirectoryAllowedMethods().find(_request.getType());
 
-				if(pos != std::string::npos || (_request.getRequestMethod() == POST && _request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention())){
+				if(pos != std::string::npos || \
+                  (_request.getRequestMethod() == POST && \
+                   _request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention()) && \
+                   !_request.getOptionFileExtension().empty())
+                {
 					_response.setMethodIsAllowed(true);
 				}
 				// FIXME check redirections - tester not works with redirections
@@ -499,7 +501,7 @@ public:
 				*file << "for this dir maxBosySize: " << it->getMaxBodySize() << "\n";
 				if(it->getMaxBodySize() >= 0)
 				{
-					std::cout << "MAX Body Size! "<< it->getMaxBodySize() << "\n";
+//					std::cout << "MAX Body Size! "<< it->getMaxBodySize() << "\n";
 					_request.setMaxBodySize(it->getMaxBodySize());
 				}
 				break;
@@ -511,7 +513,7 @@ public:
 		if( stat(_request.getFullPath().c_str(),&s) == 0 && (s.st_mode & S_IFDIR))
 		{
 			_request.setRequestOptionType(OPTION_DIR);
-            if (_request.getDirectoryConfig().getDirectoryIndexName().empty() && !_request.isAutoIndex()){
+            if (_request.getDirectoryConfig().getDirectoryIndexName().empty() && !_request.isAutoIndex() && _request.getRequestMethod() == GET){
                 _request.setRequestErrors(ERROR_FILE_NOT_FOUND);
                 return;
             }
@@ -535,7 +537,7 @@ public:
 	}
 	void        generateResponse()
 	{
-		printStates("generate response");
+		printStates((_request.getOption()));
 		std::fstream inputFile;
 		std::string bufResp;
 		std::string body;
@@ -600,7 +602,7 @@ public:
                                 break;
                             }
 							case OPTION_FILE: {
-								std::cout << "index name: " << _request.getFullPath() << "\n";
+//								std::cout << "index name: " << _request.getFullPath() << "\n";
 								inputFile.open(_request.getFullPath(), std::ios::in);
 								break;
 							}
@@ -608,7 +610,7 @@ public:
                                 break;
 							case OPTION_CGI:
                             {
-								std::cout << "cgi--- " << _request.getFullPath() << "\n";
+//								std::cout << "cgi--- " << _request.getFullPath() << "\n";
                                 CGI *cgi = new CGI(_request.getType(), _request.getFullPath(), \
                                                     _response.getCgiOutputFileName(), _response.getCgiInputFileName());
                                 try {
@@ -662,8 +664,8 @@ public:
                                                     _response.getCgiOutputFileName(), _response.getCgiInputFileName());
                             try {
                                 cgi->executeCgiScript();
-                                bufResp += cgi->getContentTypeStr();
-                                bufResp += "\n";
+//                                bufResp += cgi->getContentTypeStr();
+//                                bufResp += "\n";
                                 body = cgi->getBody();
                             }
                             catch (const std::exception &e) {
