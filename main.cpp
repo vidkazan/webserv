@@ -134,7 +134,7 @@ int     main(int argc, char ** argv)
 			// finding a write event in client sockets array
 			if(FD_ISSET(it->getSocketFd(), &writefds))
 			{
-//				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
+				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
 				it->sendResponse();
 			}
 		}

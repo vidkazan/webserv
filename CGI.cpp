@@ -188,8 +188,8 @@ void CGI::createBodyFromFile()
 	cgiTmpFile.open(getCgiOutputFileName());
     if(!cgiTmpFile.is_open())
         throw StandartFunctionsException("createBodyFromFile: error open output file");
-    size_t size = filesize(getCgiOutputFileName().c_str());
-    std::cout << GREEN << "filesize: " << size << WHITE << "\n";
+//    size_t size = filesize(getCgiOutputFileName().c_str());
+//    std::cout << GREEN << getCgiOutputFileName() << ": filesize: " << size << WHITE << "\n";
 	std::stringstream bufferCgi;
 	bufferCgi << cgiTmpFile.rdbuf();
 	bodyAndHeader = bufferCgi.str();

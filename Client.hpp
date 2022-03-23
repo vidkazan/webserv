@@ -706,7 +706,7 @@ public:
 				break;
 		}
 		bufResp += "\n\n";
-		if(_request.getType() != "HEAD")
+		if(_request.getRequestMethod() != HEAD)
 			bufResp += body;
 		allocateResponse(bufResp);
 		std::ofstream logfile;
@@ -715,6 +715,13 @@ public:
 		logfile.close();
 		_status = WRITING;
 		inputFile.close();
+            std::string a1 = "tmp/log/resp_" + std::to_string(_request.getRequestId()) + ".txt";
+            std::string a2 = "tmp/log/fullReq_" + std::to_string(_request.getRequestId()) + ".txt";
+//            std::remove(a2.c_str());
+        if(_request.getRequestMethod() != POST)
+        {
+//            std::remove(a1.c_str());
+        }
 		Request request;
 		_request = request;
 	}
@@ -727,6 +734,9 @@ public:
 			res[i] = bufResp[i];
 		}
 		_response.setResponse(res,i);
+        std::cout << RED << "malloc ";
+        printf(" %p ", _response.getResponse());
+        std::cout <<  " " << getSocketFd() << WHITE << "\n";
 	}
 	void        sendResponse()
 	{
@@ -737,12 +747,20 @@ public:
 			return;
 		}
 		_response.addBytesSent(ret);
+        std::cout << YELLOW << "sent ";
+        printf(" %p ", _response.getResponse());
+        std::cout <<  " " << getSocketFd() << ": " << _response.getBytesSent() << WHITE << "\n";
 		if(_response.getBytesSent() == (size_t)_response.getResponseSize())
 		{
+            std::cout << GREEN << _request.getRequestId() << " " << getSocketFd() << " " << "sent: " << _response.getBytesSent() << WHITE << "\n";
 			if(_response.toCloseTheConnection())
 				setStatus(CLOSING);
 			else
 				setStatus(READING);
+            free(_response.getResponse());
+            std::cout << YELLOW << "free ";
+            printf(" %p ", _response.getResponse());
+            std::cout <<  " " << getSocketFd() << WHITE << "\n";
 			Response response;
 			setResponse(response);
 		}

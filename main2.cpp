@@ -9,7 +9,6 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
-
 void exec()
 {
     char **env = (char **)malloc(sizeof(char*) * 4);
@@ -35,5 +34,9 @@ void exec()
 }
 int main()
 {
-    exec();
+    struct stat s;
+    bzero(&s, sizeof(s));
+    int fd = open("tmp/test.cpp",O_RDONLY);
+    fstat(fd, &s);
+    std::cout << (size_t)(s.st_size);
 }
