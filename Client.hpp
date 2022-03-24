@@ -64,6 +64,7 @@ public:
 		bzero(&buf, 100000);
 		ret = recv(_socketFD, &buf, 99999, 0);
 		if (ret == -1 || ret == 0){
+            free(_response.getResponse());
 			_status = CLOSING;
 			return;
 		}
@@ -722,8 +723,6 @@ public:
         {
 //            std::remove(a1.c_str());
         }
-		Request request;
-		_request = request;
 	}
 	void        allocateResponse(std::string bufResp){
 		char *res;
@@ -740,9 +739,18 @@ public:
 	}
 	void        sendResponse()
 	{
+//        if(_request.getRequestMethod() == POST)
+//        {
+//            std::string path = "tmp/logOutput/logOutput_" + std::to_string(_request.getRequestId()) + ".txt";
+//            int fd = open(path.c_str(), O_CREAT | O_RDWR | O_APPEND);
+//            write(fd, _response.getResponse() + _response.getBytesSent(),
+//                  _response.getResponseSize() - _response.getBytesSent()); //  SIGPIPE ignore
+//            close(fd);
+//        }
 		ssize_t ret = send(_socketFD, _response.getResponse() + _response.getBytesSent(),_response.getResponseSize() - _response.getBytesSent(),0); //  SIGPIPE ignore
 		if(ret <= 0)
 		{
+            free(_response.getResponse());
 			setStatus(CLOSING);
 			return;
 		}
@@ -763,17 +771,11 @@ public:
             std::cout <<  " " << getSocketFd() << WHITE << "\n";
 			Response response;
 			setResponse(response);
+            Request request;
+            _request = request;
 		}
 	}
-	std::string readCgiRes(){
-		std::ifstream file;
-		file.open(_response.getCgiOutputFileName(), (std::ios_base::openmode)0);
-		if(!file.is_open())
-			std::cout << "readCgiOutput: file error\n"	;
-		std::stringstream str;
-		str << file.rdbuf();
-		return (str.str());
-	}
+
 	void        printStates(std::string place){
 		std::cout << "| RS:" << _request.getReadStatus() << " | M:" << _request.getRequestMethod() << " | B:" << _request.getRequestBodyType() <<  " | O:" << _request.getRequestOptionType() << " | E:" << _request.getRequestErrors() << " |"  << place << "\n";;
 	}
