@@ -9,7 +9,7 @@ formatConfigFile::formatConfigFile(int argc, char **argv) {
 	if (argc != 2)
 		throw std::runtime_error (ERR_ARG);
 
-	_fileContent = ftostr(argv[1]);
+	this->_ftostr(argv[1]);
 	this->_formatFile();
 	this->_separateStringServers();
 	this->_eraseExternal();
@@ -102,4 +102,25 @@ void formatConfigFile::_eraseExternal() {
 		b->erase(b->length() - 1, 1);
 		b++;
 	}
+}
+
+void	formatConfigFile::_ftostr (string const & fileName) {
+	string	conf = ".conf";
+	size_t n;
+	if ( (n = fileName.rfind(conf)) == string::npos ||
+		 n + conf.length() != fileName.length() )
+		throw std::runtime_error(ERR_ARG);
+
+	std::ifstream t(fileName.c_str());
+
+	if (t.fail())
+		throw std::runtime_error(ERR_ARG);
+
+	string line;
+	while(t){
+		std::getline(t, line);
+		this->_fileContent += line + "\n";
+	}
+	t.close();
+
 }
