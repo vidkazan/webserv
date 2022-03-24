@@ -4,8 +4,7 @@ NAME = webserv
 SRCS =	main.cpp CGI.cpp utils.cpp parse/formatConfigFile.cpp \
                            parse/ListenConfig.cpp \
                            parse/LocationConfig.cpp \
-                           parse/serverConfig.cpp \
-                           parse/tools.cpp
+                           parse/serverConfig.cpp
 
 #HDRS = Webserv.hpp main.hpp ListenSocketConfigDirectory.hpp ListenSocketConfig.hpp Request.hpp Response.hpp Client.hpp ListenSocket.hpp AutoIndex.hpp
 

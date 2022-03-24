@@ -27,10 +27,10 @@ private:
 	void			_formatFile ();
 	void 			_bracketsCheck ();
 	void			_separateStringServers ();
-	void 			_parsePoles ();
+//	void 			_parsePoles ();
 	void			_eraseExternal();
+	void			_ftostr (string const & fileName);
 };
 
-string	ftostr (string const & fileName);
 
 #endif

@@ -27,4 +27,4 @@ add_executable(webserv
         parse/LocationConfig.hpp
         parse/serverConfig.cpp
         parse/serverConfig.hpp
-        parse/tools.cpp)
+        )
