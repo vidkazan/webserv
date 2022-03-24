@@ -12,7 +12,7 @@
 #include "LocationConfig.hpp"
 
 
-#include <filesystem>
+//#include <filesystem>
 
 #include "IParse.hpp"
 
@@ -23,7 +23,7 @@ class LocationConfig;
 
 typedef struct s_listen {
 	uint8_t ip[4]; // TODO m?
-	char *rawIp;
+	string rawIp;
 	vector<short>	port;
 } t_listen;
 

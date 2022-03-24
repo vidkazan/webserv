@@ -1,7 +1,17 @@
 #include "main.hpp"
 
+void    printWebservData(Webserv2 &webserv2)
+{
+    //print port servers
+    for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it!=webserv2.getPortServers().end();it++){
+        std::cout << it->getIp() << " " << it->getPort() << "\n";
+        for(std::vector<VirtualServerConfig>::iterator it2 = it->getVirtualServers().begin();it2!=it->getVirtualServers().end();it2++){
+            std::cout << " " << it2->getIp() << " " << it2->getPort() << " " << it2->getServerName() <<  "\n";
+        }
+    }
+}
 
-void setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
+void    setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 {
 	// generate servers
 	std::vector<VirtualServerConfigDirectory>	dirs;
@@ -19,24 +29,31 @@ void setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 		dirs.push_back(VirtualServerConfigDirectory((*b)->name,\
 							(*b)->allow_methods[0],\
 							(*b)->root, \
-							"",
-							(*b)->client_body_buffer_size)); // TODO logic for multimethods
+							"", \
+							(*b)->client_body_buffer_size, \
+					   		(bool)(*b)->autoindex, \
+					   		(*b)->index, \
+					   		(*b)->cgi_path, \
+					   		(*b)->cgi_extension)); // TODO logic for multimethods
 		b++;
 	}
 	std::sort(dirs.begin(), dirs.end());
 
-	VirtualServerConfig virtualServConfig1(dirs, sc->listen->port[0], sc->listen->rawIp, sc->server_name); // TODO logic for multiports
-	webserv2.addPortServer(sc->listen->port[0], sc->listen->rawIp);
+    VirtualServerConfig virtualServConfig1(dirs, \
+      sc->listen->port[0], \
+      (char *)sc->listen->rawIp.c_str(), \
+      sc->server_name);
+	webserv2.addPortServer(sc->listen->port[0], (char *)sc->listen->rawIp.c_str());
 	webserv2.addVirtualServer(virtualServConfig1);
 }
 
-void startMessage(){
+void    startMessage(){
 	printLog("", "______________________________________________________________|\n"
 				 			   "|_________________________SERVER START_________________________|\n"
 							   "|______________________________________________________________", GREEN);
 }
 
-void parseConfigFile(Webserv2 & webserv2, int argc, char ** argv) {
+void    parseConfigFile(Webserv2 & webserv2, int argc, char ** argv) {
 	formatConfigFile			a(argc, argv);
 //	vector<ServerConfig *>		_servers;
 	vector<string> strServers = a.getStringServers();
@@ -53,16 +70,24 @@ void parseConfigFile(Webserv2 & webserv2, int argc, char ** argv) {
 	}
 }
 
-int main(int argc, char ** argv)
+int     main(int argc, char ** argv)
 {
 	Webserv2 webserv2;
-	// config file parser is cominggg.....
-	parseConfigFile(webserv2, argc, argv);
+	try
+	{
+		parseConfigFile(webserv2, argc, argv);
+	}
+	catch(const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+		exit(1);
+	}
 	startMessage();
 	// listening listen sockets
 	for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it != webserv2.getPortServers().end(); it++)
 		listen(it->getSocketFD(), 1000);
 	// MAIN LOOP
+    printWebservData(webserv2);
 	while(1)
 	{
 		// preparing for SELECT

@@ -90,11 +90,19 @@ protected:
 	}
 
 	void _setRoot() {
+		// this->_rawErase("root ");
+		// string root = this->_getSingleValue();
+
+		// _checkDir(root);
+		// this->root = root;
 		this->_rawErase("root ");
 		string root = this->_getSingleValue();
 
 		_checkDir(root);
+		if (*(root.end() - 1) != '/')
+			root += "/";
 		this->root = root;
+
 	}
 
 	void _setIndex() {
@@ -120,10 +128,8 @@ protected:
 	void _setAutoindex() {
 		this->_rawErase("autoindex ");
 		string state  = this->_getSingleValue();
-		if (state == "on") {
-			cout << "on!" << endl;
+		if (state == "on")
 			this->autoindex = ON;
-		}
 		else if (state == "off") {
 			this->autoindex = OFF;
 		}

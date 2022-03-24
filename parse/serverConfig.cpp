@@ -14,8 +14,7 @@ ServerConfig::ServerConfig(string const & raw) :
 	this->_raw = raw;
 	this->_nulling();
 	this->_parse();
-
-	this->_printConfigurations();
+//	this->_printConfigurations();
 }
 
 ServerConfig::~ServerConfig() {
@@ -24,7 +23,7 @@ ServerConfig::~ServerConfig() {
 		vector<LocationConfig *>::iterator e = this->locations.end();
 		while (b != e) {
 			delete *b;
-			this->locations.erase(b);
+//			this->locations.erase(b);
 			b++;
 		}
 	}

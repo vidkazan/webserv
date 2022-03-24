@@ -14,6 +14,7 @@ LocationConfig::LocationConfig(string const & raw, string & dir) : IParse() {
 
 void LocationConfig::_nulling() {
 	this->autoindex = OFF;
+	this->client_body_buffer_size = -1;
 }
 
 void LocationConfig::_idPole(string pole) {
@@ -81,4 +82,6 @@ void LocationConfig::_setCGIExtension() {
 	this->_rawErase("cgi_extension ");
 
 	this->cgi_extension = this->_getSingleValue();
+	std::string tmp(cgi_extension, 1, cgi_extension.size() - 1);
+	this->cgi_extension = tmp;
 }

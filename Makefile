@@ -1,6 +1,7 @@
 NAME = webserv
 
-SRCS =	main.cpp utils.cpp parse/formatConfigFile.cpp \
+
+SRCS =	main.cpp CGI.cpp utils.cpp parse/formatConfigFile.cpp \
                            parse/ListenConfig.cpp \
                            parse/LocationConfig.cpp \
                            parse/serverConfig.cpp \
@@ -17,15 +18,17 @@ HDRS = Webserv.hpp\
  		Client.hpp \
  		VirtualServerConfigDirectory.hpp \
  		AutoIndex.hpp \
+ 		CGI.hpp \
  		parse/errorCodes.hpp \
         parse/formatConfigFile.hpp \
         parse/IParse.hpp \
         parse/LocationConfig.hpp \
         parse/serverConfig.hpp
 
+
 OBJS = $(SRCS:.cpp=.o)
 
-FLAGS = -O3 -Wno-c++11-compat-deprecated-writable-strings
+FLAGS = -O3 -g -Wno-c++11-compat-deprecated-writable-strings
 
 COMP = g++
 
