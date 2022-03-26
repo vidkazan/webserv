@@ -63,7 +63,12 @@ public:
 		char buf[100000];
 		bzero(&buf, 100000);
 		ret = recv(_socketFD, &buf, 99999, 0);
-		if (ret == -1 || ret == 0){
+        if(ret < 1)
+        {
+            std::cout << "fd: " << _socketFD << " recv: " << ret << "\n";
+        }
+		if (ret == -1 || ret == 0)
+        {
             free(_response.getResponse());
 			_status = CLOSING;
 			return;
@@ -733,9 +738,9 @@ public:
 			res[i] = bufResp[i];
 		}
 		_response.setResponse(res,i);
-        std::cout << RED << "malloc ";
-        printf(" %p ", _response.getResponse());
-        std::cout <<  " " << getSocketFd() << WHITE << "\n";
+//        std::cout << RED << "malloc ";
+//        printf(" %p ", _response.getResponse());
+//        std::cout <<  " " << getSocketFd() << WHITE << "\n";
 	}
 	void        sendResponse()
 	{
@@ -748,16 +753,20 @@ public:
 //            close(fd);
 //        }
 		ssize_t ret = send(_socketFD, _response.getResponse() + _response.getBytesSent(),_response.getResponseSize() - _response.getBytesSent(),0); //  SIGPIPE ignore
-		if(ret <= 0)
+        if(ret < 1)
+        {
+            std::cout << "fd: " << _socketFD << "send: " << ret << "\n";
+        }
+        if(ret <= 0)
 		{
             free(_response.getResponse());
 			setStatus(CLOSING);
 			return;
 		}
 		_response.addBytesSent(ret);
-        std::cout << YELLOW << "sent ";
-        printf(" %p ", _response.getResponse());
-        std::cout <<  " " << getSocketFd() << ": " << _response.getBytesSent() << WHITE << "\n";
+//        std::cout << YELLOW << "sent ";
+//        printf(" %p ", _response.getResponse());
+//        std::cout <<  " " << getSocketFd() << ": " << _response.getBytesSent() << WHITE << "\n";
 		if(_response.getBytesSent() == (size_t)_response.getResponseSize())
 		{
             std::cout << GREEN << _request.getRequestId() << " " << getSocketFd() << " " << "sent: " << _response.getBytesSent() << WHITE << "\n";
@@ -766,9 +775,9 @@ public:
 			else
 				setStatus(READING);
             free(_response.getResponse());
-            std::cout << YELLOW << "free ";
-            printf(" %p ", _response.getResponse());
-            std::cout <<  " " << getSocketFd() << WHITE << "\n";
+//            std::cout << YELLOW << "free ";
+//            printf(" %p ", _response.getResponse());
+//            std::cout <<  " " << getSocketFd() << WHITE << "\n";
 			Response response;
 			setResponse(response);
             Request request;
