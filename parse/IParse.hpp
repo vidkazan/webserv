@@ -89,6 +89,12 @@ protected:
 			throw std::runtime_error (string (ERR_INVALID_DIR) + ": '" + dir + "'" );
 	}
 
+    void _checkFile(string dir) {
+        struct stat s;
+        if (stat(dir.c_str(),&s) || !S_ISREG(s.st_mode))
+            throw std::runtime_error (string (ERR_INVALID_FILE) + ": '" + dir + "'" );
+    }
+
 	void _setRoot() {
 		// this->_rawErase("root ");
 		// string root = this->_getSingleValue();
