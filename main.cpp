@@ -20,11 +20,6 @@ void    setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 	vector<LocationConfig *>::iterator 	b = locations.begin();
 	vector<LocationConfig *>::iterator 	e = locations.end();
 
-	string directoryName;
-	string directoryAllowedMethods;
-	string directoryPath;
-	ssize_t bodySize;
-
 	while (b != e) {
 		dirs.push_back(VirtualServerConfigDirectory((*b)->name,\
 							(*b)->allow_methods,\
@@ -34,7 +29,8 @@ void    setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 					   		(bool)(*b)->autoindex, \
 					   		(*b)->index, \
 					   		(*b)->cgi_path, \
-					   		(*b)->cgi_extension));
+					   		(*b)->cgi_extension, \
+					   		(*b)->error_page));
 		b++;
 	}
 	std::sort(dirs.begin(), dirs.end());
@@ -87,7 +83,7 @@ int     main(int argc, char ** argv)
 	for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it != webserv2.getPortServers().end(); it++)
 		listen(it->getSocketFD(), 1000);
 	// MAIN LOOP
-    printWebservData(webserv2);
+//    printWebservData(webserv2);
 	while(1)
 	{
 		// preparing for SELECT
@@ -130,12 +126,14 @@ int     main(int argc, char ** argv)
 				it->readRequest();
 				if(it->getStatus() == WRITING)
 					it->generateResponse();
+                break;
 			}
 			// finding a write event in client sockets array
-			if(FD_ISSET(it->getSocketFd(), &writefds))
+			else if(FD_ISSET(it->getSocketFd(), &writefds))
 			{
 //				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
 				it->sendResponse();
+                break;
 			}
 		}
 		// finding a new connection event in listen sockets array
@@ -148,19 +146,21 @@ int     main(int argc, char ** argv)
 				struct sockaddr_in adrAccept;
 				bzero((void *)&adrAccept,sizeof adrAccept);
 				socklen_t adrAcceptLen = sizeof adrAccept;
-				std::cout << "select: new client on port " << ntohs(it->getSockAddrInStruct().sin_port) << "\n";
 				fd = accept(it->getSocketFD(), (struct sockaddr *)&adrAccept, &adrAcceptLen);
 				if (fd < 0){
 					printLog("","accept error",RED);
 					exit(EXIT_FAILURE);
 				}
+//				std::cout << SOME << "new client: " << fd << WHITE << "\n";
 				fcntl(fd, F_SETFL, O_NONBLOCK);
 				webserv2.addClient(fd, it->getVirtualServers());
 			}
 		}
 		// checking all connections for closing
 		for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++){
-			if(it->getStatus() == CLOSING){
+			if(it->getStatus() == CLOSING)
+            {
+//                std::cout << SOME << "close: " << it->getSocketFd() << WHITE << "\n";
 				close(it->getSocketFd());
 				webserv2.getClients().erase(it);
 				break;

@@ -14,7 +14,7 @@ ServerConfig::ServerConfig(string const & raw) :
 	this->_raw = raw;
 	this->_nulling();
 	this->_parse();
-	this->_printConfigurations();
+//	this->_printConfigurations();
 }
 
 ServerConfig::~ServerConfig() {

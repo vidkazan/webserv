@@ -13,7 +13,7 @@
 //#include <algorithm>
 //#include <strings.h>
 
-
+#define SOME "\e[38m"
 #define RED "\e[91m"
 #define YELLOW "\e[93m"
 #define GREEN "\e[92m"

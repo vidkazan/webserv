@@ -57,7 +57,8 @@ private:
 	std::string                     _multiPartFileName;
 	ssize_t                         _contentLength;
 	ssize_t                         _chunkSize;
-	bool                            _isAutoIndex;
+    bool                            _isAutoIndex;
+    bool                            _isXSecretHeader;
 	std::string                     _redirect;
 	ssize_t                         _maxBodySize;
 	size_t                          _count;
@@ -119,8 +120,10 @@ public:
 	std::string                     getOptionFileExtension() const {return  _optionFileExtension;};
 	std::string                     getHost() const {return  _host;};
 	std::string                     getHTTPVersion(){return  _httpVersion;};
-	bool                            isAutoIndex(){return _isAutoIndex;}
-	std::string                     getRedirect(){return _redirect;}
+    bool                            isXSecretHeader(){return _isXSecretHeader;}
+    bool                            isAutoIndex(){return _isAutoIndex;}
+    std::string                     getRedirect(){return _redirect;}
+    void                            setIsXSecretHeader(bool x){_isXSecretHeader = x;}
 	void                            setRedirect(std::string redir){_redirect = redir;}
 	void                            setIsAutoIndex(bool ai){_isAutoIndex = ai;}
 	void                            setBuffer(const std::string & req){

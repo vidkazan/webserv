@@ -14,22 +14,23 @@ class VirtualServerConfigDirectory
 		std::string _index;
 		std::string _cgi_path;
 		std::string _cgi_extention;
+		std::string _error_page;
 	public:
         VirtualServerConfigDirectory(){};
 		VirtualServerConfigDirectory(const std::string&directoryName, const std::string&directoryAllowedMethods,
 							  const std::string&directoryPath,const std::string&directoryRedirect, ssize_t bodySize,
 							  const bool autoindex,	const std::string index, const std::string cgi_path,
-							  const std::string cgi_extention) : \
+							  const std::string cgi_extention, const std::string _error_page) : \
 							  _directoryName(directoryName), \
 							  _directoryAllowedMethods(directoryAllowedMethods), \
 							  _directoryPath(directoryPath), \
 							  _directoryRedirect(directoryRedirect), \
-
 							  _maxBodySize(bodySize), \
 							  _isAutoIndex (autoindex), \
 							  _index (index), \
 							  _cgi_path (cgi_path), \
-							  _cgi_extention (cgi_extention){}
+							  _cgi_extention (cgi_extention), \
+							  _error_page(error_page){}
 
 		~VirtualServerConfigDirectory(){}
 
