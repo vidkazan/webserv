@@ -14,7 +14,7 @@ ServerConfig::ServerConfig(string const & raw) :
 	this->_raw = raw;
 	this->_nulling();
 	this->_parse();
-	this->_printConfigurations();
+//	this->_printConfigurations();
 }
 
 ServerConfig::~ServerConfig() {
@@ -168,7 +168,7 @@ void ServerConfig::_printConfigurations() {
 		cout << "location err_page:" << endl;
 		for (map<int, string>::iterator it = this->error_pages.begin();
 		it != this->error_pages.end(); it++)
-			cout << "code: " << it->first << "file: " << it->second << endl;
+			cout << "code: " << it->first << " file: " << it->second << endl;
 	}
 	if (!this->locations.empty()) {
 		vector<LocationConfig *>::iterator b = this->locations.begin();
@@ -199,7 +199,7 @@ void ServerConfig::_printConfigurations() {
 				cout << "location err_page:" << endl;
 				for (map<int, string>::iterator it = (*b)->error_pages.begin();
 				it != (*b)->error_pages.end(); it++)
-					cout << "code: " << it->first << "file: " << it->second << endl;
+					cout << "code: " << it->first << " file: " << it->second << endl;
 			}
 			b++;
 		}

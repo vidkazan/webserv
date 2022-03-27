@@ -185,14 +185,18 @@ protected:
 				break;
 			codes.push_back(code);
 		}
-		ifstream file;
-		file.open((this->root + value).c_str()); // TODO допилить права онли на чтение
+		ifstream	file;
+		string		path_file;
+		if (!this->root.empty())
+			path_file = this->root + value;
+		else
+			path_file = value;
+		file.open(path_file.c_str()); // TODO допилить права онли на чтение
 		file.close();
 		if(!file)
-			throw std::runtime_error(string(ERR_INVALID) + ": error_page file '" + value+ "'");
+			throw std::runtime_error(string(ERR_INVALID) + ": error_page file '" + path_file+ "'");
 		for (vector<int>::iterator it = codes.begin(); it != codes.end(); it++)
 			error_pages[*it] = value;
-
 	}
 
 	virtual void _idPole(string basicString) = 0;
