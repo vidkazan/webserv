@@ -164,7 +164,7 @@ void ServerConfig::_printConfigurations() {
 	}
 	if (!this->root.empty())
 		cout << "serv root : " << this->root << endl;
-	cout << "serv err_page:\t" << this->error_page << endl;
+//	cout << "serv err_page:\t" << this->error_page << endl;
 	if (!this->locations.empty()) {
 		vector<LocationConfig *>::iterator b = this->locations.begin();
 		vector<LocationConfig *>::iterator e = this->locations.end();
@@ -190,8 +190,8 @@ void ServerConfig::_printConfigurations() {
 				// ye with no loop
 				cout << "location allow_meth:\t" << (*b)->allow_methods << endl;
 			}
-			if (!(*b)->error_page.empty())
-				cout << "location err_page:\t" << (*b)->error_page << endl;
+			if (!(*b)->error_pages.empty())
+//				cout << "location err_page:\t" << (*b)->error_page << endl;
 			b++;
 		}
 	}

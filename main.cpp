@@ -34,15 +34,17 @@ void    setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 					   		(bool)(*b)->autoindex, \
 					   		(*b)->index, \
 					   		(*b)->cgi_path, \
-					   		(*b)->cgi_extension));
+					   		(*b)->cgi_extension, \
+					   		(*b)->error_pages));
 		b++;
 	}
 	std::sort(dirs.begin(), dirs.end());
 
     VirtualServerConfig virtualServConfig1(dirs, \
-      sc->listen->port[0], \
-      (char *)sc->listen->rawIp.c_str(), \
-      sc->server_name);
+      										sc->listen->port[0], \
+      										(char *)sc->listen->rawIp.c_str(), \
+      										sc->server_name,
+										   sc->error_pages);
 	webserv2.addPortServer(sc->listen->port[0], (char *)sc->listen->rawIp.c_str());
 	webserv2.addVirtualServer(virtualServConfig1);
 }

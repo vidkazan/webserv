@@ -12,6 +12,7 @@ using namespace std;
 #include <iostream>
 #include <sys/stat.h>
 #include <fstream>
+#include <map>
 
 /*
  * Abstract class for parse scopes of server part and server:location part
@@ -23,15 +24,15 @@ public:
 	IParse() {};
 	virtual ~IParse() {};
 
-	tumbler			autoindex;
-	string 			root;
-	string			error_page;
-	string			index;
-	ssize_t			client_body_buffer_size;
+	tumbler				autoindex;
+	string 				root;
+	map<int, string>	error_pages;
+	string				index;
+	ssize_t				client_body_buffer_size;
 
 protected:
 
-	string			_raw;
+	string				_raw;
 
 	/*
 	 * main parsing loop of raw configurations string
@@ -155,19 +156,36 @@ protected:
 
 	void _setErrPage() {
 		this->_rawErase("error_page ");
+		vector<int> codes;
 
 		string value = this->_getSingleValue();
 
-		/*
-		 * check index file in main location
-		 */
+		size_t number_of_characters;
+		int code = stoi(value, &number_of_characters);
+		if (number_of_characters != value.length())
+			throw std::runtime_error(string(ERR_INVALID) + ": error_page code '" + value+ "'");
+		codes.push_back(code);
 
+		while (42) {
+			value = this->_getSingleValue();
+			try {
+				code = stoi(value, &number_of_characters);
+			}
+			catch (exception & ex) {
+				break;
+			}
+			if (number_of_characters != value.length())
+				break;
+			codes.push_back(code);
+		}
 		ifstream file;
 		file.open((this->root + value).c_str()); // TODO допилить права онли на чтение
 		file.close();
 		if(!file)
 			throw std::runtime_error(string(ERR_INVALID) + ": error_page file '" + value+ "'");
-		this->error_page = value;
+		for (vector<int>::iterator it = codes.begin(); it != codes.end(); it++)
+			error_pages[*it] = value;
+
 	}
 
 	virtual void _idPole(string basicString) = 0;
