@@ -33,14 +33,8 @@ CGI::CGI(std::string _requestMethod, std::string _cgiScriptPath, std::string cgi
 	cgiEnvVector.push_back("REQUEST_METHOD=" + _requestMethod);
     cgiEnvVector.push_back("HTTP_X_SECRET_HEADER_FOR_TEST=1");
 	/*--конец обязательного--*/
-//	cgiEnvVector.push_back("SCRIPT_NAME=a.out");
-
 	scriptFileName = scriptPath.substr(scriptPath.find_last_of('/') + 1, scriptPath.size());
     scriptPath = scriptPath.substr(0,scriptPath.find_last_of('/'));
-//	if (_requestMethod == "POST") {
-//		cgiEnvVector.push_back("CONTENT_LENGTH=48");
-//		cgiEnvVector.push_back("CONTENT_TYPE=text/html");
-//	}
 	/*
 		если кидать PATH_INFO то нужно и PATH_TRANSLATED
 	*/

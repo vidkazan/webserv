@@ -77,14 +77,12 @@ void        Client::generateResponse()
                             break;
                         case OPTION_CGI:
                         {
-								std::cout << "cgi--- " << _request.getFullPath() << "\n";
+//								std::cout << "cgi--- " << _request.getFullPath() << "\n";
                             CGI *cgi = new CGI(_request.getType(), _request.getFullPath(), \
                                                     _response.getCgiOutputFileName(), _response.getCgiInputFileName());
                             try {
                                 cgi->executeCgiScript();
-                                 bufResp += cgi->getContentTypeStr();
-                                 bufResp += "\n";
-                                bufResp = cgi->getBufResp();
+//                                bufResp = cgi->getBufResp();
                                 body = cgi->getBody();
                             }
                             catch (const std::exception &e) {
@@ -105,12 +103,10 @@ void        Client::generateResponse()
                 case 413:
                     break;
             }
-//            if(_request.getRequestOptionType() != OPTION_CGI) {
-                std::stringstream buffer;
-                buffer << inputFile.rdbuf();
-                if (body.empty())
-                    body = buffer.str();
-//            }
+            std::stringstream buffer;
+            buffer << inputFile.rdbuf();
+            if (body.empty())
+                body = buffer.str();
             break;
         }
         case PUT:
@@ -119,13 +115,13 @@ void        Client::generateResponse()
             switch (_request.getRequestOptionType()){
                 case OPTION_CGI:
                 {
-                    std::cout << "cgi--- " << _request.getFullPath() << "\n";
+//                    std::cout << "cgi--- " << _request.getFullPath() << "\n";
                     CGI *cgi = new CGI(_request.getType(), _request.getFullPath(), \
                                                     _response.getCgiOutputFileName(), _response.getCgiInputFileName());
                     try {
                         cgi->executeCgiScript();
-                                bufResp += cgi->getContentTypeStr();
-                                bufResp += "\n";
+//                        bufResp += cgi->getContentTypeStr();
+//                        bufResp += "\n";
                         body = cgi->getBody();
                         std::remove(_response.getCgiInputFileName().c_str());
                         std::remove(_response.getCgiOutputFileName().c_str());
@@ -165,13 +161,11 @@ void        Client::generateResponse()
     bufResp += "Content-Length: ";
     bufResp += std::to_string((unsigned  long long )body.size());
     bufResp += "\n";
-    bufResp += "Content-Type: ";
-    //choosing type
     if (_request.getOptionFileExtension() == "html")
-        bufResp += "text/html";
-    if (_request.getOptionFileExtension() == "png")
-        bufResp += "image/png";
-    bufResp += "\n\n";
+        bufResp += "Content-Type: text/html\n";
+    else if (_request.getOptionFileExtension() == "png")
+        bufResp += "Content-Type: image/png\n";
+    bufResp += "\n";
     if(_request.getRequestMethod() != HEAD)
         bufResp += body;
     allocateResponse(bufResp);
