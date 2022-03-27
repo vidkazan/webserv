@@ -1,5 +1,6 @@
 #pragma once
 #include "main.hpp"
+#include <map>
 
 class VirtualServerConfig{
 private:
@@ -14,12 +15,13 @@ public:
 	short port, \
 	std::string ip, \
 	const std::string serverName, \
-	const std::map<int, std::string> error_pages):
-						_directories(directories), \
-						_port(port), \
-						_ip(ip), \
-						_serverName(serverName), \
-						_error_pages(error_pages){}
+	const std::map<int, std::string> error_pages)
+			: _directories(directories), \
+			_port(port), \
+			_ip(ip), \
+			_serverName(serverName), \
+			_error_pages(error_pages){}
+
 	~VirtualServerConfig(){}
 
 	const std::vector<VirtualServerConfigDirectory>&getDirectories() const{return _directories;}
