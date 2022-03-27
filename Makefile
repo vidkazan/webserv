@@ -1,33 +1,38 @@
 NAME = webserv
 
 
-SRCS =	main.cpp CGI.cpp utils.cpp parse/formatConfigFile.cpp \
-                           parse/ListenConfig.cpp \
-                           parse/LocationConfig.cpp \
-                           parse/serverConfig.cpp
+SRCS =	src/main.cpp \
+ 		src/cgi/CGI.cpp \
+ 		src/other/utils.cpp \
+ 		src/parse/formatConfigFile.cpp \
+	    src/parse/ListenConfig.cpp \
+	    src/parse/LocationConfig.cpp \
+	    src/parse/serverConfig.cpp \
+	    src/http/ClientRequestParse.cpp \
+	    src/http/ClientRequestAnalyse.cpp \
+	    src/http/ClientResponse.cpp \
+	    src/http/ClientRequestRead.cpp \
 
-#HDRS = Webserv.hpp main.hpp ListenSocketConfigDirectory.hpp ListenSocketConfig.hpp Request.hpp Response.hpp Client.hpp ListenSocket.hpp AutoIndex.hpp
-
-HDRS = Webserv.hpp\
- 		main.hpp \
- 		PortServer.hpp \
- 		VirtualServerConfig.hpp \
- 		Request.hpp \
- 		Response.hpp \
- 		Client.hpp \
- 		VirtualServerConfigDirectory.hpp \
- 		AutoIndex.hpp \
- 		CGI.hpp \
- 		parse/errorCodes.hpp \
-        parse/formatConfigFile.hpp \
-        parse/IParse.hpp \
-        parse/LocationConfig.hpp \
-        parse/serverConfig.hpp
+HDRS =  src/server/Webserv.hpp\
+ 		src/main.hpp \
+ 		src/server/PortServer.hpp \
+ 		src/server/VirtualServerConfig.hpp \
+ 		src/http/Request.hpp \
+ 		src/http/Response.hpp \
+ 		src/http/Client.hpp \
+ 		src/server/VirtualServerConfigDirectory.hpp \
+ 		src/http/AutoIndex.hpp \
+ 		src/cgi/CGI.hpp \
+ 		src/parse/errorCodes.hpp \
+        src/parse/formatConfigFile.hpp \
+        src/parse/IParse.hpp \
+        src/parse/LocationConfig.hpp \
+        src/parse/serverConfig.hpp
 
 
 OBJS = $(SRCS:.cpp=.o)
 
-FLAGS = -O3 -g -Wno-c++11-compat-deprecated-writable-strings
+FLAGS = -O3 -g -Wall -Wextra -Werror -std=c++98
 
 COMP = g++
 
