@@ -71,13 +71,13 @@ public:
                 std::cout << "NO_BODY ";
                 break;
             case 1:
-                std::cout << "OPTION_DIR ";
+                std::cout << "BODY_BASE ";
                 break;
             case 2:
-                std::cout << "OPTION_CGI ";
+                std::cout << "BODY_CHUNKED ";
                 break;
             case 3:
-                std::cout << "OPTION_FILE ";
+                std::cout << "BODY_MULTI_PART ";
                 break;
         }
         std::cout << "\n";
@@ -127,14 +127,14 @@ public:
     void        parseRequestHeader(std::ofstream * file);
     void        parseRequestTypeOptionVersion(std::string str);
     void        parseRequestBody();
-    void        parseRequestMultiPart(std::ofstream * file);
+    void        parseRequestMultiPart();
     void        parseRequestBodyChunked(std::ofstream * file);
     void        exportChunk();
 
 //              ClientRequestAnalyse.cpp
 
-    void        analyseRequest(std::ofstream * file);
-    void        analysePath(std::ofstream * file);
+    void        analyseRequest();
+    void        analysePath();
     void        findVirtualServer();
     bool        isCgi();
 

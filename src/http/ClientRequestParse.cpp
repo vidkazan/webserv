@@ -18,7 +18,7 @@ void        Client::parseRequestHeader(std::ofstream * file)
 
             if(_request.getReadStatus() == REQUEST_READ_HEADER)
                 _request.setReadStatus(REQUEST_READ_COMPLETE);
-            analyseRequest(file);
+            analyseRequest();
             return;
         }
         if((pos = _request.getBuffer().find("\n")) == std::string::npos)
@@ -97,6 +97,10 @@ void        Client::parseRequestTypeOptionVersion(std::string str)
 }
 void        Client::parseRequestBody()
 {
+    if(_request.getMaxBodySize() >= 0 && (_request.getContentLength() > _request.getMaxBodySize())) {
+        _request.setRequestErrors(ERROR_BODY_OVER_MAX_SIZE);
+        return;
+    }
     if(_request.getRequestMethod() == POST) {
 //			std::cout << "parse Body: " << "content length: " << _request.getContentLength() << " buffer size: " << _request.getBuffer().size() << " buffer: " << _request.getBuffer() << "\n";
     }
@@ -122,8 +126,12 @@ void        Client::parseRequestBody()
         _request.setReadStatus(REQUEST_READ_COMPLETE);
     }
 }
-void        Client::parseRequestMultiPart(std::ofstream * file)
+void        Client::parseRequestMultiPart()
 {
+    if(_request.getMaxBodySize() >= 0 && (_request.getContentLength() > _request.getMaxBodySize())) {
+        _request.setRequestErrors(ERROR_BODY_OVER_MAX_SIZE);
+        return;
+    }
     if(_request.getMultiPartFileName().empty())
     {
         size_t pos = _request.getBuffer().find("\r\n\r\n");
@@ -137,17 +145,14 @@ void        Client::parseRequestMultiPart(std::ofstream * file)
         pos = header.find('\"');
         _request.setMultiPartFileName(header.substr(0,pos));
         _request.setFullPath(_request.getFullPath() + _request.getMultiPartFileName());
-//			std::cout << "212 " << _request.getFullPath() << " + " << _request.getMultiPartFileName() << "\n";
     }
-    else {
+    else
         _request.setContentLength(_request.getContentLength() - _request.getBuffer().size());
-    }
-    *file << "Parse Body: " << "content length: " << _request.getContentLength() << " buffer size: " << _request.getBuffer().size() << "\n";
+    std::cout << "Parse Body: " << "content length: " << _request.getContentLength() << " buffer size: " << _request.getBuffer().size() << "\n";
     size_t pos = _request.getBuffer().find("------WebKitFormBoundary");
 
-    if((pos != std::string::npos) && _request.getContentLength() == 0){
+    if((pos != std::string::npos) && _request.getContentLength() == 0)
         _request.setBuffer(_request.getBuffer().substr(0, pos - 1));
-    }
     std::ofstream outFile;
     outFile.open(_request.getFullPath(), std::ios::app);
     outFile << _request.getBuffer();

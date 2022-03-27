@@ -3,7 +3,7 @@
 //
 #include "../main.hpp"
 
-void        Client::analyseRequest(std::ofstream * file)
+void        Client::analyseRequest()
 {
     if(_request.getRequestMethod() == NO_METHOD || _request.getOption().empty() || _request.getHTTPVersion().empty() || _request.getHost().empty() )
     {
@@ -12,7 +12,7 @@ void        Client::analyseRequest(std::ofstream * file)
         return;
     }
     findVirtualServer();
-    analysePath(file);
+    analysePath();
 
     if(!_response.isMethodIsAllowed())
         _request.setRequestErrors(ERROR_METHOD_NOT_ALLOWED);
@@ -31,7 +31,7 @@ void        Client::analyseRequest(std::ofstream * file)
         case OPTION_DIR:
             break;
         default:
-            _request.setRequestOptionType(OPTION_FILE); // buggy place?
+            _request.setRequestOptionType(OPTION_FILE);
     }
     switch (_request.getRequestOptionType()) {
         case NO_OPTION:
@@ -109,7 +109,7 @@ void        Client::analyseRequest(std::ofstream * file)
     }
 }
 
-void        Client::analysePath(std::ofstream * file){
+void        Client::analysePath(){
     size_t pos;
     std::string fileName;
     std::string filePath;
@@ -119,15 +119,11 @@ void        Client::analysePath(std::ofstream * file){
     for(;it != itEnd; it++){
         if(filePath.find(it->getDirectoryName()) == 0)
         {
-            *file << "path found in config: " << it->getDirectoryName() << "\n";
             _response.setPathIsAvailable(true);
             _request.setDirectoryConfig(*it);
             pos = it->getDirectoryAllowedMethods().find(_request.getType());
-
-            if(pos != std::string::npos || (_request.getRequestMethod() == POST && (_request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention()) && !_request.getOptionFileExtension().empty()))
-            {
+            if(pos != std::string::npos)
                 _response.setMethodIsAllowed(true);
-            }
             if(!it->getDirectoryRedirect().empty() && it->getDirectoryName() == _request.getOption())
             {
 //					std::cout << "redirects: " << it->getDirectoryRedirect() << " " << _request.getOption() << "\n";
@@ -139,12 +135,8 @@ void        Client::analysePath(std::ofstream * file){
             filePath.erase(0,it->getDirectoryName().size());
             filePath.insert(0,it->getDirectoryPath());
             _request.setFullPath(filePath);
-            *file << "for this dir maxBosySize: " << it->getMaxBodySize() << "\n";
             if(it->getMaxBodySize() >= 0)
-            {
-//					std::cout << "MAX Body Size! "<< it->getMaxBodySize() << "\n";
                 _request.setMaxBodySize(it->getMaxBodySize());
-            }
             break;
         }
     }
@@ -172,8 +164,7 @@ void        Client::analysePath(std::ofstream * file){
         if(pos != std::string::npos)
             _request.setOptionFileExtension(fileName.substr(pos + 1, fileName.size() - pos));
     }
-
-    if(_request.getRequestMethod() == POST && _request.getOptionFileExtension() == "bla")
+    if((_request.getOptionFileExtension() == _request.getDirectoryConfig().getCgiExtention() && !_request.getOptionFileExtension().empty()))
         _response.setMethodIsAllowed(true);
 }
 

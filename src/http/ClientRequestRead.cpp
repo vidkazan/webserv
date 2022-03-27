@@ -33,7 +33,7 @@ void        Client::readRequest()
                 _request.setRequestBodyType(BODY_BASE);
                 break;
             case REQUEST_READ_MULTIPART:
-                parseRequestMultiPart(&file);
+                parseRequestMultiPart();
                 _request.setRequestBodyType(BODY_MULTI_PART);
                 break;
             case REQUEST_READ_COMPLETE:
