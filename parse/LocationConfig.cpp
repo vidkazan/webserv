@@ -3,6 +3,7 @@
 //
 
 #include "LocationConfig.hpp"
+class IParse;
 
 LocationConfig::LocationConfig(string const & raw, string & dir) : IParse() {
 	this->_raw = raw;
@@ -26,7 +27,7 @@ void LocationConfig::_idPole(string pole) {
 			&LocationConfig::_setMetods,
 			&LocationConfig::_setCGIExtension,
 			&LocationConfig::_setCBBS,
-			&LocationConfig::_setErrPage
+//			&LocationConfig::_setErrPage
 	};
 	int num = ("root" == pole) * 1 +
 			  ("index" == pole) * 2 +
@@ -34,8 +35,8 @@ void LocationConfig::_idPole(string pole) {
 			  ("autoindex" == pole) * 4 +
 			  ("method" == pole) * 5 +
 			  ("cgi_extension" == pole) * 6 +
-			  ("client_body_buffer_size" == pole) * 7 +
-			  ("error_page" == pole) * 8;
+			  ("client_body_buffer_size" == pole) * 7; // +
+//			  ("error_page" == pole) * 8;
 	if (num) {
 		(this->*member[num - 1])();
 	}

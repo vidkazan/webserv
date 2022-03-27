@@ -22,8 +22,8 @@ HDRS = Webserv.hpp\
         parse/formatConfigFile.hpp \
         parse/IParse.hpp \
         parse/LocationConfig.hpp \
-        parse/serverConfig.hpp
-
+        parse/serverConfig.hpp \
+		parse/IPase.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 

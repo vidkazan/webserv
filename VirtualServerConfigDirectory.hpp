@@ -1,5 +1,6 @@
 #pragma once
 #include "main.hpp"
+#include <map>
 
 class VirtualServerConfigDirectory
 {
@@ -14,13 +15,13 @@ class VirtualServerConfigDirectory
 		std::string _index;
 		std::string _cgi_path;
 		std::string _cgi_extention;
-		std::string _error_page;
+		std::map<int, std::string> _error_pages;
 	public:
         VirtualServerConfigDirectory(){};
 		VirtualServerConfigDirectory(const std::string&directoryName, const std::string&directoryAllowedMethods,
 							  const std::string&directoryPath,const std::string&directoryRedirect, ssize_t bodySize,
 							  const bool autoindex,	const std::string index, const std::string cgi_path,
-							  const std::string cgi_extention, const std::string _error_page) : \
+							  const std::string cgi_extention, const std::map<int, std::string> error_page) : \
 							  _directoryName(directoryName), \
 							  _directoryAllowedMethods(directoryAllowedMethods), \
 							  _directoryPath(directoryPath), \
@@ -30,7 +31,7 @@ class VirtualServerConfigDirectory
 							  _index (index), \
 							  _cgi_path (cgi_path), \
 							  _cgi_extention (cgi_extention), \
-							  _error_page(error_page){}
+							  _error_pages(error_page){}
 
 		~VirtualServerConfigDirectory(){}
 

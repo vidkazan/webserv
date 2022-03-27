@@ -52,7 +52,7 @@ void ServerConfig::_idPole(string pole) {
 		&ServerConfig::_setLocation,
 		&ServerConfig::_setAutoindex,
 		&ServerConfig::_setRoot,
-		&ServerConfig::_setErrPage
+//		&ServerConfig::_setErrPage
 	};
 	int num = ("server_name" == pole) * 1 +
 			("client_body_buffer_size" == pole) * 2 +
@@ -60,8 +60,8 @@ void ServerConfig::_idPole(string pole) {
 			("listen" == pole) * 4 +
 			("location" == pole) * 5 +
 			("autoindex" == pole) * 6 +
-			("root" == pole) * 7 +
-			("error_page" == pole) * 8;
+			("root" == pole) * 7;// +
+//			("error_page" == pole) * 8;
 	if (num)
 		(this->*member[num - 1])();
 	else
@@ -164,7 +164,13 @@ void ServerConfig::_printConfigurations() {
 	}
 	if (!this->root.empty())
 		cout << "serv root : " << this->root << endl;
-	cout << "serv err_page:\t" << this->error_page << endl;
+	if (!this->error_pages.empty()) {
+		cout << "serv err_pages:\t" << endl;
+		for (map<int, string>::iterator it = this->error_pages.begin();
+		it != this->error_pages.end(); it++)
+			cout << "code: " << it->first << " page: " << it->second << endl;
+	}
+//	cout << "serv err_page:\t" << this->error_page << endl;
 	if (!this->locations.empty()) {
 		vector<LocationConfig *>::iterator b = this->locations.begin();
 		vector<LocationConfig *>::iterator e = this->locations.end();
@@ -190,8 +196,12 @@ void ServerConfig::_printConfigurations() {
 				// ye with no loop
 				cout << "location allow_meth:\t" << (*b)->allow_methods << endl;
 			}
-			if (!(*b)->error_page.empty())
-				cout << "location err_page:\t" << (*b)->error_page << endl;
+			if (!(*b)->error_pages.empty()) {
+				cout << "location err_pages:\t" << endl;
+				for (map<int, string>::iterator it = (*b)->error_pages.begin();
+				it != (*b)->error_pages.end(); it++)
+					cout << "code: " << it->first << " page: " << it->second << endl;
+			}
 			b++;
 		}
 	}
