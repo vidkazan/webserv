@@ -25,9 +25,9 @@ public:
 
 	tumbler			autoindex;
 	string 			root;
+	string			error_page;
 	string			index;
 	ssize_t			client_body_buffer_size;
-//	string			directory;// TODO int fd?
 
 protected:
 
@@ -151,6 +151,23 @@ protected:
 		static_cast<ssize_t>(stoi(value, &pos, 10));
 		if (this->client_body_buffer_size < 0 || pos != value.length())
 			throw std::runtime_error(ERR_INVALID);
+	}
+
+	void _setErrPage() {
+		this->_rawErase("error_page ");
+
+		string value = this->_getSingleValue();
+
+		/*
+		 * check index file in main location
+		 */
+
+		ifstream file;
+		file.open((this->root + value).c_str()); // TODO допилить права онли на чтение
+		file.close();
+		if(!file)
+			throw std::runtime_error(string(ERR_INVALID) + ": error_page file '" + value+ "'");
+		this->error_page = value;
 	}
 
 	virtual void _idPole(string basicString) = 0;
