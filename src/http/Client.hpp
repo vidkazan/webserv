@@ -12,7 +12,7 @@ private:
 	Request                          _request;
 
 public:
-	            Client(int fd, std::vector<VirtualServerConfig> virtualServers): _socketFD(fd), _status(READING), _virtualServers(virtualServers) {};
+	            Client(int fd, std::vector<VirtualServerConfig> virtualServers): _socketFD(fd), _status(READING), _virtualServers(virtualServers), _serverConfig() {};
 	            ~Client(){};
 	int         getStatus() const {return _status;};
     Request&    getRequest(){return _request;};

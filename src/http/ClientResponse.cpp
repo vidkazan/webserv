@@ -5,9 +5,9 @@
 
 void        Client::generateResponse()
 {
-    std::cout << YELLOW << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << " \n" << _request.getOption() << WHITE << "\n";
-    std::cout << YELLOW << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << WHITE << " ";
-    printStates("");
+//    std::cout << YELLOW << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << " \n" << _request.getOption() << WHITE << "\n";
+//    std::cout << YELLOW << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << WHITE << " ";
+//    printStates("");
     std::fstream inputFile;
     std::string bufResp;
     std::string body;
@@ -49,6 +49,8 @@ void        Client::generateResponse()
         case GET:
         {
             switch(_response.getResponseCodes()){
+                case 0:
+                    break;
                 case 301: {
                     bufResp += "Location: ";
                     bufResp += _request.getRedirect();
@@ -122,6 +124,9 @@ void        Client::generateResponse()
         case POST:
         {
             switch(_response.getResponseCodes()) {
+                case 0:{
+                    break;
+                }
                 case 301: {
                     bufResp += "Location: ";
                     bufResp += _request.getRedirect();
@@ -260,7 +265,7 @@ void        Client::sendResponse()
     _response.addBytesSent(ret);
     if(_response.getBytesSent() == (size_t)_response.getResponseSize())
     {
-        std::cout << GREEN << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << " " << "sent: " << _response.getBytesSent() << WHITE << "\n";
+//        std::cout << GREEN << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << " " << "sent: " << _response.getBytesSent() << WHITE << "\n";
         if(_response.toCloseTheConnection())
             setStatus(CLOSING);
         else
