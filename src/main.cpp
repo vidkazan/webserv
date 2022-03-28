@@ -26,22 +26,24 @@ void    setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 
 	while (b != e) {
 		dirs.push_back(VirtualServerConfigDirectory((*b)->name,\
-							(*b)->allow_methods[0],\
+							(*b)->allow_methods,\
 							(*b)->root, \
 							"", \
 							(*b)->client_body_buffer_size, \
 					   		(bool)(*b)->autoindex, \
 					   		(*b)->index, \
 					   		(*b)->cgi_path, \
-					   		(*b)->cgi_extension)); // TODO logic for multimethods
+					   		(*b)->cgi_extension,
+							(*b)->error_pages)); // TODO logic for multimethods
 		b++;
 	}
 	std::sort(dirs.begin(), dirs.end());
 
     VirtualServerConfig virtualServConfig1(dirs, \
-      sc->listen->port[0], \
-      (char *)sc->listen->rawIp.c_str(), \
-      sc->server_name);
+    	sc->listen->port[0], \
+    	(char *)sc->listen->rawIp.c_str(), \
+    	sc->server_name,
+		sc->error_pages);
 	webserv2.addPortServer(sc->listen->port[0], (char *)sc->listen->rawIp.c_str());
 	webserv2.addVirtualServer(virtualServConfig1);
 }
