@@ -7,7 +7,7 @@
 void        Client::readRequest()
 {
     std::ofstream file;
-    file.open("tmp/log/fullReq_" + std::to_string(_request.getRequestId()) + ".txt", std::ios::app);
+    file.open(REQUEST_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION, std::ios::app);
     recvBuffer();
 
     int previousReadStatus = -1;

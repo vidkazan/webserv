@@ -27,5 +27,9 @@ public:
 	short getPort() const{return _port;}
 	std::string getIp() const{return _ip;}
 	std::string getServerName(){return  _serverName;}
+    std::string& getErrorPages(int code)
+    {
+        return _error_pages[code];
+    }
 };
 

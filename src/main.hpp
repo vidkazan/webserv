@@ -23,6 +23,14 @@
 #define WRITING 1
 #define CLOSING 2
 
+#define LOG_FILE_EXTENSION  ".txt"
+#define REQUEST_LOG_FILE_PATH_NAME "tmp/log/fullReq_"
+#define RESPONSE_LOG_FILE_PATH_NAME "tmp/log/resp_"
+#define CGI_OUTPUT_TMP_FILE_PATH_NAME "tmp/tmp_cgi_output_"
+#define CGI_INPUT_TMP_FILE_PATH_NAME "tmp/tmp_cgi_input_"
+#define SUCCESS_UPLOAD_FILE_PATH_NAME "www/uploadSuccess.html"
+
+
 #include "http/AutoIndex.hpp"
 #include "cgi/CGI.hpp"
 #include "server/VirtualServerConfigDirectory.hpp"

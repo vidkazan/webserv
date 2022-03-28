@@ -1,5 +1,11 @@
 #include "main.hpp"
 
+void    startMessage(){
+    printLog("", "______________________________________________________________|\n"
+                 "|_________________________SERVER START_________________________|\n"
+                 "|______________________________________________________________", GREEN);
+}
+
 void    printWebservData(Webserv2 &webserv2)
 {
     //print port servers
@@ -16,15 +22,10 @@ void    setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 	// generate servers
 	std::vector<VirtualServerConfigDirectory>	dirs;
 	vector<LocationConfig *>					locations = sc->locations;
-
 	vector<LocationConfig *>::iterator 	b = locations.begin();
 	vector<LocationConfig *>::iterator 	e = locations.end();
-
-	string directoryName;
-	string directoryAllowedMethods;
-	string directoryPath;
-
-	while (b != e) {
+	while (b != e)
+    {
 		dirs.push_back(VirtualServerConfigDirectory((*b)->name,\
 							(*b)->allow_methods,\
 							(*b)->root, \
@@ -34,36 +35,39 @@ void    setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 					   		(*b)->index, \
 					   		(*b)->cgi_path, \
 					   		(*b)->cgi_extension,
-							(*b)->error_pages)); // TODO logic for multimethods
+							(*b)->error_pages));
 		b++;
 	}
 	std::sort(dirs.begin(), dirs.end());
-
     VirtualServerConfig virtualServConfig1(dirs, \
     	sc->listen->port[0], \
     	(char *)sc->listen->rawIp.c_str(), \
     	sc->server_name,
 		sc->error_pages);
-	webserv2.addPortServer(sc->listen->port[0], (char *)sc->listen->rawIp.c_str());
+
+    bool portFlag=1;
+    std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();
+    for(;it!=webserv2.getPortServers().end();it++)
+    {
+        if((it->getIp() == sc->listen->rawIp) && (it->getPort() == sc->listen->port[0]))
+        {
+            portFlag = 0;
+            break;
+        }
+    }
+    if(portFlag)
+	    webserv2.addPortServer(sc->listen->port[0], (char *)sc->listen->rawIp.c_str());
 	webserv2.addVirtualServer(virtualServConfig1);
 }
 
-void    startMessage(){
-	printLog("", "______________________________________________________________|\n"
-				 			   "|_________________________SERVER START_________________________|\n"
-							   "|______________________________________________________________", GREEN);
-}
-
-void    parseConfigFile(Webserv2 & webserv2, int argc, char ** argv) {
+void    parseConfigFile(Webserv2 & webserv2, int argc, char ** argv)
+{
 	formatConfigFile			a(argc, argv);
-//	vector<ServerConfig *>		_servers;
 	vector<string> strServers = a.getStringServers();
-
-
 	vector<string>::iterator b = strServers.begin();
 	vector<string>::iterator e = strServers.end();
-
-	while (b != e) {
+	while (b != e)
+    {
 		ServerConfig * tmp = new ServerConfig (*b);
 		setVirtualServerConfig(webserv2, tmp);
 		delete tmp;
@@ -75,7 +79,7 @@ int     main(int argc, char ** argv)
 {
 	Webserv2 webserv2;
 	try
-	{
+    {
 		parseConfigFile(webserv2, argc, argv);
 	}
 	catch(const std::exception& e)
@@ -84,12 +88,10 @@ int     main(int argc, char ** argv)
 		exit(1);
 	}
 	startMessage();
-	// listening listen sockets
 	for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it != webserv2.getPortServers().end(); it++)
 		listen(it->getSocketFD(), 1000);
-	// MAIN LOOP
 //    printWebservData(webserv2);
-	while(1)
+	while(42)
 	{
 		// preparing for SELECT
 		int largestFD = 0;
@@ -106,6 +108,7 @@ int     main(int argc, char ** argv)
 		// adding client sockets to SELECT's read/write events catching array
 		for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
 		{
+//            std::cout << "|" << std::setw(7) << it->getRequest().getRequestId() << "|" << std::setw(4) << it->getSocketFd() << "|" << std::setw(10) << it->getRequest().getReadStatus() << "|"<< std::setw(10) << it->getRequest().getRequestMethod()<< "|" << std::setw(10) << it->getResponse().getBytesSent() << "|" <<  std::setw(10) << std::to_string(it->getResponse().getResponseCodes()) << "|\n";
 			if(it->getStatus() == READING)
 				FD_SET(it->getSocketFd(), &readfds);
 			else if(it->getStatus() == WRITING)
@@ -120,6 +123,12 @@ int     main(int argc, char ** argv)
 			printLog("","webserv: select error",RED);
 			exit(EXIT_FAILURE);
 		}
+        system("clear");
+        std::cout << "|" << std::setw(7) << "   id  " << "|" << std::setw(4) << " fd " << "|" << std::setw(10) << "  status  " << "|"  << std::setw(10) << "  method  " << "|" << std::setw(10) << "   sent   " << "|" << std::setw(6) << " code " <<"|"<<" received " <<  "|\n";
+        for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
+        {
+            std::cout << "|" << std::setw(7) << it->getRequest().getRequestId() << "|" << std::setw(4) << it->getSocketFd() << "|" << std::setw(10) << it->getRequest().getReadStatus() << "|"<< std::setw(10) << it->getRequest().getRequestMethod()<< "|" << std::setw(10) << it->getResponse().getBytesSent() << "|" <<  std::setw(6) << std::to_string(it->getResponse().getResponseCodes()) << "|" << std::setw(10) << it->getRequest().getCounter() << "|\n";
+        }
 		// checking all connections for closing
 		for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++){
 			if(it->getStatus() == CLOSING)
