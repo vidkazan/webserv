@@ -19,7 +19,7 @@ public:
 	string 			name;
 	string			cgi_path; // TODO vector<string>? def:NULL
 	string			cgi_extension;
-	string			allow_methods; // yay or nay?
+	vector<string>	allow_methods; // yay or nay?
 
 	LocationConfig(string const & raw, string & dir);
 	~LocationConfig() {}

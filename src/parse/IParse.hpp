@@ -12,8 +12,6 @@ using namespace std;
 #include <iostream>
 #include <sys/stat.h>
 #include <fstream>
-#include <map>
-#include <vector>
 
 /*
  * Abstract class for parse scopes of server part and server:location part
@@ -25,15 +23,15 @@ public:
 	IParse() {};
 	virtual ~IParse() {};
 
-	tumbler				autoindex;
-	string 				root;
-	map<int, string>	error_pages;
-	string				index;
-	ssize_t				client_body_buffer_size;
+	tumbler			autoindex;
+	string 			root;
+	string			index;
+	ssize_t			client_body_buffer_size;
+//	string			directory;// TODO int fd?
 
 protected:
 
-	string				_raw;
+	string			_raw;
 
 	/*
 	 * main parsing loop of raw configurations string
@@ -91,11 +89,11 @@ protected:
 			throw std::runtime_error (string (ERR_INVALID_DIR) + ": '" + dir + "'" );
 	}
 
-	void _checkFile(string dir) {
-		struct stat s;
-		if (stat(dir.c_str(),&s) || !S_ISREG(s.st_mode))
-			throw std::runtime_error (string (ERR_INVALID_FILE) + ": '" + dir + "'" );
-	}
+    void _checkFile(string dir) {
+        struct stat s;
+        if (stat(dir.c_str(),&s) || !S_ISREG(s.st_mode))
+            throw std::runtime_error (string (ERR_INVALID_FILE) + ": '" + dir + "'" );
+    }
 
 	void _setRoot() {
 		// this->_rawErase("root ");
@@ -159,44 +157,6 @@ protected:
 		static_cast<ssize_t>(stoi(value, &pos, 10));
 		if (this->client_body_buffer_size < 0 || pos != value.length())
 			throw std::runtime_error(ERR_INVALID);
-	}
-
-	void _setErrPage() {
-		this->_rawErase("error_page ");
-		vector<int> codes;
-
-		string value = this->_getSingleValue();
-
-		size_t number_of_characters;
-		int code = stoi(value, &number_of_characters);
-		if (number_of_characters != value.length())
-			throw std::runtime_error(string(ERR_INVALID) + ": error_page code '" + value+ "'");
-		codes.push_back(code);
-
-		while (42) {
-			value = this->_getSingleValue();
-			try {
-				code = stoi(value, &number_of_characters);
-			}
-			catch (exception & ex) {
-				break;
-			}
-			if (number_of_characters != value.length())
-				break;
-			codes.push_back(code);
-		}
-		ifstream	file;
-		string		path_file;
-		if (!this->root.empty())
-			path_file = this->root + value;
-		else
-			path_file = value;
-		file.open(path_file.c_str()); // TODO допилить права онли на чтение
-		file.close();
-		if(!file)
-			throw std::runtime_error(string(ERR_INVALID) + ": error_page file '" + path_file+ "'");
-		for (vector<int>::iterator it = codes.begin(); it != codes.end(); it++)
-			error_pages[*it] = value;
 	}
 
 	virtual void _idPole(string basicString) = 0;

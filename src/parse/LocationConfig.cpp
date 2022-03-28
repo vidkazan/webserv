@@ -3,7 +3,6 @@
 //
 
 #include "LocationConfig.hpp"
-class IParse;
 
 LocationConfig::LocationConfig(string const & raw, string & dir) : IParse() {
 	this->_raw = raw;
@@ -19,15 +18,14 @@ void LocationConfig::_nulling() {
 }
 
 void LocationConfig::_idPole(string pole) {
-	void    (LocationConfig::*member[8])() = {
+	void    (LocationConfig::*member[7])() = {
 			&LocationConfig::_setRoot,
 			&LocationConfig::_setIndex,
 			&LocationConfig::_setCGIPath,
 			&LocationConfig::_setAutoindex,
 			&LocationConfig::_setMetods,
 			&LocationConfig::_setCGIExtension,
-			&LocationConfig::_setCBBS,
-			&LocationConfig::_setErrPage
+			&LocationConfig::_setCBBS
 	};
 	int num = ("root" == pole) * 1 +
 			  ("index" == pole) * 2 +
@@ -35,8 +33,7 @@ void LocationConfig::_idPole(string pole) {
 			  ("autoindex" == pole) * 4 +
 			  ("method" == pole) * 5 +
 			  ("cgi_extension" == pole) * 6 +
-			  ("client_body_buffer_size" == pole) * 7 +
-			  ("error_page" == pole) * 8;
+			  ("client_body_buffer_size" == pole) * 7;
 	if (num) {
 		(this->*member[num - 1])();
 	}
@@ -62,12 +59,6 @@ void LocationConfig::_setMetods() {
 
 	string value;
 
-	value = this->_getSingleValue();
-	if (value == "GET" ||
-		value == "POST" ||
-		value == "DELETE" ||
-		value == "PUT")
-		this->allow_methods += value;
 	while (42) {
 		if (this->_raw.empty())
 			return;
@@ -76,7 +67,7 @@ void LocationConfig::_setMetods() {
 				value == "POST" ||
 				value == "DELETE" ||
 				value == "PUT") {
-			this->allow_methods += " " + value;
+			this->allow_methods.push_back(value);
 		}
 		else {
 			if (this->_raw.empty())

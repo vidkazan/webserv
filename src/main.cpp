@@ -26,24 +26,22 @@ void    setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 
 	while (b != e) {
 		dirs.push_back(VirtualServerConfigDirectory((*b)->name,\
-							(*b)->allow_methods,\
+							(*b)->allow_methods[0],\
 							(*b)->root, \
 							"", \
 							(*b)->client_body_buffer_size, \
 					   		(bool)(*b)->autoindex, \
 					   		(*b)->index, \
 					   		(*b)->cgi_path, \
-					   		(*b)->cgi_extension, \
-					   		(*b)->error_pages));
+					   		(*b)->cgi_extension)); // TODO logic for multimethods
 		b++;
 	}
 	std::sort(dirs.begin(), dirs.end());
 
     VirtualServerConfig virtualServConfig1(dirs, \
-      										sc->listen->port[0], \
-      										(char *)sc->listen->rawIp.c_str(), \
-      										sc->server_name,
-										   sc->error_pages);
+      sc->listen->port[0], \
+      (char *)sc->listen->rawIp.c_str(), \
+      sc->server_name);
 	webserv2.addPortServer(sc->listen->port[0], (char *)sc->listen->rawIp.c_str());
 	webserv2.addVirtualServer(virtualServConfig1);
 }
@@ -88,7 +86,7 @@ int     main(int argc, char ** argv)
 	for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it != webserv2.getPortServers().end(); it++)
 		listen(it->getSocketFD(), 1000);
 	// MAIN LOOP
-    printWebservData(webserv2);
+//    printWebservData(webserv2);
 	while(1)
 	{
 		// preparing for SELECT
@@ -120,50 +118,11 @@ int     main(int argc, char ** argv)
 			printLog("","webserv: select error",RED);
 			exit(EXIT_FAILURE);
 		}
-// <<<<<<< HEAD:main.cpp
-		// finding an event in client sockets array
-		for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
-		{
-			if(webserv2.getClients().empty())
-				break;
-			// finding a read event in client sockets array
-			if (FD_ISSET(it->getSocketFd(), &readfds)){
-//				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
-				it->readRequest();
-				if(it->getStatus() == WRITING)
-					it->generateResponse();
-			}
-			// finding a write event in client sockets array
-			if(FD_ISSET(it->getSocketFd(), &writefds))
-			{
-//				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
-				it->sendResponse();
-			}
-		}
-		// finding a new connection event in listen sockets array
-		int fd;
-		for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it != webserv2.getPortServers().end(); it++)
-		{
-			if(FD_ISSET(it->getSocketFD(), &readfds))
-			{
-				// creating new connection/client socket
-				struct sockaddr_in adrAccept;
-				bzero((void *)&adrAccept,sizeof adrAccept);
-				socklen_t adrAcceptLen = sizeof adrAccept;
-				std::cout << "select: new client on port " << ntohs(it->getSockAddrInStruct().sin_port) << "\n";
-				fd = accept(it->getSocketFD(), (struct sockaddr *)&adrAccept, &adrAcceptLen);
-				if (fd < 0){
-					printLog("","accept error",RED);
-					exit(EXIT_FAILURE);
-				}
-				fcntl(fd, F_SETFL, O_NONBLOCK);
-				webserv2.addClient(fd, it->getVirtualServers());
-			}
-		}
-// >>>>>>> dev:src/main.cpp
 		// checking all connections for closing
 		for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++){
-			if(it->getStatus() == CLOSING){
+			if(it->getStatus() == CLOSING)
+            {
+//                std::cout << SOME << "close: " << it->getSocketFd() << WHITE << "\n";
 				close(it->getSocketFd());
 				webserv2.getClients().erase(it);
 				break;

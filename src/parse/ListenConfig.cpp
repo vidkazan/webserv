@@ -40,6 +40,10 @@ void ServerConfig::_makeListen() {
 bool ServerConfig::_validIP(string ip) {
 	if (ip == "localhost") {
 		this->listen->rawIp = (char *)"127.0.0.1";
+		this->listen->ip[0] = 127;
+		this->listen->ip[1] = 0;
+		this->listen->ip[2] = 0;
+		this->listen->ip[3] = 1;
 		return true;
 	}
 
@@ -48,6 +52,7 @@ bool ServerConfig::_validIP(string ip) {
 	string		rawOktet;
 	int			oktet;
 
+//	string copy = ip;
 	this->listen->rawIp = ip;
 	while ((pos = ip.find(".")) != string::npos) {
 		rawOktet = ip.substr(0,pos);
@@ -57,6 +62,7 @@ bool ServerConfig::_validIP(string ip) {
 			this->listen->rawIp.erase();
 			return false;
 		}
+		this->listen->ip[i] = static_cast<uint8_t>(oktet);
 		i++;
 	}
 	if (i != 3)
@@ -65,6 +71,7 @@ bool ServerConfig::_validIP(string ip) {
 	oktet = stoi(rawOktet, &pos);
 	if (pos != rawOktet.length() || oktet < 0 || oktet > 255)
 		return false;
+	this->listen->ip[i] = static_cast<uint8_t>(oktet);
 	return true;
 }
 
