@@ -5,9 +5,9 @@
 
 void        Client::generateResponse()
 {
-//    std::cout << YELLOW << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << " \n" << _request.getOption() << WHITE << "\n";
-//    std::cout << YELLOW << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << WHITE << " ";
-//    printStates("");
+    std::cout << YELLOW << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << " \n" << _request.getOption() << WHITE << "\n";
+    std::cout << YELLOW << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << WHITE << " ";
+    printStates("");
     std::fstream inputFile;
     std::string bufResp;
     std::string body;
@@ -204,20 +204,25 @@ void        Client::generateResponse()
             break;
         }
     }
-    std::stringstream buffer;
-    buffer << inputFile.rdbuf();
-    if (body.empty())
-        body = buffer.str();
-    bufResp += "Content-Length: ";
-    bufResp += std::to_string((unsigned  long long )body.size());
-    bufResp += "\n";
-    if (_request.getOptionFileExtension() == "html")
-        bufResp += "Content-Type: text/html\n";
-    else if (_request.getOptionFileExtension() == "png")
-        bufResp += "Content-Type: image/png\n";
-    bufResp += "\n";
-    if(_request.getRequestMethod() != HEAD)
+    if(_request.getRequestMethod() != HEAD) {
+        std::stringstream buffer;
+        buffer << inputFile.rdbuf();
+        if (body.empty())
+            body = buffer.str();
+        bufResp += "Content-Length: ";
+        bufResp += std::to_string((unsigned long long) body.size());
+        bufResp += "\n";
+        if (_request.getOptionFileExtension() == "html")
+            bufResp += "Content-Type: text/html\n";
+        else if (_request.getOptionFileExtension() == "png")
+            bufResp += "Content-Type: image/png\n";
+        bufResp += "\n";
         bufResp += body;
+    }
+    else
+    {
+        bufResp += "Content-Length: 0\n\n";
+    }
     allocateResponse(bufResp);
     std::ofstream logfile;
     logfile.open(RESPONSE_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION, std::ios::trunc);
@@ -255,7 +260,7 @@ void        Client::sendResponse()
     _response.addBytesSent(ret);
     if(_response.getBytesSent() == (size_t)_response.getResponseSize())
     {
-//        std::cout << GREEN << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << " " << "sent: " << _response.getBytesSent() << WHITE << "\n";
+        std::cout << GREEN << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << " " << "sent: " << _response.getBytesSent() << WHITE << "\n";
         if(_response.toCloseTheConnection())
             setStatus(CLOSING);
         else
