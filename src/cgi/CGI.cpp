@@ -75,7 +75,7 @@ bool CGI::checkScriptRights() { // изменить логик bool
 		std::fstream inputFile;
 		std::cerr << "ERROR IN CGI: cgi script not found\n";
 		cgiBufResp = "HTTP/1.1 404 Not found\n";
-		inputFile.open("www/404.html", std::ios::in);
+		inputFile.open("www/404.html", std::ios::in); // FIXME прикрутить путь из конфига
 		std::stringstream buffer;
 		buffer << inputFile.rdbuf();
 		body = buffer.str();

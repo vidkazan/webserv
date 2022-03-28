@@ -101,10 +101,7 @@ void        Client::parseRequestBody()
         _request.setRequestErrors(ERROR_BODY_OVER_MAX_SIZE);
         return;
     }
-    if(_request.getRequestMethod() == POST) {
-//			std::cout << "parse Body: " << "content length: " << _request.getContentLength() << " buffer size: " << _request.getBuffer().size() << " buffer: " << _request.getBuffer() << "\n";
-    }
-    _request.setContentLength(_request.getContentLength() - _request.getBuffer().size());
+    _request.setCounter(_request.getCounter() + _request.getBuffer().size());
     if(_request.getRequestOptionType() != OPTION_CGI)
     {
         std::ofstream outFile;
@@ -120,7 +117,7 @@ void        Client::parseRequestBody()
         outFile.close();
     }
     _request.setBuffer("");
-    if(_request.getContentLength() <= 0)
+    if(_request.getContentLength() > -1 && ((size_t)_request.getContentLength() <= _request.getCounter()))
     {
 //			std::cout << _request.getRequestId() << " request read status: REQUEST_READ_COMPLETE\n";
         _request.setReadStatus(REQUEST_READ_COMPLETE);
@@ -148,7 +145,6 @@ void        Client::parseRequestMultiPart()
     }
     else
         _request.setContentLength(_request.getContentLength() - _request.getBuffer().size());
-    std::cout << "Parse Body: " << "content length: " << _request.getContentLength() << " buffer size: " << _request.getBuffer().size() << "\n";
     size_t pos = _request.getBuffer().find("------WebKitFormBoundary");
 
     if((pos != std::string::npos) && _request.getContentLength() == 0)
@@ -157,6 +153,7 @@ void        Client::parseRequestMultiPart()
     outFile.open(_request.getFullPath(), std::ios::app);
     outFile << _request.getBuffer();
     outFile.close();
+    _request.setCounter(_request.getCounter() + _request.getBuffer().size());
     _request.setBuffer("");
 
     if(_request.getContentLength() == 0){
@@ -188,14 +185,14 @@ void        Client::parseRequestBodyChunked(std::ofstream * file)
             // converting request chunk size from HEX-string to DEC-long
             ssize_t tmpChunkSize;
             std::istringstream(tmp.substr(0, pos)) >> std::hex >> tmpChunkSize;
-            *file << "new chunk size DEC: " << tmpChunkSize << "\n";
+//            *file << "new chunk size DEC: " << tmpChunkSize << "\n";
             _request.setChunkSize(tmpChunkSize);
             tmp.erase(0,pos + 2);
             _request.setBuffer(tmp);
         }
         if(_request.getChunkSize() != -1)
         {
-            *file << "current chunkSize: " << _request.getChunkSize() << " bufferSize: " << tmp.size() << "\n";
+//            *file << "current chunkSize: " << _request.getChunkSize() << " bufferSize: " << tmp.size() << "\n";
             if (tmp.size() >= static_cast<size_t>(_request.getChunkSize()) + 2){
                 // get chunk body
                 // set chunkBuffer
@@ -209,16 +206,16 @@ void        Client::parseRequestBodyChunked(std::ofstream * file)
                 if(_request.getChunkSize() == 0)
                 {
                     _request.setReadStatus(REQUEST_READ_COMPLETE);
-                    *file << "written:" << _request.getCounter() << "\n";
-                    *file << _request.getRequestId() << " request read status: REQUEST_READ_COMPLETE\n";
+//                    *file << "written:" << _request.getCounter() << "\n";
+//                    *file << _request.getRequestId() << " request read status: REQUEST_READ_COMPLETE\n";
                 }
                 else
                 {
                     // chunk complete
                     // export chunkBuffer
-                    *file << "chunk complete! chunkBufferSize:" << _request.getBufferChunk().size() << "\n" ; // FIXME maxBodySize made only for chunks!
+//                    *file << "chunk complete! chunkBufferSize:" << _request.getBufferChunk().size() << "\n" ; // FIXME maxBodySize made only for chunks!
                     _request.setCounter(_request.getCounter() + _request.getBufferChunk().size());
-                    *file << "chunks: read: " << _request.getCounter() << " max body size: " << _request.getMaxBodySize() <<  "\n";
+//                    *file << "chunks: read: " << _request.getCounter() << " max body size: " << _request.getMaxBodySize() <<  "\n";
                     if(_request.getMaxBodySize() >= 0 && ((ssize_t)_request.getCounter() > _request.getMaxBodySize()))
                     {
                         _request.setRequestErrors(ERROR_BODY_OVER_MAX_SIZE);

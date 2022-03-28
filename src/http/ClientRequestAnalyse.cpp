@@ -41,7 +41,7 @@ void        Client::analyseRequest()
             _request.setFullPath(_request.getDirectoryConfig().getCgiPath());
             std::stringstream OutputFileName;
             std::ofstream cgiOutput;
-            OutputFileName << "tmp/tmp_cgi_output_";
+            OutputFileName << CGI_OUTPUT_TMP_FILE_PATH_NAME;
             OutputFileName << _socketFD;
             _response.setCgiOutputFileName(OutputFileName.str());
             cgiOutput.open(_response.getCgiOutputFileName(), std::ios::trunc);
@@ -50,7 +50,7 @@ void        Client::analyseRequest()
 
             std::stringstream InputFileName;
             std::ofstream cgiInput;
-            InputFileName << "tmp/tmp_cgi_input_";
+            InputFileName << CGI_INPUT_TMP_FILE_PATH_NAME;
             InputFileName << _socketFD;
             _response.setCgiInputFileName(InputFileName.str());
             cgiInput.open(_response.getCgiInputFileName(), std::ios::trunc);

@@ -15,11 +15,14 @@ public:
 	            Client(int fd, std::vector<VirtualServerConfig> virtualServers): _socketFD(fd), _status(READING), _virtualServers(virtualServers) {};
 	            ~Client(){};
 	int         getStatus() const {return _status;};
+    Request&    getRequest(){return _request;};
+    Response&    getResponse(){return _response;};
 	int         getSocketFd() const{return _socketFD;}
 	void        setStatus(int status){_status = status;}
 	void        setVirtualServerConfig(const VirtualServerConfig & conf){_serverConfig = conf;}
     void        setResponse(const Response&response){_response = response;}
-    void        printStates(std::string place)
+    const VirtualServerConfig& getVirtualServerConfig(){return _serverConfig;}
+    void        printStates(const std::string& place)
     {
         std::cout << YELLOW << place << "\n";
         switch (_request.getReadStatus()) {
