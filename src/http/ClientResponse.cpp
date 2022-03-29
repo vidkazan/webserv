@@ -49,6 +49,8 @@ void        Client::generateResponse()
         case GET:
         {
             switch(_response.getResponseCodes()){
+                case 0:
+                    break;
                 case 301: {
                     bufResp += "Location: ";
                     bufResp += _request.getRedirect();
@@ -122,6 +124,9 @@ void        Client::generateResponse()
         case POST:
         {
             switch(_response.getResponseCodes()) {
+                case 0:{
+                    break;
+                }
                 case 301: {
                     bufResp += "Location: ";
                     bufResp += _request.getRedirect();
@@ -204,20 +209,25 @@ void        Client::generateResponse()
             break;
         }
     }
-    std::stringstream buffer;
-    buffer << inputFile.rdbuf();
-    if (body.empty())
-        body = buffer.str();
-    bufResp += "Content-Length: ";
-    bufResp += std::to_string((unsigned  long long )body.size());
-    bufResp += "\n";
-    if (_request.getOptionFileExtension() == "html")
-        bufResp += "Content-Type: text/html\n";
-    else if (_request.getOptionFileExtension() == "png")
-        bufResp += "Content-Type: image/png\n";
-    bufResp += "\n";
-    if(_request.getRequestMethod() != HEAD)
+    if(_request.getRequestMethod() != HEAD) {
+        std::stringstream buffer;
+        buffer << inputFile.rdbuf();
+        if (body.empty())
+            body = buffer.str();
+        bufResp += "Content-Length: ";
+        bufResp += std::to_string((unsigned long long) body.size());
+        bufResp += "\n";
+        if (_request.getOptionFileExtension() == "html")
+            bufResp += "Content-Type: text/html\n";
+        else if (_request.getOptionFileExtension() == "png")
+            bufResp += "Content-Type: image/png\n";
+        bufResp += "\n";
         bufResp += body;
+    }
+    else
+    {
+        bufResp += "Content-Length: 0\n\n";
+    }
     allocateResponse(bufResp);
     std::ofstream logfile;
     logfile.open(RESPONSE_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION, std::ios::trunc);

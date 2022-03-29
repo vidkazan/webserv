@@ -10,7 +10,7 @@ private:
 	std::string _serverName;
 	std::map<int, std::string> _error_pages;
 public:
-	VirtualServerConfig(){}
+	VirtualServerConfig(): _port(0), _ip(""), _serverName("not set"){}
 	VirtualServerConfig(const std::vector<VirtualServerConfigDirectory>&directories, \
 	short port, \
 	std::string ip, \
@@ -23,11 +23,11 @@ public:
 			_error_pages(error_pages){}
 	~VirtualServerConfig(){}
 
-	const std::vector<VirtualServerConfigDirectory>&getDirectories() const{return _directories;}
-	short getPort() const{return _port;}
-	std::string getIp() const{return _ip;}
-	std::string getServerName(){return  _serverName;}
-    std::string& getErrorPages(int code)
+	const std::vector<VirtualServerConfigDirectory> & getDirectories() const {return _directories;}
+	short                                             getPort() const {return _port;}
+	std::string                                       getIp() const {return _ip;}
+	std::string                                       getServerName() const {return  _serverName;}
+    std::string&                                      getErrorPages(int code)
     {
         return _error_pages[code];
     }

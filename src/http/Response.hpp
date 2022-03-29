@@ -7,7 +7,8 @@ enum responseCodeStates{
 	BAD_REQUEST = 400,
 	NOT_FOUND = 404,
 	METHOD_NOT_ALLOWED = 405,
-	PAYLOAD_TOO_LARGE = 413
+	PAYLOAD_TOO_LARGE = 413,
+    CODE_NOT_SET = 0
 };
 
 class Response{
@@ -33,7 +34,7 @@ public:
 				_methodIsAllowed(false), \
 				_fileIsFound(false),\
 				_toCloseTheConnection(false), \
-                _responseCodes(OK){};
+                _responseCodes(CODE_NOT_SET){};
 	virtual             ~Response(){};
 	responseCodeStates  &getResponseCodes(){return _responseCodes;};
 	void                setResponseCode(int code){_responseCodes = static_cast<responseCodeStates>(code);}
