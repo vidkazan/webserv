@@ -35,6 +35,7 @@ void ServerConfig::_makeListen() {
 	if (this->listen != NULL)
 		throw std::runtime_error (ERR_DOUBLE_ASSIGMENT);
 	this->listen = new t_listen;
+	this->listen->port = 0;
 }
 
 bool ServerConfig::_validIP(string ip) {
@@ -69,6 +70,8 @@ bool ServerConfig::_validIP(string ip) {
 }
 
 bool ServerConfig::_validPort(string port) {
+	if (this->listen->port != 0)
+		throw std::runtime_error(ERR_INVALID);
 	size_t pos;
 	if (!this->listen)
 		throw std::runtime_error(ERR_INTERPRET);
@@ -83,7 +86,7 @@ bool ServerConfig::_validPort(string port) {
 	if (p < 0 || p > 65535) {
 		throw std::runtime_error(ERR_INVALID);
 	}
-	this->listen->port.push_back(static_cast<short>(p));
+	this->listen->port = static_cast<short>(p);
 	return true;
 }
 

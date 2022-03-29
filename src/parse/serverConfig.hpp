@@ -18,8 +18,8 @@ class IParse;
 class LocationConfig;
 
 typedef struct s_listen {
-	string rawIp;
-	vector<short>	port;
+	string	rawIp;
+	short	port;
 } t_listen;
 
 class ServerConfig : public IParse {
