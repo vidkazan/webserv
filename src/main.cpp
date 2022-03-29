@@ -179,6 +179,7 @@ int     main(int argc, char ** argv)
         {
             std::cout << "|" << std::setw(7) << it->getRequest().getRequestId() << "|" << std::setw(4) << it->getSocketFd() << "|"<< std::setw(10) << it->getRequest().getRequestMethod()<< "|" << std::setw(10) << it->getResponse().getBytesSent() << "|" <<  std::setw(6) << std::to_string(it->getResponse().getResponseCodes()) << "|" << std::setw(10) << it->getRequest().getCounter() << "|" << std::setw(11) << it->getVirtualServerConfig().getServerName() << "|" << std::setw(6) << it->getVirtualServerConfig().getPort() << "|\n";
         }
+
 	}
 	// very bad place:)
 	return 0;
