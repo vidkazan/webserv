@@ -9,6 +9,7 @@ LocationConfig::LocationConfig(string const & raw, string & dir) : IParse() {
 	this->autoindex = OFF;
 	this->client_body_buffer_size = -1;
 	this->_setName(dir);
+	this->_setDefaultErrorPages();
 	this->_parse();
 	if (!this->redirect.empty()) {
 		if (!this->root.empty())
