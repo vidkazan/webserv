@@ -12,7 +12,9 @@
 ServerConfig::ServerConfig(string const & raw) :
 		IParse() {
 	this->_raw = raw;
-	this->_nulling();
+	this->listen = NULL;
+	this->client_body_buffer_size = -1;
+	this->root = "./";
 	this->_parse();
 //	this->_printConfigurations();
 }
@@ -32,15 +34,8 @@ ServerConfig::~ServerConfig() {
 }
 
 /*
- * service methods: _nulling and _idPole
+ * service methods: _idPole
  */
-
-void ServerConfig::_nulling() {
-	this->listen = NULL;
-	this->client_body_buffer_size = -1;
-	this->root = "./";
-
-}
 
 void ServerConfig::_idPole(string pole) {
 
@@ -174,6 +169,8 @@ void ServerConfig::_printConfigurations() {
 		vector<LocationConfig *>::iterator b = this->locations.begin();
 		vector<LocationConfig *>::iterator e = this->locations.end();
 		while (b != e) {
+			if (!(*b)->name.empty())
+				cout << "***********location name: '" << (*b)->name << "'***********" << endl;
 			if (!(*b)->allow_methods.empty())
 				cout << "location methods:\t" << (*b)->allow_methods << endl;
 			if (!(*b)->root.empty())
@@ -199,6 +196,8 @@ void ServerConfig::_printConfigurations() {
 					 it != (*b)->error_pages.end(); it++)
 					cout << "code: " << it->first << " file: " << it->second << endl;
 			}
+			if (!(*b)->redirect.empty())
+				cout << "location redirect: " << (*b)->redirect << endl;
 			b++;
 		}
 	}

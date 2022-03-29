@@ -10,10 +10,6 @@
 #include <fstream>
 #include "formatConfigFile.hpp"
 #include "LocationConfig.hpp"
-
-
-//#include <filesystem>
-
 #include "IParse.hpp"
 
 enum state {IP, IP_PORT, NOTHING};
@@ -34,7 +30,7 @@ public:
 	ServerConfig(string const & raw);
 
 	string 						server_name;
-	vector<LocationConfig *>	locations; // vector
+	vector<LocationConfig *>	locations;
 	t_listen *					listen;
 
 
@@ -59,7 +55,6 @@ private:
 
 	void _idPole(string basicString);
 
-	void _nulling();
 };
 
 #endif //WEBSERV_SERVERCONFIG_HPP

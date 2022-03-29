@@ -6,19 +6,25 @@
 
 LocationConfig::LocationConfig(string const & raw, string & dir) : IParse() {
 	this->_raw = raw;
-
-	this->_nulling();
-	this->_setName(dir);
-	this->_parse();
-}
-
-void LocationConfig::_nulling() {
 	this->autoindex = OFF;
 	this->client_body_buffer_size = -1;
+	this->_setName(dir);
+	this->_parse();
+	if (!this->redirect.empty()) {
+		if (!this->root.empty())
+			this->root.erase();
+		if (!this->cgi_extension.empty())
+			this->cgi_extension.erase();
+		if (!this->cgi_path.empty())
+			this->cgi_path.erase();
+		if (!this->allow_methods.empty())
+			this->allow_methods.erase();
+		if (!this->index.empty())
+			this->index.erase();
+	}
 }
-
 void LocationConfig::_idPole(string pole) {
-	void    (LocationConfig::*member[8])() = {
+	void    (LocationConfig::*member[9])() = {
 			&LocationConfig::_setRoot,
 			&LocationConfig::_setIndex,
 			&LocationConfig::_setCGIPath,
@@ -26,16 +32,18 @@ void LocationConfig::_idPole(string pole) {
 			&LocationConfig::_setMetods,
 			&LocationConfig::_setCGIExtension,
 			&LocationConfig::_setCBBS,
-			&LocationConfig::_setErrPage
+			&LocationConfig::_setErrPage,
+			&LocationConfig::_setRedir
 	};
-	int num = ("root" == pole) * 1 +
-			  ("index" == pole) * 2 +
-			  ("cgi_path" == pole) * 3 +
-			  ("autoindex" == pole) * 4 +
-			  ("method" == pole) * 5 +
-			  ("cgi_extension" == pole) * 6 +
-			("client_body_buffer_size" == pole) * 7 +
-			("error_page" == pole) * 8;
+	int num =	("root" == pole) * 1 +
+				("index" == pole) * 2 +
+				("cgi_path" == pole) * 3 +
+				("autoindex" == pole) * 4 +
+				("method" == pole) * 5 +
+				("cgi_extension" == pole) * 6 +
+				("client_body_buffer_size" == pole) * 7 +
+				("error_page" == pole) * 8 +
+				("redirect" == pole) * 9;
 	if (num) {
 		(this->*member[num - 1])();
 	}
@@ -88,8 +96,15 @@ void LocationConfig::_setMetods() {
 
 void LocationConfig::_setCGIExtension() {
 	this->_rawErase("cgi_extension ");
-
 	this->cgi_extension = this->_getSingleValue();
 	std::string tmp(cgi_extension, 1, cgi_extension.size() - 1);
 	this->cgi_extension = tmp;
+}
+
+void LocationConfig::_setRedir() {
+
+	this->_rawErase("redirect ");
+	if (!this->_raw.empty())
+		this->redirect = this->_getSingleValue();
+	else throw std::runtime_error (ERR_PARSE);
 }
