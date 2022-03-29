@@ -72,6 +72,7 @@ private:
 	RequestBodyType                 _requestBodyType;
 	RequestOptionType	            _requestOptionType;
     VirtualServerConfigDirectory    _dirConfig;
+    size_t                          _bytesReceieved;
 public:
 	Request():	_id(0), \
 				_type(""),\
@@ -91,7 +92,8 @@ public:
 				_requestMethod(NO_METHOD), \
 				_requestErrors(NO_ERROR), \
 				_requestBodyType(NO_BODY), \
-				_requestOptionType(NO_OPTION)
+				_requestOptionType(NO_OPTION) , \
+                _bytesReceieved(0)
 	{
 		while(_id < 1){
 			_id = rand();
@@ -149,6 +151,12 @@ public:
 	void                            cleanBuffer(){_buffer.erase();}
 	ssize_t                         getContentLength() const{return _contentLength;}
 	size_t                          getCounter() const{return _count;}
+    size_t                          getBytesReceieved() const{return _bytesReceieved;}
+    void                          addBytesReceieved(size_t n)
+    {
+        if(n>0)
+        _bytesReceieved += n;
+    }
 	ssize_t                         getMaxBodySize() const{return _maxBodySize;}
 	void                            setMaxBodySize(ssize_t size){_maxBodySize = size;}
 	void                            setContentLength(ssize_t contentLength){_contentLength = contentLength;}
