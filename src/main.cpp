@@ -109,7 +109,6 @@ int     main(int argc, char ** argv)
 		// adding client sockets to SELECT's read/write events catching array
 		for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
 		{
-//            std::cout << "|" << std::setw(7) << it->getRequest().getRequestId() << "|" << std::setw(4) << it->getSocketFd() << "|" << std::setw(10) << it->getRequest().getReadStatus() << "|"<< std::setw(10) << it->getRequest().getRequestMethod()<< "|" << std::setw(10) << it->getResponse().getBytesSent() << "|" <<  std::setw(10) << std::to_string(it->getResponse().getResponseCodes()) << "|\n";
 			if(it->getStatus() == READING)
 				FD_SET(it->getSocketFd(), &readfds);
 			else if(it->getStatus() == WRITING)
@@ -124,12 +123,6 @@ int     main(int argc, char ** argv)
 			printLog("","webserv: select error",RED);
 			exit(EXIT_FAILURE);
 		}
-        system("clear");
-        std::cout << "|" << std::setw(7) << "   id  " << "|" << std::setw(4) << " fd " << "|" << std::setw(10) << "  status  " << "|"  << std::setw(10) << "  method  " << "|" << std::setw(10) << "   sent   " << "|" << std::setw(6) << " code " <<"|"<<" received " <<  "|\n";
-        for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
-        {
-            std::cout << "|" << std::setw(7) << it->getRequest().getRequestId() << "|" << std::setw(4) << it->getSocketFd() << "|" << std::setw(10) << it->getRequest().getReadStatus() << "|"<< std::setw(10) << it->getRequest().getRequestMethod()<< "|" << std::setw(10) << it->getResponse().getBytesSent() << "|" <<  std::setw(6) << std::to_string(it->getResponse().getResponseCodes()) << "|" << std::setw(10) << it->getRequest().getCounter() << "|\n";
-        }
 		// checking all connections for closing
 		for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++){
 			if(it->getStatus() == CLOSING)
@@ -181,6 +174,13 @@ int     main(int argc, char ** argv)
                 webserv2.addClient(fd, it->getVirtualServers());
             }
         }
+        system("clear");
+        std::cout << "|" << std::setw(7) << "   id  " << "|" << std::setw(4) << " fd " << "|" << std::setw(10) << "  method  " << "|" << std::setw(10) << "   sent   " << "|" << std::setw(6) << " code " <<"|"<<" received " << "|" << "server name" << "|" << " port " << "|\n";
+        for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
+        {
+            std::cout << "|" << std::setw(7) << it->getRequest().getRequestId() << "|" << std::setw(4) << it->getSocketFd() << "|"<< std::setw(10) << it->getRequest().getRequestMethod()<< "|" << std::setw(10) << it->getResponse().getBytesSent() << "|" <<  std::setw(6) << std::to_string(it->getResponse().getResponseCodes()) << "|" << std::setw(10) << it->getRequest().getCounter() << "|" << std::setw(11) << it->getVirtualServerConfig().getServerName() << "|" << std::setw(6) << it->getVirtualServerConfig().getPort() << "|\n";
+        }
+
 	}
 	// very bad place:)
 	return 0;

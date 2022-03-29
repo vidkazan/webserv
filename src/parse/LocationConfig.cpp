@@ -72,6 +72,7 @@ void LocationConfig::_setMetods() {
 	if (value == "GET" ||
 		value == "POST" ||
 		value == "DELETE" ||
+        value == "HEAD" ||
 		value == "PUT")
 		this->allow_methods += value;
 	while (42) {
@@ -81,6 +82,7 @@ void LocationConfig::_setMetods() {
 		if (value == "GET" ||
 				value == "POST" ||
 				value == "DELETE" ||
+                value == "HEAD" ||
 				value == "PUT") {
 			this->allow_methods += " " + value;
 		}

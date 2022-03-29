@@ -9,6 +9,7 @@ void        Client::analyseRequest()
     {
         _response.setRequestIsValid(false);
         _request.setRequestErrors(ERROR_REQUEST_NOT_VALID);
+        _request.setReadStatus(REQUEST_READ_COMPLETE);
         return;
     }
     findVirtualServer();
@@ -24,7 +25,10 @@ void        Client::analyseRequest()
         _request.setRequestOptionType(OPTION_CGI);
 
     if(_request.getRequestErrors() != NO_ERROR)
+    {
+        _request.setReadStatus(REQUEST_READ_COMPLETE);
         return;
+    }
 
     switch (_request.getRequestOptionType()) {
         case OPTION_CGI:
@@ -119,6 +123,7 @@ void        Client::analysePath(){
     for(;it != itEnd; it++){
         if(filePath.find(it->getDirectoryName()) == 0)
         {
+//            std::cout << it->getDirectoryName() << " " << it->getDirectoryAllowedMethods() << "\n";
             _response.setPathIsAvailable(true);
             _request.setDirectoryConfig(*it);
             pos = it->getDirectoryAllowedMethods().find(_request.getType());
@@ -185,7 +190,7 @@ void        Client::findVirtualServer()
     if(!isFound)
     {
         setVirtualServerConfig(*def);
-        std::cout << "default virtual server is set\n";
+//        std::cout << "default virtual server is set\n";
     }
 }
 
