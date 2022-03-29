@@ -12,26 +12,28 @@ using namespace std;
 
 class IParse;
 
-//enum methods {GET, POST, DELETE, PUT};
-
 class LocationConfig  : public IParse {
 public:
 	string 			name;
-	string			cgi_path; // TODO vector<string>? def:NULL
+	string			cgi_path;
 	string			cgi_extension;
 	string			allow_methods;
+	string 			redirect;
 
 	LocationConfig(string const & raw, string & dir);
 	~LocationConfig() {}
 private:
 	void _idPole(string basicString);
-	void _nulling();
 
 	void _setName(string & value);
+
 	void _setCGIPath();
+
 	void _setMetods();
 
 	void _setCGIExtension();
+
+	void _setRedir();
 };
 
 
