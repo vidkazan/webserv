@@ -16,6 +16,9 @@ ServerConfig::ServerConfig(string const & raw) :
 	this->client_body_buffer_size = -1;
 	this->root = "./";
 	this->_parse();
+	if (this->listen == NULL || this->listen->rawIp.empty() || this->listen->port == 0)
+		throw std::runtime_error (ERR_PARSE);
+
 //	this->_printConfigurations();
 }
 
@@ -148,13 +151,8 @@ void ServerConfig::_printConfigurations() {
 	cout << endl;
 	if (this->listen) {
 		cout << "listen ip : " << this->listen->rawIp << endl;
-		if (!this->listen->port.empty()) {
-			vector<short>::iterator b = this->listen->port.begin();
-			vector<short>::iterator e = this->listen->port.end();
-			while (b!=e){
-				cout << "listen port: " << *b << endl;
-				b++;
-			}
+		if (this->listen->port) {
+				cout << "listen port: " << this->listen->port << endl;
 		}
 	}
 	if (!this->root.empty())

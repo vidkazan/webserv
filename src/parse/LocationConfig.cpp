@@ -17,8 +17,6 @@ LocationConfig::LocationConfig(string const & raw, string & dir) : IParse() {
 			this->cgi_extension.erase();
 		if (!this->cgi_path.empty())
 			this->cgi_path.erase();
-		if (!this->allow_methods.empty())
-			this->allow_methods.erase();
 		if (!this->index.empty())
 			this->index.erase();
 	}
