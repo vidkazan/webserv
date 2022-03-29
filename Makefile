@@ -8,6 +8,7 @@ SRCS =	src/main.cpp \
 	    src/parse/ListenConfig.cpp \
 	    src/parse/LocationConfig.cpp \
 	    src/parse/serverConfig.cpp \
+	    src/parse/print_util.cpp \
 	    src/http/ClientRequestParse.cpp \
 	    src/http/ClientRequestAnalyse.cpp \
 	    src/http/ClientResponse.cpp \

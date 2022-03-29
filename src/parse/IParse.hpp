@@ -123,6 +123,7 @@ protected:
 
 		/*
 		 * check index file in main location
+
 		 */
 
 		ifstream file;
@@ -197,6 +198,24 @@ protected:
 			throw std::runtime_error(string(ERR_INVALID) + ": error_page file '" + path_file+ "'");
 		for (vector<int>::iterator it = codes.begin(); it != codes.end(); it++)
 			error_pages[*it] = value;
+	}
+
+	void _defaultErrorPagesCheck (int code) {
+		string path = "default_error_pages";
+		this->_checkDir(path);
+		path += '/' + to_string(code) + ".html";
+		this->_checkFile(path);
+		this->error_pages[code] = path;
+
+	}
+
+	void _setDefaultErrorPages () {
+		this->_defaultErrorPagesCheck(301);
+		this->_defaultErrorPagesCheck(400);
+		this->_defaultErrorPagesCheck(404);
+		this->_defaultErrorPagesCheck(405);
+		this->_defaultErrorPagesCheck(413);
+		this->_defaultErrorPagesCheck(500);
 	}
 
 	virtual void _idPole(string basicString) = 0;

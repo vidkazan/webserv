@@ -28,4 +28,5 @@ add_executable(webserv
         src/server/VirtualServerConfigDirectory.hpp
         src/server/Webserv.hpp
         src/main.cpp
-        src/main.hpp)
+        src/main.hpp
+        src/parse/print_util.cpp)

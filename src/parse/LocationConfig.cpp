@@ -9,6 +9,7 @@ LocationConfig::LocationConfig(string const & raw, string & dir) : IParse() {
 	this->autoindex = OFF;
 	this->client_body_buffer_size = -1;
 	this->_setName(dir);
+	this->_setDefaultErrorPages();
 	this->_parse();
 	if (!this->redirect.empty()) {
 		if (!this->root.empty())
@@ -17,8 +18,6 @@ LocationConfig::LocationConfig(string const & raw, string & dir) : IParse() {
 			this->cgi_extension.erase();
 		if (!this->cgi_path.empty())
 			this->cgi_path.erase();
-		if (!this->allow_methods.empty())
-			this->allow_methods.erase();
 		if (!this->index.empty())
 			this->index.erase();
 	}

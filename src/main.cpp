@@ -49,10 +49,9 @@ void    setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 							(*b)->redirect));
 		b++;
 	}
-	cout << "400 error pade: " << sc->error_pages[400] << endl;
 	std::sort(dirs.begin(), dirs.end());
     VirtualServerConfig virtualServConfig1(dirs, \
-    	sc->listen->port[0], \
+    	sc->listen->port, \
     	(char *)sc->listen->rawIp.c_str(), \
     	sc->server_name, \
 		sc->error_pages);
@@ -61,14 +60,14 @@ void    setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
     std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();
     for(;it!=webserv2.getPortServers().end();it++)
     {
-        if((it->getIp() == sc->listen->rawIp) && (it->getPort() == sc->listen->port[0]))
+        if((it->getIp() == sc->listen->rawIp) && (it->getPort() == sc->listen->port))
         {
             portFlag = 0;
             break;
         }
     }
     if(portFlag)
-	    webserv2.addPortServer(sc->listen->port[0], (char *)sc->listen->rawIp.c_str());
+	    webserv2.addPortServer(sc->listen->port, (char *)sc->listen->rawIp.c_str());
 	webserv2.addVirtualServer(virtualServConfig1);
 }
 
