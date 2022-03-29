@@ -49,7 +49,7 @@ class VirtualServerConfigDirectory
 		const std::string&getDirectoryName() const{return _directoryName;}
 		const std::string&getDirectoryAllowedMethods() const{return _directoryAllowedMethods;}
 		const std::string&getDirectoryPath() const{return _directoryPath;}
-		const std::string&getDirectoryRedirect() const{return _directoryRedirect;}
+		const std::string&getDirectoryRedirect() const{return _redirect;}
 
         const std::string&getDirectoryIndexName() const{return _index;}
 
