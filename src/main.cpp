@@ -6,7 +6,17 @@ void    startMessage(){
                  "|______________________________________________________________", GREEN);
 }
 
-void    printWebservData(Webserv2 &webserv2)
+void    mainPrint(Webserv2 & webserv2)
+{
+    write(1,"\E[H\E[2J",7);
+    std::cout << "|" << std::setw(7) << "   id  " << "|" << std::setw(4) << " fd " << "|" << std::setw(10) << "  method  " << "|" << std::setw(10) << "   sent   " << "|" << std::setw(6) << " code " <<"|"<<" received " << "|" << "server name" << "|" << " port " << "|\n";
+    for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
+    {
+        std::cout << "|" << std::setw(7) << it->getRequest().getRequestId() << "|" << std::setw(4) << it->getSocketFd() << "|"<< std::setw(10) << it->getRequest().getRequestMethod()<< "|" << std::setw(10) << it->getResponse().getBytesSent() << "|" <<  std::setw(6) << std::to_string(it->getResponse().getResponseCodes()) << "|" << std::setw(10) << it->getRequest().getBytesReceieved() << "|" << std::setw(11) << it->getVirtualServerConfig().getServerName() << "|" << std::setw(6) << it->getVirtualServerConfig().getPort() << "|\n";
+    }
+}
+
+void    printWebservServers(Webserv2 &webserv2)
 {
     //print port servers
     for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it!=webserv2.getPortServers().end();it++){
@@ -134,14 +144,14 @@ int     main(int argc, char ** argv)
 				break;
 			}
 		}
-        // finding an event in client sockets array
+        mainPrint(webserv2);
+           // finding an event in client sockets array
         for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
         {
             if(webserv2.getClients().empty())
                 break;
             // finding a read event in client sockets array
             if (FD_ISSET(it->getSocketFd(), &readfds)){
-//				std::cout << "select:"<< YELLOW << " read "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
                 it->readRequest();
                 if(it->getStatus() == WRITING)
                     it->generateResponse();
@@ -150,7 +160,6 @@ int     main(int argc, char ** argv)
                 // finding a write event in client sockets array
             else if(FD_ISSET(it->getSocketFd(), &writefds))
             {
-//				std::cout << "select:"<< GREEN << " write "<< WHITE << "ready on fd " << it->getSocketFd() << "\n";
                 it->sendResponse();
                 break;
             }
@@ -175,13 +184,6 @@ int     main(int argc, char ** argv)
                 webserv2.addClient(fd, it->getVirtualServers());
             }
         }
-        system("clear");
-        std::cout << "|" << std::setw(7) << "   id  " << "|" << std::setw(4) << " fd " << "|" << std::setw(10) << "  method  " << "|" << std::setw(10) << "   sent   " << "|" << std::setw(6) << " code " <<"|"<<" received " << "|" << "server name" << "|" << " port " << "|\n";
-        for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
-        {
-            std::cout << "|" << std::setw(7) << it->getRequest().getRequestId() << "|" << std::setw(4) << it->getSocketFd() << "|"<< std::setw(10) << it->getRequest().getRequestMethod()<< "|" << std::setw(10) << it->getResponse().getBytesSent() << "|" <<  std::setw(6) << std::to_string(it->getResponse().getResponseCodes()) << "|" << std::setw(10) << it->getRequest().getCounter() << "|" << std::setw(11) << it->getVirtualServerConfig().getServerName() << "|" << std::setw(6) << it->getVirtualServerConfig().getPort() << "|\n";
-        }
-
 	}
 	// very bad place:)
 	return 0;

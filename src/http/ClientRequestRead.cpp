@@ -53,6 +53,6 @@ void        Client::recvBuffer(){
         _status = CLOSING;
         return;
     }
-
+    _request.addBytesReceieved(ret);
     _request.appendBuffer(buf, ret);
 }

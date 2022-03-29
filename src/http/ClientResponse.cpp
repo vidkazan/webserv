@@ -209,7 +209,8 @@ void        Client::generateResponse()
             break;
         }
     }
-    if(_request.getRequestMethod() != HEAD) {
+    if(_request.getRequestMethod() != HEAD)
+    {
         std::stringstream buffer;
         buffer << inputFile.rdbuf();
         if (body.empty())
@@ -229,14 +230,14 @@ void        Client::generateResponse()
         bufResp += "Content-Length: 0\n\n";
     }
     allocateResponse(bufResp);
-    std::ofstream logfile;
-    logfile.open(RESPONSE_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION, std::ios::trunc);
-    logfile << bufResp;
-    logfile.close();
+//    std::ofstream logfile;
+//    logfile.open(RESPONSE_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION, std::ios::trunc);
+//    logfile << bufResp;
+//    logfile.close();
     _status = WRITING;
     inputFile.close();
-    std::string a1 = RESPONSE_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION;
-    std::string a2 = REQUEST_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION;
+//    std::string a1 = RESPONSE_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION;
+//    std::string a2 = REQUEST_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION;
 //            std::remove(a2.c_str());
     if(_request.getRequestMethod() != POST)
     {
@@ -255,13 +256,24 @@ void        Client::allocateResponse(std::string bufResp){
 }
 void        Client::sendResponse()
 {
-    ssize_t ret = send(_socketFD, _response.getResponse() + _response.getBytesSent(),_response.getResponseSize() - _response.getBytesSent(),0x80000); //  SIGPIPE ignore
+    ssize_t ret;
+    ssize_t size = 0;
+    if(_response.getResponseSize() - _response.getBytesSent() < 1000000000)
+        size = _response.getResponseSize() - _response.getBytesSent();
+    else
+        size = 999999999;
+    ret = send(_socketFD, _response.getResponse() + _response.getBytesSent(),size,0x80000); //  SIGPIPE ignore
     if(ret <= 0)
     {
+        Response response;
+        setResponse(response);
+        Request request;
+        _request = request;
         free(_response.getResponse());
         setStatus(CLOSING);
         return;
     }
+
     _response.addBytesSent(ret);
     if(_response.getBytesSent() == (size_t)_response.getResponseSize())
     {
