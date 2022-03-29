@@ -16,6 +16,7 @@ class VirtualServerConfigDirectory
 		std::string _cgi_path;
 		std::string _cgi_extention;
 		std::map<int, std::string> _error_pages;
+		std::string _redirect;
 	public:
         VirtualServerConfigDirectory(){};
 	VirtualServerConfigDirectory(const std::string&directoryName, \
@@ -27,7 +28,8 @@ class VirtualServerConfigDirectory
 								const std::string index, \
 								const std::string cgi_path, \
 								const std::string cgi_extention, \
-								const std::map<int, std::string> error_pages ) : \
+								const std::map<int, std::string> error_pages, \
+								const std::string redirect) : \
 								_directoryName(directoryName), \
 								_directoryAllowedMethods(directoryAllowedMethods), \
 								_directoryPath(directoryPath), \
@@ -37,7 +39,8 @@ class VirtualServerConfigDirectory
 								_index (index), \
 								_cgi_path (cgi_path), \
 								_cgi_extention (cgi_extention), \
-								_error_pages(error_pages){}
+								_error_pages(error_pages), \
+								_redirect(redirect){}
 
 		~VirtualServerConfigDirectory(){}
 

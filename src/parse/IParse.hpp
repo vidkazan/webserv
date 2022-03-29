@@ -200,8 +200,6 @@ protected:
 	}
 
 	virtual void _idPole(string basicString) = 0;
-	virtual void _nulling() = 0;
-
 
 };
 

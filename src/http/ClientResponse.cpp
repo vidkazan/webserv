@@ -255,7 +255,7 @@ void        Client::allocateResponse(std::string bufResp){
 }
 void        Client::sendResponse()
 {
-    ssize_t ret = send(_socketFD, _response.getResponse() + _response.getBytesSent(),_response.getResponseSize() - _response.getBytesSent(),MSG_NOSIGNAL); //  SIGPIPE ignore
+    ssize_t ret = send(_socketFD, _response.getResponse() + _response.getBytesSent(),_response.getResponseSize() - _response.getBytesSent(),0x80000); //  SIGPIPE ignore
     if(ret <= 0)
     {
         free(_response.getResponse());

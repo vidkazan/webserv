@@ -34,15 +34,17 @@ void    setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
 					   		(bool)(*b)->autoindex, \
 					   		(*b)->index, \
 					   		(*b)->cgi_path, \
-					   		(*b)->cgi_extension,
-							(*b)->error_pages));
+					   		(*b)->cgi_extension, \
+							(*b)->error_pages, \
+							(*b)->redirect));
 		b++;
 	}
+	cout << "400 error pade: " << sc->error_pages[400] << endl;
 	std::sort(dirs.begin(), dirs.end());
     VirtualServerConfig virtualServConfig1(dirs, \
     	sc->listen->port[0], \
     	(char *)sc->listen->rawIp.c_str(), \
-    	sc->server_name,
+    	sc->server_name, \
 		sc->error_pages);
 
     bool portFlag=1;
