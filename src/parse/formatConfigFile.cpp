@@ -6,10 +6,13 @@
 #include <strstream>
 
 formatConfigFile::formatConfigFile(int argc, char **argv) {
-	if (argc != 2)
+	if (argc > 2)
 		throw std::runtime_error (ERR_ARG);
 
-	this->_ftostr(argv[1]);
+	if (argc == 1)
+		this->_ftostr("config/default.conf");
+	else
+		this->_ftostr(argv[1]);
 	this->_formatFile();
 	this->_separateStringServers();
 	this->_eraseExternal();
