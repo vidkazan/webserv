@@ -8,23 +8,25 @@ void    startMessage(){
 
 void    mainPrint(Webserv2 & webserv2)
 {
-    write(1,"\E[H\E[2J",7);
-    std::cout << "|" << std::setw(7) << "   id  " << "|" << std::setw(4) << " fd " << "|" << std::setw(10) << "  method  " << "|" << std::setw(10) << "   sent   " << "|" << std::setw(6) << " code " <<"|"<<" received " << "|" << "server name" << "|" << " port " << "|\n";
-    for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
-    {
-        std::cout << "|" << std::setw(7) << it->getRequest().getRequestId() << "|" << std::setw(4) << it->getSocketFd() << "|"<< std::setw(10) << it->getRequest().getRequestMethod()<< "|" << std::setw(10) << it->getResponse().getBytesSent() << "|" <<  std::setw(6) << std::to_string(it->getResponse().getResponseCodes()) << "|" << std::setw(10) << it->getRequest().getBytesReceieved() << "|" << std::setw(11) << it->getVirtualServerConfig().getServerName() << "|" << std::setw(6) << it->getVirtualServerConfig().getPort() << "|\n";
-    }
+	(void)webserv2;
+    // write(1,"\E[H\E[2J",7);
+    // std::cout << "|" << std::setw(7) << "   id  " << "|" << std::setw(4) << " fd " << "|" << std::setw(10) << "  method  " << "|" << std::setw(10) << "   sent   " << "|" << std::setw(6) << " code " <<"|"<<" received " << "|" << "server name" << "|" << " port " << "|\n";
+    // for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
+    // {
+    //     std::cout << "|" << std::setw(7) << it->getRequest().getRequestId() << "|" << std::setw(4) << it->getSocketFd() << "|"<< std::setw(10) << it->getRequest().getRequestMethod()<< "|" << std::setw(10) << it->getResponse().getBytesSent() << "|" <<  std::setw(6) << std::to_string(it->getResponse().getResponseCodes()) << "|" << std::setw(10) << it->getRequest().getBytesReceieved() << "|" << std::setw(11) << it->getVirtualServerConfig().getServerName() << "|" << std::setw(6) << it->getVirtualServerConfig().getPort() << "|\n";
+    // }
 }
 
 void    printWebservServers(Webserv2 &webserv2)
 {
+	(void)webserv2;
     //print port servers
-    for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it!=webserv2.getPortServers().end();it++){
-        std::cout << it->getIp() << " " << it->getPort() << "\n";
-        for(std::vector<VirtualServerConfig>::iterator it2 = it->getVirtualServers().begin();it2!=it->getVirtualServers().end();it2++){
-            std::cout << " " << it2->getIp() << " " << it2->getPort() << " " << it2->getServerName() <<  "\n";
-        }
-    }
+    // for(std::vector<PortServer>::iterator it = webserv2.getPortServers().begin();it!=webserv2.getPortServers().end();it++){
+    //     std::cout << it->getIp() << " " << it->getPort() << "\n";
+    //     for(std::vector<VirtualServerConfig>::iterator it2 = it->getVirtualServers().begin();it2!=it->getVirtualServers().end();it2++){
+    //         std::cout << " " << it2->getIp() << " " << it2->getPort() << " " << it2->getServerName() <<  "\n";
+    //     }
+    // }
 }
 
 void    setVirtualServerConfig(Webserv2 & webserv2, ServerConfig * sc)
@@ -143,7 +145,7 @@ int     main(int argc, char ** argv)
 				break;
 			}
 		}
-        mainPrint(webserv2);
+        // mainPrint(webserv2);
            // finding an event in client sockets array
         for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
         {

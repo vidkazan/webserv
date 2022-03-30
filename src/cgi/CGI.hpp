@@ -22,6 +22,9 @@ private:
     std::string _cgiOutputFileName;
     std::string _cgiInputFileName;
 
+	std::string ip;
+	std::string port;
+
 	void initEnv();
 	void initArgv();
 	void initContentType();
@@ -45,7 +48,8 @@ public:
 	};
 
 
-	CGI(std::string _requestMethod, std::string _cgiScriptPath, std::string cgiInputFileName, std::string cgiOutputFileName);
+	CGI(std::string _requestMethod, std::string _cgiScriptPath, std::string cgiInputFileName,
+		std::string cgiOutputFileName, std::string ip, short port);
 
 	~CGI();
 	void executeCgiScript();
