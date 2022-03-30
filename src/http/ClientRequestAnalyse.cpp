@@ -131,7 +131,6 @@ void        Client::analysePath(){
                 _response.setMethodIsAllowed(true);
             if(!it->getDirectoryRedirect().empty() && it->getDirectoryName() == _request.getOption())
             {
-//					std::cout << "redirects: " << it->getDirectoryRedirect() << " " << _request.getOption() << "\n";
                 _request.setRedirect(it->getDirectoryRedirect());
                 _request.setRequestErrors(ERROR_REDIRECT);
                 return;
