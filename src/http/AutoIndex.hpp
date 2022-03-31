@@ -1,23 +1,26 @@
 #pragma once
 #include "../main.hpp"
 
+#include <dirent.h>
+
+/* если автоиндекс включен, пользователь вводит в url директорию (http://localhost:2001/cgi-bin/)
+	и в этой директории нет индекс файлов
+*/
 class AutoIndex {
 public:
 	static std::string generateAutoindexPage(std::string path) {
 		// char cwd2[1024];
 		// getcwd(cwd2, sizeof(cwd2));
-		bool isDoubleSlash = false;
+		
 		if (path[path.size() - 1] == '/' && path[path.size() - 2] == '/') {
 			std::string tmpPath(path, 0, path.size() - 1);
 			path = tmpPath;
-			isDoubleSlash = true;
 		}
-		std::string dirName(path, path.find_first_of("/") + 1, path.length());
 
 		std::string res;
-		DIR *dir;
-		struct dirent *current;
-		dir = opendir(path.c_str());
+		DIR *dp;
+		struct dirent *ep;
+		dp = opendir(path.c_str());
 
 		res = "<!DOCTYPE html>\n\
 			<html>\n\
@@ -29,28 +32,29 @@ public:
 		res += path;
 		res += "</h1>\n";
 
-		if (dir != NULL)
+		// struct stat st_buff;
+		std::string type;
+		if (dp != NULL)
 		{
-			current = readdir(dir);
-			while ((current = readdir(dir))) {
+			while ((ep = readdir (dp))) {
+				// stat(ep->d_name, &st_buff);
 					res += "<a href=\"";
-					if (!strcmp(current->d_name, "..") || isDoubleSlash == true)
-						res += current->d_name;
-					else
-						res += dirName + current->d_name;
+					res += ep->d_name;
 					res += "\">";
-					res += current->d_name;
+					res += ep->d_name;
 					res += "</a> ";
+					// res += std::to_string(st_buff.st_size);
 					res += "<br>\n";
 			}
-			closedir(dir);
+			res += "</body>\n\
+					</html>\n";
+
+			(void) closedir (dp);
 		}
 		else {
 			perror ("Couldn't open the directory");
 			res += "Couldn't open the directory";
 		}
-		res += "</body>\n\
-				</html>\n";
 		return res;
 	}
 };

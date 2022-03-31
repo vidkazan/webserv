@@ -43,8 +43,6 @@ void        Client::analyseRequest()
             break;
         case OPTION_CGI: {
             _request.setFullPath(_request.getDirectoryConfig().getCgiPath());
-            if(!opendir("tmp/"))
-                mkdir("tmp/",0777);
             std::stringstream OutputFileName;
             std::ofstream cgiOutput;
             OutputFileName << CGI_OUTPUT_TMP_FILE_PATH_NAME;

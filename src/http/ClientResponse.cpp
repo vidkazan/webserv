@@ -5,7 +5,6 @@
 
 void        Client::generateResponse()
 {
-
 //    std::cout << YELLOW << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << " \n" << _request.getOption() << WHITE << "\n";
 //    std::cout << YELLOW << "id: " + std::to_string(_request.getRequestId()) + " fd: " + std::to_string(getSocketFd()) << WHITE << " ";
 //    printStates("");
@@ -45,7 +44,6 @@ void        Client::generateResponse()
             break;
         }
     }
-    std::string cgiContentTypeStr;
     switch (_request.getRequestMethod()){
         case HEAD:
         case GET:
@@ -90,12 +88,12 @@ void        Client::generateResponse()
                         case NO_OPTION:
                             break;
                         case OPTION_CGI: {
+//								std::cout << "cgi--- " << _request.getFullPath() << "\n";
                             CGI *cgi = new CGI(_request.getType(), _request.getFullPath(), \
-                                                    _response.getCgiOutputFileName(), _response.getCgiInputFileName(), \
-                                                    _serverConfig.getIp(), _serverConfig.getPort());
+                                                    _response.getCgiOutputFileName(), _response.getCgiInputFileName());
                             try {
                                 cgi->executeCgiScript();
-                                cgiContentTypeStr = cgi->getContentTypeStr(); //cgi this
+//                                bufResp = cgi->getBufResp();
                                 body = cgi->getBody();
                             }
                             catch (const std::exception &e) {
@@ -153,8 +151,8 @@ void        Client::generateResponse()
                         case OPTION_CGI: {
                             //                    std::cout << "cgi--- " << _request.getFullPath() << "\n";
                             CGI *cgi = new CGI(_request.getType(), _request.getFullPath(), \
-                                                _response.getCgiOutputFileName(), _response.getCgiInputFileName(),\
-                                                _serverConfig.getIp(), _serverConfig.getPort());
+                                                        _response.getCgiOutputFileName(),
+                                               _response.getCgiInputFileName());
                             try {
                                 cgi->executeCgiScript();
                                 //                        bufResp += cgi->getContentTypeStr();
@@ -224,8 +222,6 @@ void        Client::generateResponse()
             bufResp += "Content-Type: text/html\n";
         else if (_request.getOptionFileExtension() == "png")
             bufResp += "Content-Type: image/png\n";
-        else if (_request.getRequestOptionType() == OPTION_CGI) //cgi this
-            bufResp += cgiContentTypeStr + "\n"; //cgi this
         bufResp += "\n";
         bufResp += body;
     }
@@ -248,6 +244,7 @@ void        Client::generateResponse()
 //            std::remove(a1.c_str());
     }
 }
+
 void        Client::allocateResponse(std::string bufResp){
     char *res;
     size_t i=0;

@@ -144,7 +144,6 @@ int     main(int argc, char ** argv)
 			}
 		}
         mainPrint(webserv2);
-
            // finding an event in client sockets array
         for(std::vector<Client>::iterator it = webserv2.getClients().begin();it != webserv2.getClients().end(); it++)
         {

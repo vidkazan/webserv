@@ -22,23 +22,27 @@ int CGI::error500BodySize = CGI::error500Body.size();
 **	@param	_requestMethod		POST/GET
 **	@param	_cgiScriptPath		cgi script path
 */
-CGI::CGI(std::string _requestMethod, std::string _cgiScriptPath,
-			std::string cgiOutputFileName, std::string cgiInputFileName, 
-			std::string ip, short _port)
-		: scriptPath(_cgiScriptPath),env(NULL), argv(NULL),
-		_cgiOutputFileName(cgiOutputFileName), _cgiInputFileName(cgiInputFileName),
-		ip(ip), port(std::to_string(_port)) {
+CGI::CGI(std::string _requestMethod, std::string _cgiScriptPath, std::string cgiOutputFileName, std::string cgiInputFileName)
+		: scriptPath(_cgiScriptPath),env(NULL), argv(NULL), _cgiOutputFileName(cgiOutputFileName), _cgiInputFileName(cgiInputFileName) {
 	/*----обязательно----*/
 	cgiEnvVector.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	cgiEnvVector.push_back("SERVER_PROTOCOL=HTTP/1.1");
-	cgiEnvVector.push_back("SERVER_SOFTWARE=WEBSERV"); //FIXME
-	cgiEnvVector.push_back("SERVER_NAME=" + ip);
-	cgiEnvVector.push_back("SERVER_PORT=" + port);
+	cgiEnvVector.push_back("SERVER_SOFTWARE=WEBSERV");
+	cgiEnvVector.push_back("SERVER_NAME=127.0.0.1");
+	cgiEnvVector.push_back("SERVER_PORT=2001");
 	cgiEnvVector.push_back("REQUEST_METHOD=" + _requestMethod);
     cgiEnvVector.push_back("HTTP_X_SECRET_HEADER_FOR_TEST=1");
 	/*--конец обязательного--*/
 	scriptFileName = scriptPath.substr(scriptPath.find_last_of('/') + 1, scriptPath.size());
     scriptPath = scriptPath.substr(0,scriptPath.find_last_of('/'));
+	/*
+		если кидать PATH_INFO то нужно и PATH_TRANSLATED
+	*/
+	/*
+	cgiEnvVector.push_back("REQUEST_LINE");
+	REQUEST_LINE Содержит строку из запроса протокола HTTP. Например:
+	GET /cgi-bin/1.cgi HTTP/1.0
+	*/
 }
 
 /**
@@ -49,6 +53,8 @@ void CGI::createFullPathToScript() {
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		throw StandartFunctionsException("getcwd");
 	std::string cwdStr(cwd);
+	// std::cout << "--- " << cwdStr << "\n";
+	// std::cout << "--- " << cwdStr[cwdStr.size() - 1] << "\n";
     this->scriptFullPath = cwdStr + "/" + scriptPath + "/" + scriptFileName;
 }
 
@@ -93,6 +99,7 @@ void CGI::executeCgiScript() {
     std::string path_info = "PATH_INFO=" + scriptFullPath.substr(0,scriptFullPath.find_last_of('/') + 1);
 	cgiEnvVector.push_back(path_info);
 
+//	 std::cout << "--- PATH_INFO=" << path_info << "\n";
 	initEnv();
 	initArgv();
 	if (checkScriptRights() == false)
@@ -123,9 +130,10 @@ void CGI::executeCgiScript() {
         }
 	}
     createBodyFromFile();
+//    initContentType();
 	cgiBufResp = "HTTP/1.1 200 OK\r\n";
-    initContentType(); //cgi this
-	this->contentTypeStr = this->getContentTypeStr(); //cgi this
+//	cgiBufResp += this->getContentTypeStr();
+//	cgiBufResp += "\n";
 }
 
 /**
@@ -171,9 +179,15 @@ void CGI::createBodyFromFile()
 	cgiTmpFile.open(getCgiOutputFileName());
     if(!cgiTmpFile.is_open())
         throw StandartFunctionsException("createBodyFromFile: error open output file");
+//    size_t size = filesize(getCgiOutputFileName().c_str());
+//    std::cout << GREEN << getCgiOutputFileName() << ": filesize: " << size << WHITE << "\n";
 	std::stringstream bufferCgi;
 	bufferCgi << cgiTmpFile.rdbuf();
 	bodyAndHeader = bufferCgi.str();
+
+//    for(size_t i=0;i<bodyAndHeader.size();i++){
+//        std::cout << (int)bodyAndHeader[i] << "\n";
+//    }
 
     size_t pos = bodyAndHeader.find("\r\n\r\n");
     if(pos != std::string::npos)
@@ -181,11 +195,6 @@ void CGI::createBodyFromFile()
     else
         pos=0;
     this->body = bodyAndHeader.substr(pos,bodyAndHeader.size() - pos);
-
-	std::string bodyWithoutHeader(this->body, //cgi this
-		this->body.find_first_of("\n") + 2, this->body.length()); //cgi this
-	this->body = bodyWithoutHeader; //cgi this
-	
 	cgiTmpFile.close();
 }
 /**
@@ -193,9 +202,7 @@ void CGI::createBodyFromFile()
 **			(throw if the body does not contain a line with or no \\n)
 */
 void CGI::initContentType() { // нужна ли проврека на Content-type
-
-	// if (bodyAndHeader.find("Content-type:") != std::string::npos)
-	if (strncmp(bodyAndHeader.c_str(), "Content-type:", 13) != 0) //cgi this
+	if (bodyAndHeader.find("Content-type:") != std::string::npos)
 		throw StandartFunctionsException("no Content-type: in cgi script");
 
 	std::string tmp(bodyAndHeader, 0, bodyAndHeader.find_first_of("\n"));

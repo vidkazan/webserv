@@ -10,7 +10,6 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
-#include <dirent.h>
 //#include <algorithm>
 //#include <strings.h>
 
