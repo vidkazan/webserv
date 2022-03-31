@@ -22,27 +22,19 @@ int CGI::error500BodySize = CGI::error500Body.size();
 **	@param	_requestMethod		POST/GET
 **	@param	_cgiScriptPath		cgi script path
 */
-CGI::CGI(std::string _requestMethod, std::string _cgiScriptPath, std::string cgiOutputFileName, std::string cgiInputFileName)
+CGI::CGI(std::string _requestMethod, std::string _cgiScriptPath, std::string cgiOutputFileName,
+			std::string cgiInputFileName, VirtualServerConfig serverConfig)
 		: scriptPath(_cgiScriptPath),env(NULL), argv(NULL), _cgiOutputFileName(cgiOutputFileName), _cgiInputFileName(cgiInputFileName) {
-	/*----обязательно----*/
 	cgiEnvVector.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	cgiEnvVector.push_back("SERVER_PROTOCOL=HTTP/1.1");
 	cgiEnvVector.push_back("SERVER_SOFTWARE=WEBSERV");
-	cgiEnvVector.push_back("SERVER_NAME=127.0.0.1");
-	cgiEnvVector.push_back("SERVER_PORT=2001");
+	cgiEnvVector.push_back("SERVER_NAME=" + serverConfig.getIp());
+	cgiEnvVector.push_back("SERVER_PORT=" + std::to_string(serverConfig.getPort()));
 	cgiEnvVector.push_back("REQUEST_METHOD=" + _requestMethod);
     cgiEnvVector.push_back("HTTP_X_SECRET_HEADER_FOR_TEST=1");
-	/*--конец обязательного--*/
+
 	scriptFileName = scriptPath.substr(scriptPath.find_last_of('/') + 1, scriptPath.size());
     scriptPath = scriptPath.substr(0,scriptPath.find_last_of('/'));
-	/*
-		если кидать PATH_INFO то нужно и PATH_TRANSLATED
-	*/
-	/*
-	cgiEnvVector.push_back("REQUEST_LINE");
-	REQUEST_LINE Содержит строку из запроса протокола HTTP. Например:
-	GET /cgi-bin/1.cgi HTTP/1.0
-	*/
 }
 
 /**
@@ -53,8 +45,6 @@ void CGI::createFullPathToScript() {
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		throw StandartFunctionsException("getcwd");
 	std::string cwdStr(cwd);
-	// std::cout << "--- " << cwdStr << "\n";
-	// std::cout << "--- " << cwdStr[cwdStr.size() - 1] << "\n";
     this->scriptFullPath = cwdStr + "/" + scriptPath + "/" + scriptFileName;
 }
 
@@ -69,13 +59,13 @@ CGI::~CGI() {
 	free(argv);
 }
 
-bool CGI::checkScriptRights() { // изменить логик bool
+bool CGI::checkScriptRights() {
 	if (access(scriptFullPath.c_str(), F_OK) == -1) {
 		/* проверяем на существование */
 		std::fstream inputFile;
 		std::cerr << "ERROR IN CGI: cgi script not found\n";
 		cgiBufResp = "HTTP/1.1 404 Not found\n";
-		inputFile.open("www/404.html", std::ios::in); // FIXME прикрутить путь из конфига
+		inputFile.open(serverConfig.getErrorPages(404), std::ios::in);
 		std::stringstream buffer;
 		buffer << inputFile.rdbuf();
 		body = buffer.str();
@@ -95,11 +85,9 @@ bool CGI::checkScriptRights() { // изменить логик bool
 */
 void CGI::executeCgiScript() {
 	createFullPathToScript();
-	/* здесь, а не в конструкторе, т.к. выбрасывает исключение */
     std::string path_info = "PATH_INFO=" + scriptFullPath.substr(0,scriptFullPath.find_last_of('/') + 1);
 	cgiEnvVector.push_back(path_info);
 
-//	 std::cout << "--- PATH_INFO=" << path_info << "\n";
 	initEnv();
 	initArgv();
 	if (checkScriptRights() == false)
@@ -130,10 +118,7 @@ void CGI::executeCgiScript() {
         }
 	}
     createBodyFromFile();
-//    initContentType();
 	cgiBufResp = "HTTP/1.1 200 OK\r\n";
-//	cgiBufResp += this->getContentTypeStr();
-//	cgiBufResp += "\n";
 }
 
 /**
@@ -177,20 +162,15 @@ void CGI::createBodyFromFile()
 {
 	std::fstream cgiTmpFile;
 	cgiTmpFile.open(getCgiOutputFileName());
-    if(!cgiTmpFile.is_open())
+    if (!cgiTmpFile.is_open())
         throw StandartFunctionsException("createBodyFromFile: error open output file");
-//    size_t size = filesize(getCgiOutputFileName().c_str());
-//    std::cout << GREEN << getCgiOutputFileName() << ": filesize: " << size << WHITE << "\n";
+
 	std::stringstream bufferCgi;
 	bufferCgi << cgiTmpFile.rdbuf();
 	bodyAndHeader = bufferCgi.str();
 
-//    for(size_t i=0;i<bodyAndHeader.size();i++){
-//        std::cout << (int)bodyAndHeader[i] << "\n";
-//    }
-
     size_t pos = bodyAndHeader.find("\r\n\r\n");
-    if(pos != std::string::npos)
+    if (pos != std::string::npos)
         pos += 4;
     else
         pos=0;
