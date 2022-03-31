@@ -25,10 +25,7 @@ void        Client::analyseRequest()
         _request.setRequestOptionType(OPTION_CGI);
 
     if(_request.getRequestErrors() != NO_ERROR)
-    {
-        _request.setReadStatus(REQUEST_READ_COMPLETE);
         return;
-    }
 
     switch (_request.getRequestOptionType()) {
         case OPTION_CGI:
@@ -42,6 +39,8 @@ void        Client::analyseRequest()
         case OPTION_DIR:
             break;
         case OPTION_CGI: {
+            if(!opendir("tmp/"))
+                mkdir("tmp",0777);
             _request.setFullPath(_request.getDirectoryConfig().getCgiPath());
             std::stringstream OutputFileName;
             std::ofstream cgiOutput;
@@ -66,7 +65,6 @@ void        Client::analyseRequest()
             switch (_request.getRequestMethod()) {
                 case POST:
                 case PUT:{
-//						std::cout << "analyse request: POST/PUT: trunc file\n";
                     std::fstream outFile;
                     outFile.open((_request.getFullPath()), std::ios::out | std::ios::trunc);
                     if(outFile.is_open())
@@ -78,7 +76,6 @@ void        Client::analyseRequest()
                 }
                 case GET:
                 case HEAD:{
-//                        std::cout << _request.getFullPath() << "\n";
                     std::fstream inFile;
                     inFile.open((_request.getFullPath()),std::ios::in);
                     if(!inFile.is_open() || opendir(_request.getFullPath().c_str()))

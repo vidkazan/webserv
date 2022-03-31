@@ -102,14 +102,14 @@ void        Client::parseRequestBody()
         return;
     }
     _request.setCounter(_request.getCounter() + _request.getBuffer().size());
-    if(_request.getRequestOptionType() != OPTION_CGI)
+    if(_request.getRequestOptionType() != OPTION_CGI && _request.getRequestErrors() == NO_ERROR)
     {
         std::ofstream outFile;
         outFile.open(_request.getFullPath(), std::ios::app);
         outFile << _request.getBuffer();
         outFile.close();
     }
-    if(_request.getRequestOptionType() == OPTION_CGI)
+    if(_request.getRequestOptionType() == OPTION_CGI && _request.getRequestErrors() == NO_ERROR)
     {
         std::ofstream outFile;
         outFile.open(_response.getCgiInputFileName(), std::ios::app);
