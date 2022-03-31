@@ -237,8 +237,8 @@ void        Client::generateResponse()
 //    logfile.open(RESPONSE_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION, std::ios::trunc);
 //    logfile << bufResp;
 //    logfile.close();
-    // _status = WRITING;
-    // inputFile.close();
+    _status = WRITING;
+    inputFile.close();
     
 //    std::string a1 = RESPONSE_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION;
 //    std::string a2 = REQUEST_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION;
