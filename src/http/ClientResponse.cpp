@@ -88,19 +88,15 @@ void        Client::generateResponse()
                         case NO_OPTION:
                             break;
                         case OPTION_CGI: {
-//								std::cout << "cgi--- " << _request.getFullPath() << "\n";
                             CGI *cgi = new CGI(_request.getType(), _request.getFullPath(), \
-                                                    _response.getCgiOutputFileName(), _response.getCgiInputFileName());
+                                                    _response.getCgiOutputFileName(), _response.getCgiInputFileName(), \
+                                                    _serverConfig);
                             try {
                                 cgi->executeCgiScript();
 //                                bufResp = cgi->getBufResp();
                                 body = cgi->getBody();
                             }
                             catch (const std::exception &e) {
-                                /*
-                                    в классе CGI есть статические перемнные
-                                    с готовым body и сторокой с ContentType при ошибке 500
-                                */
                                 std::cerr << "ERROR IN CGI: " << e.what() << '\n';
                                 bufResp = "HTTP/1.1 500 Internal Server Error\n";
                                 bufResp += CGI::error500ContentType;
@@ -149,10 +145,9 @@ void        Client::generateResponse()
                 case 200: {
                     switch (_request.getRequestOptionType()) {
                         case OPTION_CGI: {
-                            //                    std::cout << "cgi--- " << _request.getFullPath() << "\n";
                             CGI *cgi = new CGI(_request.getType(), _request.getFullPath(), \
                                                         _response.getCgiOutputFileName(),
-                                               _response.getCgiInputFileName());
+                                               _response.getCgiInputFileName(), _serverConfig);
                             try {
                                 cgi->executeCgiScript();
                                 //                        bufResp += cgi->getContentTypeStr();
@@ -162,10 +157,6 @@ void        Client::generateResponse()
                                 std::remove(_response.getCgiOutputFileName().c_str());
                             }
                             catch (const std::exception &e) {
-                                /*
-                                    в классе CGI есть статические перемнные
-                                    с готовым body и сторокой с ContentType при ошибке 500
-                                */
                                 std::cerr << "ERROR IN CGI: " << e.what() << '\n';
                                 bufResp = "HTTP/1.1 500 Internal Server Error\n";
                                 bufResp += CGI::error500ContentType;
@@ -211,6 +202,16 @@ void        Client::generateResponse()
     }
     if(_request.getRequestMethod() != HEAD)
     {
+        std::string cgiContentType;
+        if (_request.getRequestOptionType() == OPTION_CGI) {
+                if (body.length() > 3) {
+                std::string tmpContentType(body, 0, body.find_first_of("\n\n") + 1);
+                cgiContentType = tmpContentType;
+                std::string tmpBody(body, body.find_first_of("\n\n") + 1, body.length());
+                body = tmpBody;
+            }
+        }
+
         std::stringstream buffer;
         buffer << inputFile.rdbuf();
         if (body.empty())
@@ -222,6 +223,8 @@ void        Client::generateResponse()
             bufResp += "Content-Type: text/html\n";
         else if (_request.getOptionFileExtension() == "png")
             bufResp += "Content-Type: image/png\n";
+        else if (_request.getRequestOptionType() == OPTION_CGI)
+            bufResp += cgiContentType;
         bufResp += "\n";
         bufResp += body;
     }
@@ -236,6 +239,7 @@ void        Client::generateResponse()
 //    logfile.close();
     _status = WRITING;
     inputFile.close();
+    
 //    std::string a1 = RESPONSE_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION;
 //    std::string a2 = REQUEST_LOG_FILE_PATH_NAME + std::to_string(_request.getRequestId()) + LOG_FILE_EXTENSION;
 //            std::remove(a2.c_str());

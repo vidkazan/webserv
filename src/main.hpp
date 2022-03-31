@@ -12,6 +12,7 @@
 #include <vector>
 //#include <algorithm>
 //#include <strings.h>
+#include <dirent.h>
 
 #define SOME "\e[38m"
 #define RED "\e[91m"
@@ -32,9 +33,9 @@
 
 
 #include "http/AutoIndex.hpp"
-#include "cgi/CGI.hpp"
 #include "server/VirtualServerConfigDirectory.hpp"
 #include "server/VirtualServerConfig.hpp"
+#include "cgi/CGI.hpp"
 #include "http/Request.hpp"
 #include "http/Response.hpp"
 #include "http/Client.hpp"

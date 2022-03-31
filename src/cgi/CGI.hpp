@@ -3,9 +3,8 @@
 #include "../main.hpp"
 
 #define ERROR_500 "www/500.html"
-#define TMP_CGI "tmp_cgi_file.$"
-#define CGI_ERROR "ERROR IN CGI: "
 
+// class VirtualServerConfig;
 class CGI {
 private:
 	std::string scriptFileName;
@@ -18,6 +17,8 @@ private:
 	std::string contentTypeStr;
 	std::string bodyAndHeader;
 	std::string body;
+
+	VirtualServerConfig serverConfig;
 
     std::string _cgiOutputFileName;
     std::string _cgiInputFileName;
@@ -45,7 +46,8 @@ public:
 	};
 
 
-	CGI(std::string _requestMethod, std::string _cgiScriptPath, std::string cgiInputFileName, std::string cgiOutputFileName);
+	CGI(std::string _requestMethod, std::string _cgiScriptPath, std::string cgiInputFileName,
+		std::string cgiOutputFileName, VirtualServerConfig serverConfig);
 
 	~CGI();
 	void executeCgiScript();
