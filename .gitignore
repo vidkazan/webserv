@@ -5,5 +5,4 @@ webserv
 cmake-build-debug/
 cmake-build-debug/*
 *.o
-tmp
-tmp/*
+www/cgi-bin/noRights.bla
